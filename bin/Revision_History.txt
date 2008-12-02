@@ -1,0 +1,6 @@
+MASIC Results Merger Revision History
+
+Version 1.2.????; November 26, 2008
+	- Now supports reading MASIC result files (?? and ??) and creating output files that include key MASIC data columns
+		- Can optionally create a separate result file for each CollisionMode type
+
