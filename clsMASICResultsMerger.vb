@@ -29,7 +29,7 @@ Public Class clsMASICResultsMerger
     Inherits clsProcessFilesBaseClass
 
     Public Sub New()
-        MyBase.mFileDate = "December 1, 2008"
+        MyBase.mFileDate = "December 2, 2008"
         InitializeLocalVariables()
     End Sub
 

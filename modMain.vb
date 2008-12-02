@@ -26,7 +26,7 @@ Option Strict On
 ' this computer software.
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "December 1, 2008"
+    Public Const PROGRAM_DATE As String = "December 2, 2008"
 
     Private mInputFilePath As String
     Private mMASICResultsFolderPath As String                   ' Optional
@@ -201,19 +201,19 @@ Module modMain
             Console.WriteLine(" [/N:ScanNumberColumn] [/C]")
             Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/Q]")
             Console.WriteLine()
-            Console.WriteLine("The input file should be a tab-delimited file with scan number in the second column (e.g. Sequest Synopsis or First-Hits file (_syn.txt or _fht.txt), XTandem _xt.txt file, or Inspect syn/fht file (_inspect_fht.txt or _inspect_syn.txt).")
-            Console.WriteLine("If the MASIC result files are not in the same folder as the input file, then use /M to define the path to the correct folder.")
-            Console.WriteLine("The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file.")
-            Console.WriteLine("The parameter file path is optional.  If included, it should point to a valid XML parameter file.")
+            Console.WriteLine("The input file should be a tab-delimited file with scan number in the second column (e.g. Sequest Synopsis or First-Hits file (_syn.txt or _fht.txt), XTandem _xt.txt file, or Inspect syn/fht file (_inspect_fht.txt or _inspect_syn.txt)." & _
+                              "If the MASIC result files are not in the same folder as the input file, then use /M to define the path to the correct folder." & _
+                              "The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file." & _
+                              "The parameter file path is optional.  If included, it should point to a valid XML parameter file.")
 
             Console.WriteLine()
-            Console.WriteLine("Use /N to change the column number that contains scan number in the input file.  The default is 2 (meaning /N:2).")
-            Console.WriteLine("When reading data with _ReporterIons.txt files, you can use /C to specify that a separate output file be created for each collision mode type in the input file.")
+            Console.WriteLine("Use /N to change the column number that contains scan number in the input file.  The default is 2 (meaning /N:2)." & _
+                              "When reading data with _ReporterIons.txt files, you can use /C to specify that a separate output file be created for each collision mode type in the input file.")
             Console.WriteLine()
-            Console.WriteLine("Use /S to process all valid files in the input folder and subfolders. Include a number after /S (like /S:2) to limit the level of subfolders to examine.")
-            Console.WriteLine("When using /S, you can redirect the output of the results using /A.")
-            Console.WriteLine("When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined).")
-            Console.WriteLine("The optional /Q switch will suppress all error messages.")
+            Console.WriteLine("Use /S to process all valid files in the input folder and subfolders. Include a number after /S (like /S:2) to limit the level of subfolders to examine." & _
+                              "When using /S, you can redirect the output of the results using /A." & _
+                              "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined)." & _
+                              "The optional /Q switch will suppress all error messages.")
             Console.WriteLine()
 
             Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2008")
