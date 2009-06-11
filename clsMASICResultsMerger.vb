@@ -712,6 +712,7 @@ Public Class clsMASICResultsMerger
 
                     If intLinesWritten(intIndex) = 0 Then
                         Try
+                            ShowMessage("Deleting empty output file: " & ControlChars.NewLine & " --> " & System.IO.Path.GetFileName(strOutputFilePaths(intIndex)))
                             System.IO.File.Delete(strOutputFilePaths(intIndex))
                         Catch ex As Exception
                             ' Ignore errors here

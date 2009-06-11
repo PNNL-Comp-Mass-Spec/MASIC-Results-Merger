@@ -1,5 +1,8 @@
 MASIC Results Merger Revision History
 
+Version 1.0.3448; June 10, 2009
+	- Now displaying a message if an empty results file is created then deleted while using the /C switch
+
 Version 1.0.3258; December 2, 2008
 	- Initial release
 	- Supports reading MASIC result files (_ScanStats.txt, _SICstats.txt, and optionally _ReporterIons.txt) and creating output files that include key MASIC data columns
