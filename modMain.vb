@@ -26,7 +26,7 @@ Option Strict On
 ' this computer software.
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "December 2, 2008"
+    Public Const PROGRAM_DATE As String = "November 17, 2009"
 
     Private mInputFilePath As String
     Private mMASICResultsFolderPath As String                   ' Optional
@@ -238,6 +238,9 @@ Module modMain
                               "WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LIABILITY FOR THE USE OF THIS " & _
                               "SOFTWARE.  This notice including this sentence must appear on any copies of " & _
                               "this computer software.")
+
+            ' Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
+            System.Threading.Thread.Sleep(750)
 
         Catch ex As Exception
             Console.WriteLine("Error displaying the program syntax: " & ex.Message)
