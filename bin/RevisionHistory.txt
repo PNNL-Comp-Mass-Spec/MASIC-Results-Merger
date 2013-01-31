@@ -1,5 +1,10 @@
 MASIC Results Merger Revision History
 
+Version 1.1.4778; January 30, 2013
+	- Added support for reading results from Mage Extractor (where multiple jobs are combined into one file)
+		- Use /Mage at the command line
+	- Updated to .NET 4
+
 Version 1.0.3608; November 17, 2009
 	- Added 750 msec delay when showing syntax at the command line
 

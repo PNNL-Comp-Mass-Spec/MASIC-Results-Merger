@@ -15,6 +15,18 @@
     {
         "Entry"
         {
+        "MsmKey" = "8:_53C73BB1FF1A762F8FFB7250D2BE773A"
+        "OwnerKey" = "8:_BF1C0F1013027C0C36988344B528ECE8"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_53C73BB1FF1A762F8FFB7250D2BE773A"
+        "OwnerKey" = "8:_EB93CE814D4C4F7D9D3CA4058F0E1C28"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_549D97660F15413B85D15C38749A6661"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -35,6 +47,12 @@
         {
         "MsmKey" = "8:_9AC172E9E11945118740BF5808C4E049"
         "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_BF1C0F1013027C0C36988344B528ECE8"
+        "OwnerKey" = "8:_EB93CE814D4C4F7D9D3CA4058F0E1C28"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -67,6 +85,18 @@
         "OwnerKey" = "8:_EB93CE814D4C4F7D9D3CA4058F0E1C28"
         "MsmSig" = "8:_UNDEFINED"
         }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_BF1C0F1013027C0C36988344B528ECE8"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_53C73BB1FF1A762F8FFB7250D2BE773A"
+        "MsmSig" = "8:_UNDEFINED"
+        }
     }
     "Configurations"
     {
@@ -94,10 +124,10 @@
             "ComponentsUrl" = "8:"
                 "Items"
                 {
-                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.Net.Framework.3.5.SP1"
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.0"
                     {
-                    "Name" = "8:.NET Framework 3.5 SP1"
-                    "ProductCode" = "8:Microsoft.Net.Framework.3.5.SP1"
+                    "Name" = "8:Microsoft .NET Framework 4 (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.0"
                     }
                     "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.Windows.Installer.3.1"
                     {
@@ -164,7 +194,7 @@
                 {
                 "Name" = "8:.NET Framework"
                 "Message" = "8:[VSDNETMSG]"
-                "Version" = "8:3.5.30729"
+                "FrameworkVersion" = "8:.NETFramework,Version=v4.0"
                 "AllowLaterVersions" = "11:FALSE"
                 "InstallUrl" = "8:http://go.microsoft.com/fwlink/?LinkId=76617"
                 }
@@ -172,6 +202,37 @@
         }
         "File"
         {
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_53C73BB1FF1A762F8FFB7250D2BE773A"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:ThermoRawFileReaderDLL, Version=1.1.4758.26744, Culture=neutral, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_53C73BB1FF1A762F8FFB7250D2BE773A"
+                    {
+                    "Name" = "8:ThermoRawFileReaderDLL.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:ThermoRawFileReaderDLL.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_6AB5978BADDC467CBC7B134E52CCFC6D"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_549D97660F15413B85D15C38749A6661"
             {
             "SourcePath" = "8:..\\bin\\QC_Shew_Excerpt_ScanStats.txt"
@@ -250,6 +311,37 @@
             "Register" = "3:1"
             "Exclude" = "11:FALSE"
             "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_BF1C0F1013027C0C36988344B528ECE8"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:PHRPReader, Version=1.1.4778.23017, Culture=neutral, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_BF1C0F1013027C0C36988344B528ECE8"
+                    {
+                    "Name" = "8:PHRPReader.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:PHRPReader.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_6AB5978BADDC467CBC7B134E52CCFC6D"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_C6F2E60814BD49B380A4A16929E5D261"
@@ -379,14 +471,15 @@
         {
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:MASICResultsMerger"
-        "ProductCode" = "8:{2FD0DA60-1DFC-4B4E-BDC9-A3513051BD51}"
-        "PackageCode" = "8:{CE2A99DB-1A15-4409-8EA1-C82A3B033F4E}"
+        "ProductCode" = "8:{032CC3E9-B18D-4874-8200-4181D69D45D3}"
+        "PackageCode" = "8:{507AFBB0-6589-4343-A60F-40F3A9AEE6A2}"
         "UpgradeCode" = "8:{53BC9088-0364-423F-9F8F-CCDD558C0830}"
+        "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
         "RemovePreviousVersions" = "11:FALSE"
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
-        "ProductVersion" = "8:1.0.2"
+        "ProductVersion" = "8:1.1.0"
         "Manufacturer" = "8:Battelle Memorial Institute"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
@@ -914,7 +1007,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_EB93CE814D4C4F7D9D3CA4058F0E1C28"
             {
-            "SourcePath" = "8:..\\obj\\Debug\\MASICResultsMerger.exe"
+            "SourcePath" = "8:..\\obj\\x86\\Debug\\MASICResultsMerger.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_6AB5978BADDC467CBC7B134E52CCFC6D"
