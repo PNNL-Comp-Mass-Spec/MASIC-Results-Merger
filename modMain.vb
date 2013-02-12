@@ -26,149 +26,150 @@ Option Strict On
 ' this computer software.
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "January 30, 2013"
+	Public Const PROGRAM_DATE As String = "February 11, 2013"
 
 	Private mInputFilePath As String
 	Private mMageResults As Boolean
 
     Private mMASICResultsFolderPath As String                   ' Optional
-    Private mOutputFolderName As String                         ' Optional
-    Private mParameterFilePath As String                        ' Optional
+	Private mOutputFolderPath As String				' Optional
+	Private mParameterFilePath As String						' Optional
 
-    Private mOutputFolderAlternatePath As String                ' Optional
-    Private mRecreateFolderHierarchyInAlternatePath As Boolean  ' Optional
+	Private mOutputFolderAlternatePath As String				' Optional
+	Private mRecreateFolderHierarchyInAlternatePath As Boolean	' Optional
 
-    Private mRecurseFolders As Boolean
-    Private mRecurseFoldersMaxLevels As Integer
+	Private mRecurseFolders As Boolean
+	Private mRecurseFoldersMaxLevels As Integer
 
-    Private mLogMessagesToFile As Boolean
-    Private mQuietMode As Boolean
+	Private mLogMessagesToFile As Boolean
+	Private mQuietMode As Boolean
 
-    Private mScanNumberColumn As Integer
-    Private mSeparateByCollisionMode As Boolean
+	Private mScanNumberColumn As Integer
+	Private mSeparateByCollisionMode As Boolean
 
-    Private WithEvents mMASICResultsMerger As clsMASICResultsMerger
-    Private mLastProgressReportTime As System.DateTime
-    Private mLastProgressReportValue As Integer
+	Private WithEvents mMASICResultsMerger As clsMASICResultsMerger
+	Private mLastProgressReportTime As System.DateTime
+	Private mLastProgressReportValue As Integer
 
-    Private Sub DisplayProgressPercent(ByVal intPercentComplete As Integer, ByVal blnAddCarriageReturn As Boolean)
-        If blnAddCarriageReturn Then
-            Console.WriteLine()
-        End If
-        If intPercentComplete > 100 Then intPercentComplete = 100
-        Console.Write("Processing: " & intPercentComplete.ToString & "% ")
-        If blnAddCarriageReturn Then
-            Console.WriteLine()
-        End If
-    End Sub
+	Private Sub DisplayProgressPercent(ByVal intPercentComplete As Integer, ByVal blnAddCarriageReturn As Boolean)
+		If blnAddCarriageReturn Then
+			Console.WriteLine()
+		End If
+		If intPercentComplete > 100 Then intPercentComplete = 100
+		Console.Write("Processing: " & intPercentComplete.ToString & "% ")
+		If blnAddCarriageReturn Then
+			Console.WriteLine()
+		End If
+	End Sub
 
-    Public Function Main() As Integer
-        ' Returns 0 if no error, error code if an error
+	Public Function Main() As Integer
+		' Returns 0 if no error, error code if an error
 
-        Dim intReturnCode As Integer
-        Dim objParseCommandLine As New clsParseCommandLine
-        Dim blnProceed As Boolean
+		Dim intReturnCode As Integer
+		Dim objParseCommandLine As New clsParseCommandLine
+		Dim blnProceed As Boolean
 
-        intReturnCode = 0
+		intReturnCode = 0
 		mInputFilePath = String.Empty
 		mMageResults = False
 
-        mMASICResultsFolderPath = String.Empty
-        mOutputFolderName = String.Empty
-        mParameterFilePath = String.Empty
+		mMASICResultsFolderPath = String.Empty
+		mOutputFolderPath = String.Empty
+		mParameterFilePath = String.Empty
 
-        mRecurseFolders = False
-        mRecurseFoldersMaxLevels = 0
+		mRecurseFolders = False
+		mRecurseFoldersMaxLevels = 0
 
-        mQuietMode = False
-        mLogMessagesToFile = False
+		mQuietMode = False
+		mLogMessagesToFile = False
 
-        mScanNumberColumn = clsMASICResultsMerger.DEFAULT_SCAN_NUMBER_COLUMN
-        mSeparateByCollisionMode = False
+		mScanNumberColumn = clsMASICResultsMerger.DEFAULT_SCAN_NUMBER_COLUMN
+		mSeparateByCollisionMode = False
 
-        Try
-            blnProceed = False
-            If objParseCommandLine.ParseCommandLine Then
-                If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
-            End If
+		Try
+			blnProceed = False
+			If objParseCommandLine.ParseCommandLine Then
+				If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
+			End If
 
-            If Not blnProceed OrElse _
-               objParseCommandLine.NeedToShowHelp OrElse _
-               objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount = 0 OrElse _
-               mInputFilePath.Length = 0 Then
-                ShowProgramHelp()
-                intReturnCode = -1
-            Else
-                mMASICResultsMerger = New clsMASICResultsMerger
+			If Not blnProceed OrElse _
+			   objParseCommandLine.NeedToShowHelp OrElse _
+			   objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount = 0 OrElse _
+			   mInputFilePath.Length = 0 Then
+				ShowProgramHelp()
+				intReturnCode = -1
+			Else
+				mMASICResultsMerger = New clsMASICResultsMerger
 
-                With mMASICResultsMerger
-                    .ShowMessages = Not mQuietMode
-                    .LogMessagesToFile = mLogMessagesToFile
+				With mMASICResultsMerger
+					.ShowMessages = Not mQuietMode
+					.LogMessagesToFile = mLogMessagesToFile
 
-                    ' Note: Define other options here; they will get overridden if defined in the parameter file
-                    .MASICResultsFolderPath = mMASICResultsFolderPath
-                    .ScanNumberColumn = mScanNumberColumn
+					' Note: Define other options here; they will get overridden if defined in the parameter file
+					.MASICResultsFolderPath = mMASICResultsFolderPath
+					.ScanNumberColumn = mScanNumberColumn
 					.SeparateByCollisionMode = mSeparateByCollisionMode
 
 					.MageResults = mMageResults
-                End With
+				End With
 
-                If mRecurseFolders Then
-                    If mMASICResultsMerger.ProcessFilesAndRecurseFolders(mInputFilePath, mOutputFolderName, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, mParameterFilePath, mRecurseFoldersMaxLevels) Then
-                        intReturnCode = 0
-                    Else
-                        intReturnCode = mMASICResultsMerger.ErrorCode
-                    End If
-                Else
-                    If mMASICResultsMerger.ProcessFilesWildcard(mInputFilePath, mOutputFolderName, mParameterFilePath) Then
-                        intReturnCode = 0
-                    Else
-                        intReturnCode = mMASICResultsMerger.ErrorCode
-                        If intReturnCode <> 0 AndAlso Not mQuietMode Then
-                            Console.WriteLine("Error while processing: " & mMASICResultsMerger.GetErrorMessage())
-                        End If
-                    End If
-                End If
+				If mRecurseFolders Then
+					If mMASICResultsMerger.ProcessFilesAndRecurseFolders(mInputFilePath, mOutputFolderPath, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, mParameterFilePath, mRecurseFoldersMaxLevels) Then
+						intReturnCode = 0
+					Else
+						intReturnCode = mMASICResultsMerger.ErrorCode
+					End If
+				Else
+					If mMASICResultsMerger.ProcessFilesWildcard(mInputFilePath, mOutputFolderPath, mParameterFilePath) Then
+						intReturnCode = 0
+					Else
+						intReturnCode = mMASICResultsMerger.ErrorCode
+						If intReturnCode <> 0 AndAlso Not mQuietMode Then
+							Console.WriteLine("Error while processing: " & mMASICResultsMerger.GetErrorMessage())
+						End If
+					End If
+				End If
 
-                DisplayProgressPercent(mLastProgressReportValue, True)
-            End If
+				DisplayProgressPercent(mLastProgressReportValue, True)
+			End If
 
-        Catch ex As Exception
+		Catch ex As Exception
 			ShowErrorMessage("Error occurred in modMain->Main: " & System.Environment.NewLine & ex.Message)
 			intReturnCode = -1
-        End Try
+		End Try
 
-        Return intReturnCode
+		Return intReturnCode
 
-    End Function
+	End Function
 
 	Private Function GetAppVersion() As String
 		Return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & PROGRAM_DATE & ")"
 	End Function
 
-    Private Function SetOptionsUsingCommandLineParameters(ByVal objParseCommandLine As clsParseCommandLine) As Boolean
-        ' Returns True if no problems; otherwise, returns false
+	Private Function SetOptionsUsingCommandLineParameters(ByVal objParseCommandLine As clsParseCommandLine) As Boolean
+		' Returns True if no problems; otherwise, returns false
 
 		Dim strValue As String = String.Empty
 		Dim lstValidParameters As List(Of String) = New List(Of String) From {"I", "M", "O", "P", "N", "C", "Mage", "S", "A", "R", "Q"}
+		Dim intValue As Integer
 
-        Try
-            ' Make sure no invalid parameters are present
+		Try
+			' Make sure no invalid parameters are present
 			If objParseCommandLine.InvalidParametersPresent(lstValidParameters) Then
 				ShowErrorMessage("Invalid commmand line parameters",
 				  (From item In objParseCommandLine.InvalidParameters(lstValidParameters) Select "/" + item).ToList())
 				Return False
-            Else
-                With objParseCommandLine
-                    ' Query objParseCommandLine to see if various parameters are present
-                    If .RetrieveValueForParameter("I", strValue) Then
-                        mInputFilePath = strValue
-                    ElseIf .NonSwitchParameterCount > 0 Then
-                        mInputFilePath = .RetrieveNonSwitchParameter(0)
-                    End If
+			Else
+				With objParseCommandLine
+					' Query objParseCommandLine to see if various parameters are present
+					If .RetrieveValueForParameter("I", strValue) Then
+						mInputFilePath = strValue
+					ElseIf .NonSwitchParameterCount > 0 Then
+						mInputFilePath = .RetrieveNonSwitchParameter(0)
+					End If
 
-                    If .RetrieveValueForParameter("M", strValue) Then mMASICResultsFolderPath = strValue
-					If .RetrieveValueForParameter("O", strValue) Then mOutputFolderName = strValue
+					If .RetrieveValueForParameter("M", strValue) Then mMASICResultsFolderPath = strValue
+					If .RetrieveValueForParameter("O", strValue) Then mOutputFolderPath = strValue
 					If .RetrieveValueForParameter("P", strValue) Then mParameterFilePath = strValue
 
 					If .RetrieveValueForParameter("N", strValue) Then
@@ -182,8 +183,8 @@ Module modMain
 
 					If .RetrieveValueForParameter("S", strValue) Then
 						mRecurseFolders = True
-						If IsNumeric(strValue) Then
-							mRecurseFoldersMaxLevels = CInt(strValue)
+						If Integer.TryParse(strValue, intValue) Then
+							mRecurseFoldersMaxLevels = intValue
 						End If
 					End If
 					If .RetrieveValueForParameter("A", strValue) Then mOutputFolderAlternatePath = strValue
@@ -192,14 +193,16 @@ Module modMain
 					If .RetrieveValueForParameter("Q", strValue) Then mQuietMode = True
 				End With
 
-                Return True
-            End If
+				Return True
+			End If
 
-        Catch ex As Exception
+		Catch ex As Exception
 			ShowErrorMessage("Error parsing the command line parameters: " & System.Environment.NewLine & ex.Message)
-        End Try
+		End Try
 
-    End Function
+		Return False
+
+	End Function
 
 	Private Sub ShowErrorMessage(ByVal strMessage As String)
 		Dim strSeparator As String = "------------------------------------------------------------------------------"
@@ -232,52 +235,50 @@ Module modMain
 		WriteToErrorStream(strMessage)
 	End Sub
 
-    Private Sub ShowProgramHelp()
+	Private Sub ShowProgramHelp()
 
-        Try
+		Try
 
-            Console.WriteLine("This program merges the contents of a tab-delimited peptide hit results file (e.g. from Sequest, XTandem, or Inspect) with the corresponding MASIC results files, appending the relevant MASIC stats for each peptide hit result.")
-            Console.WriteLine()
-            Console.WriteLine("Program syntax:" & ControlChars.NewLine & System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) & _
-                              " /I:InputFilePath_fht.txt [/M:MASICResultsFolderPath] [/O:OutputFolderPath]")
-            Console.WriteLine(" [/P:ParameterFilePath]")
+			Console.WriteLine("This program merges the contents of a tab-delimited peptide hit results file (e.g. from Sequest, XTandem, or Inspect) with the corresponding MASIC results files, appending the relevant MASIC stats for each peptide hit result.")
+			Console.WriteLine()
+			Console.WriteLine("Program syntax:" & ControlChars.NewLine & System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) & _
+							  " /I:InputFilePath_fht.txt [/M:MASICResultsFolderPath] [/O:OutputFolderPath]")
+			Console.WriteLine(" [/P:ParameterFilePath]")
 			Console.WriteLine(" [/N:ScanNumberColumn] [/C] [/Mage]")
-            Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/Q]")
-            Console.WriteLine()
-            Console.WriteLine("The input file should be a tab-delimited file with scan number in the second column (e.g. Sequest Synopsis or First-Hits file (_syn.txt or _fht.txt), XTandem _xt.txt file, or Inspect syn/fht file (_inspect_fht.txt or _inspect_syn.txt)." & _
-                              "If the MASIC result files are not in the same folder as the input file, then use /M to define the path to the correct folder." & _
-                              "The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file." & _
-                              "The parameter file path is optional.  If included, it should point to a valid XML parameter file.")
+			Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/Q]")
+			Console.WriteLine()
+			Console.WriteLine("The input file should be a tab-delimited file with scan number in the second column (e.g. Sequest Synopsis or First-Hits file (_syn.txt or _fht.txt), XTandem _xt.txt file, or Inspect syn/fht file (_inspect_fht.txt or _inspect_syn.txt)." & _
+							  "If the MASIC result files are not in the same folder as the input file, then use /M to define the path to the correct folder." & _
+							  "The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file." & _
+							  "The parameter file path is optional.  If included, it should point to a valid XML parameter file.")
 
-            Console.WriteLine()
-            Console.WriteLine("Use /N to change the column number that contains scan number in the input file.  The default is 2 (meaning /N:2)." & _
-                              "When reading data with _ReporterIons.txt files, you can use /C to specify that a separate output file be created for each collision mode type in the input file (typically pqd, cid, and etd).")
+			Console.WriteLine()
+			Console.WriteLine("Use /N to change the column number that contains scan number in the input file.  The default is 2 (meaning /N:2)." & _
+							  "When reading data with _ReporterIons.txt files, you can use /C to specify that a separate output file be created for each collision mode type in the input file (typically pqd, cid, and etd).")
 			Console.WriteLine()
 			Console.WriteLine("Use /Mage to specify that the input file is a results from from Mage Extractor.  This file will contain results from several analysis jobs; the first column in this file must be Job and the remaining columns must be the standard Synopsis or First-Hits columns supported by PHRPReader.  In addition, the input folder must have a column named InputFile_metadata.txt (this file was auto-created by Mage Extractor).")
 			Console.WriteLine()
-            Console.WriteLine("Use /S to process all valid files in the input folder and subfolders. Include a number after /S (like /S:2) to limit the level of subfolders to examine." & _
-                              "When using /S, you can redirect the output of the results using /A." & _
-                              "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined)." & _
-                              "The optional /Q switch will suppress all error messages.")
-            Console.WriteLine()
+			Console.WriteLine("Use /S to process all valid files in the input folder and subfolders. Include a number after /S (like /S:2) to limit the level of subfolders to examine." & _
+							  "When using /S, you can redirect the output of the results using /A." & _
+							  "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined)." & _
+							  "The optional /Q switch will suppress all error messages.")
+			Console.WriteLine()
 
-            Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2008")
+			Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2008")
 			Console.WriteLine("Version: " & GetAppVersion())
+			Console.WriteLine()
 
-            Console.WriteLine("This is version " & System.Windows.Forms.Application.ProductVersion & " (" & PROGRAM_DATE & ")")
-            Console.WriteLine()
+			Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com")
+			Console.WriteLine("Website: http://panomics.pnnl.gov/ or http://omics.pnl.gov")
+			Console.WriteLine()
+			' Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
+			System.Threading.Thread.Sleep(750)
 
-            Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com")
-			Console.WriteLine("Website: http://ncrr.pnnl.gov/ or http://omics.pnl.gov")
-            Console.WriteLine()
-            ' Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-            System.Threading.Thread.Sleep(750)
-
-        Catch ex As Exception
+		Catch ex As Exception
 			ShowErrorMessage("Error displaying the program syntax: " & ex.Message)
-        End Try
+		End Try
 
-    End Sub
+	End Sub
 
 	Private Sub WriteToErrorStream(strErrorMessage As String)
 		Try
