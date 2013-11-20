@@ -1,5 +1,9 @@
 MASIC Results Merger Revision History
 
+Version 1.1.5072; November 20, 2013
+	- Updated program syntax and Readme to mention MSGF+
+	- New version of PHRPReader.dll that restores support for Mage Extractor results
+
 Version 1.1.4778; January 30, 2013
 	- Added support for reading results from Mage Extractor (where multiple jobs are combined into one file)
 		- Use /Mage at the command line

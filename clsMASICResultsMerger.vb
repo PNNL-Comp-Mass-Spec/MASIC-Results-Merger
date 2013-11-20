@@ -1,7 +1,8 @@
 Option Strict On
+Imports System.IO
 
 ' This class merges the contents of a tab-delimited peptide hit results file
-' (e.g. from Sequest, XTandem, or Inspect) with the corresponding MASIC results files, 
+' (e.g. from Sequest, XTandem, or MSGF+) with the corresponding MASIC results files, 
 ' appending the relevant MASIC stats for each peptide hit result
 '
 ' -------------------------------------------------------------------------------
@@ -29,7 +30,7 @@ Public Class clsMASICResultsMerger
 	Inherits clsProcessFilesBaseClass
 
 	Public Sub New()
-		MyBase.mFileDate = "January 30, 2013"
+		MyBase.mFileDate = "November 20, 2013"
 		InitializeLocalVariables()
 	End Sub
 
@@ -130,7 +131,7 @@ Public Class clsMASICResultsMerger
 		Public CollisionMode As String			' Comes from _ReporterIons.txt file (Nothing if the file doesn't exist)
 		Public ReporterIonData As String		' Comes from _ReporterIons.txt file (Nothing if the file doesn't exist)
 
-		Public Function CompareTo(other As udtScanStatsType) As Integer Implements System.IComparable(Of udtScanStatsType).CompareTo
+		Public Function CompareTo(other As udtScanStatsType) As Integer Implements IComparable(Of udtScanStatsType).CompareTo
 			If Me.ScanNumber < other.ScanNumber Then
 				Return -1
 			ElseIf Me.ScanNumber > other.ScanNumber Then
@@ -152,7 +153,7 @@ Public Class clsMASICResultsMerger
 		Public ParentIonMZ As String
 		Public StatMomentsArea As String
 
-		Public Function CompareTo(other As udtSICStatsType) As Integer Implements System.IComparable(Of udtSICStatsType).CompareTo
+		Public Function CompareTo(other As udtSICStatsType) As Integer Implements IComparable(Of udtSICStatsType).CompareTo
 			If Me.FragScanNumber < other.FragScanNumber Then
 				Return -1
 			ElseIf Me.FragScanNumber > other.FragScanNumber Then
@@ -242,31 +243,31 @@ Public Class clsMASICResultsMerger
 
 		Try
 			Console.WriteLine()
-			MyBase.mProgressStepDescription = "Looking for MASIC data files that correspond to " & System.IO.Path.GetFileName(strInputFilePath)
+			MyBase.mProgressStepDescription = "Looking for MASIC data files that correspond to " & Path.GetFileName(strInputFilePath)
 			ShowMessage(MyBase.mProgressStepDescription)
 
 			' Parse out the dataset name and parent folder from strInputFilePath
-			strDatasetName = System.IO.Path.GetFileNameWithoutExtension(strInputFilePath)
+			strDatasetName = Path.GetFileNameWithoutExtension(strInputFilePath)
 
 			' Use a Do loop to try various possible dataset names
 			Do
-				strCandidateFilePath = System.IO.Path.Combine(strMASICResultsFolder, strDatasetName & SIC_STATS_FILE_EXTENSION)
+				strCandidateFilePath = Path.Combine(strMASICResultsFolder, strDatasetName & SIC_STATS_FILE_EXTENSION)
 
-				If System.IO.File.Exists(strCandidateFilePath) Then
+				If File.Exists(strCandidateFilePath) Then
 					' SICStats file was found
 					' Update udtMASICFileNames, then look for the other files
 
 					udtMASICFileNames.DatasetName = strDatasetName
-					udtMASICFileNames.SICStatsFileName = System.IO.Path.GetFileName(strCandidateFilePath)
+					udtMASICFileNames.SICStatsFileName = Path.GetFileName(strCandidateFilePath)
 
-					strCandidateFilePath = System.IO.Path.Combine(strMASICResultsFolder, strDatasetName & SCAN_STATS_FILE_EXTENSION)
-					If System.IO.File.Exists(strCandidateFilePath) Then
-						udtMASICFileNames.ScanStatsFileName = System.IO.Path.GetFileName(strCandidateFilePath)
+					strCandidateFilePath = Path.Combine(strMASICResultsFolder, strDatasetName & SCAN_STATS_FILE_EXTENSION)
+					If File.Exists(strCandidateFilePath) Then
+						udtMASICFileNames.ScanStatsFileName = Path.GetFileName(strCandidateFilePath)
 					End If
 
-					strCandidateFilePath = System.IO.Path.Combine(strMASICResultsFolder, strDatasetName & REPORTER_IONS_FILE_EXTENSION)
-					If System.IO.File.Exists(strCandidateFilePath) Then
-						udtMASICFileNames.ReporterIonsFileName = System.IO.Path.GetFileName(strCandidateFilePath)
+					strCandidateFilePath = Path.Combine(strMASICResultsFolder, strDatasetName & REPORTER_IONS_FILE_EXTENSION)
+					If File.Exists(strCandidateFilePath) Then
+						udtMASICFileNames.ReporterIonsFileName = Path.GetFileName(strCandidateFilePath)
 					End If
 
 					blnSuccess = True
@@ -293,9 +294,9 @@ Public Class clsMASICResultsMerger
 		Return blnSuccess
 	End Function
 
-	Protected Function GetAdditionalMASICHeaders() As Generic.List(Of String)
+	Protected Function GetAdditionalMASICHeaders() As List(Of String)
 
-		Dim lstAddonColumns As Generic.List(Of String) = New Generic.List(Of String)
+		Dim lstAddonColumns = New List(Of String)
 
 		' Append the ScanStats columns
 		lstAddonColumns.Add("ElutionTime")
@@ -317,7 +318,7 @@ Public Class clsMASICResultsMerger
 		Return lstAddonColumns
 	End Function
 
-	Protected Function FlattenList(ByVal lstData As Generic.List(Of String)) As String
+	Protected Function FlattenList(ByVal lstData As List(Of String)) As String
 
 		Dim sbFlattened As Text.StringBuilder = New Text.StringBuilder
 
@@ -412,10 +413,10 @@ Public Class clsMASICResultsMerger
 				Return True
 			End If
 
-			If Not System.IO.File.Exists(strParameterFilePath) Then
+			If Not File.Exists(strParameterFilePath) Then
 				' See if strParameterFilePath points to a file in the same directory as the application
-				strParameterFilePath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location), System.IO.Path.GetFileName(strParameterFilePath))
-				If Not System.IO.File.Exists(strParameterFilePath) Then
+				strParameterFilePath = Path.Combine(Path.GetDirectoryName(Reflection.Assembly.GetExecutingAssembly().Location), Path.GetFileName(strParameterFilePath))
+				If Not File.Exists(strParameterFilePath) Then
 					MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.ParameterFileNotFound)
 					Return False
 				End If
@@ -443,12 +444,12 @@ Public Class clsMASICResultsMerger
 
 	Protected Function MergePeptideHitAndMASICFiles(ByVal strInputFilePath As String, _
 	  ByVal strOutputFolderPath As String, _
-	  ByVal dctScanStats As Generic.Dictionary(Of Integer, udtScanStatsType),
-	  ByVal dctSICStats As Generic.Dictionary(Of Integer, udtSICStatsType),
+	  ByVal dctScanStats As Dictionary(Of Integer, udtScanStatsType),
+	  ByVal dctSICStats As Dictionary(Of Integer, udtSICStatsType),
 	  ByVal strReporterIonHeaders As String) As Boolean
 
 
-		Dim swOutfile() As System.IO.StreamWriter
+		Dim swOutfile() As StreamWriter
 		Dim intLinesWritten() As Integer
 
 		Dim intOutputFileCount As Integer
@@ -460,7 +461,7 @@ Public Class clsMASICResultsMerger
 
 		Dim strHeaderLine As String
 		Dim strAddonColumns As String
-		Dim strCollisionModeCurrentScan As String = String.Empty
+		Dim strCollisionModeCurrentScan As String
 
 		Dim strBlankAdditionalColumns As String = String.Empty
 		Dim strBlankAdditionalSICColumns As String = String.Empty
@@ -473,10 +474,10 @@ Public Class clsMASICResultsMerger
 		Dim intLinesRead As Integer
 		Dim intScanNumber As Integer
 
-		Dim dctCollisionModeFileMap As Generic.Dictionary(Of String, Integer)
+		Dim dctCollisionModeFileMap As Dictionary(Of String, Integer)
 
 		Dim blnWriteReporterIonStats As Boolean = False
-		Dim blnSuccess As Boolean = False
+		Dim blnSuccess As Boolean
 
 		Try
 
@@ -487,7 +488,7 @@ Public Class clsMASICResultsMerger
 				strOutputFolderPath = String.Empty
 			End If
 
-			dctCollisionModeFileMap = New Generic.Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
+			dctCollisionModeFileMap = New Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
 
 			If mSeparateByCollisionMode Then
 				' Construct a list of the different collision modes in dctScanStats
@@ -505,18 +506,18 @@ Public Class clsMASICResultsMerger
 				ReDim strOutputFilePaths(intOutputFileCount - 1)
 
 				If dctCollisionModeFileMap.Count = 0 Then
-					strOutputFilePaths(intIndex) = System.IO.Path.Combine(strOutputFolderPath, System.IO.Path.GetFileNameWithoutExtension(strInputFilePath) & "_na" & RESULTS_SUFFIX)
+					strOutputFilePaths(intIndex) = Path.Combine(strOutputFolderPath, Path.GetFileNameWithoutExtension(strInputFilePath) & "_na" & RESULTS_SUFFIX)
 				Else
 					For Each oItem In dctCollisionModeFileMap
 						Dim strCollisionMode As String = oItem.Key
 						If String.IsNullOrWhiteSpace(strCollisionMode) Then strCollisionMode = "na"
-						strOutputFilePaths(oItem.Value) = System.IO.Path.Combine(strOutputFolderPath, System.IO.Path.GetFileNameWithoutExtension(strInputFilePath) & "_" & strCollisionMode & RESULTS_SUFFIX)
+						strOutputFilePaths(oItem.Value) = Path.Combine(strOutputFolderPath, Path.GetFileNameWithoutExtension(strInputFilePath) & "_" & strCollisionMode & RESULTS_SUFFIX)
 					Next
 				End If
 			Else
 				intOutputFileCount = 1
 				ReDim strOutputFilePaths(0)
-				strOutputFilePaths(0) = System.IO.Path.Combine(strOutputFolderPath, System.IO.Path.GetFileNameWithoutExtension(strInputFilePath) & RESULTS_SUFFIX)
+				strOutputFilePaths(0) = Path.Combine(strOutputFolderPath, Path.GetFileNameWithoutExtension(strInputFilePath) & RESULTS_SUFFIX)
 			End If
 
 			ReDim swOutfile(intOutputFileCount - 1)
@@ -524,7 +525,7 @@ Public Class clsMASICResultsMerger
 
 			' Open the output file(s)
 			For intIndex = 0 To intOutputFileCount - 1
-				swOutfile(intIndex) = New System.IO.StreamWriter(New System.IO.FileStream(strOutputFilePaths(intIndex), IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+				swOutfile(intIndex) = New StreamWriter(New FileStream(strOutputFilePaths(intIndex), FileMode.Create, FileAccess.Write, FileShare.Read))
 			Next
 
 		Catch ex As Exception
@@ -534,7 +535,7 @@ Public Class clsMASICResultsMerger
 
 
 		Try
-			MyBase.mProgressStepDescription = "Parsing " & System.IO.Path.GetFileName(strInputFilePath) & " and writing " & System.IO.Path.GetFileName(strOutputFilePaths(0))
+			MyBase.mProgressStepDescription = "Parsing " & Path.GetFileName(strInputFilePath) & " and writing " & Path.GetFileName(strOutputFilePaths(0))
 			ShowMessage(MyBase.mProgressStepDescription)
 
 			If mScanNumberColumn < 1 Then
@@ -544,7 +545,7 @@ Public Class clsMASICResultsMerger
 
 
 			' Read from srInFile and write out to the file(s) in swOutFile
-			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strInputFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInFile As StreamReader = New StreamReader(New FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				intLinesRead = 0
 				Do While srInFile.Peek > -1
@@ -577,7 +578,7 @@ Public Class clsMASICResultsMerger
 								ReDim strSplitLine(-1)
 							End If
 
-							Dim lstAdditionalHeaders As Generic.List(Of String)
+							Dim lstAdditionalHeaders As List(Of String)
 							lstAdditionalHeaders = GetAdditionalMASICHeaders()
 
 							' Populate strBlankAdditionalColumns with tab characters based on the number of items in lstAdditionalHeaders
@@ -714,12 +715,12 @@ Public Class clsMASICResultsMerger
 
 				For intIndex = 0 To intOutputFileCount - 1
 					' Wait 250 msec before continuing
-					System.Threading.Thread.Sleep(250)
+					Threading.Thread.Sleep(250)
 
 					If intLinesWritten(intIndex) = 0 Then
 						Try
-							ShowMessage("Deleting empty output file: " & ControlChars.NewLine & " --> " & System.IO.Path.GetFileName(strOutputFilePaths(intIndex)))
-							System.IO.File.Delete(strOutputFilePaths(intIndex))
+							ShowMessage("Deleting empty output file: " & ControlChars.NewLine & " --> " & Path.GetFileName(strOutputFilePaths(intIndex)))
+							File.Delete(strOutputFilePaths(intIndex))
 						Catch ex As Exception
 							' Ignore errors here
 						End Try
@@ -770,8 +771,8 @@ Public Class clsMASICResultsMerger
 			Return False
 		End If
 
-		Dim fiInputFile As System.IO.FileInfo
-		fiInputFile = New System.IO.FileInfo(strInputFilePath)
+		Dim fiInputFile As FileInfo
+		fiInputFile = New FileInfo(strInputFilePath)
 
 		If String.IsNullOrWhiteSpace(mMASICResultsFolderPath) Then
 			strMASICResultsFolder = fiInputFile.DirectoryName
@@ -788,17 +789,17 @@ Public Class clsMASICResultsMerger
 
 	End Function
 
-	Protected Function ProcessMageExtractorFile(ByVal fiInputFile As System.IO.FileInfo, ByVal strMASICResultsFolder As String) As Boolean
+	Protected Function ProcessMageExtractorFile(ByVal fiInputFile As FileInfo, ByVal strMASICResultsFolder As String) As Boolean
 
-		Dim udtMASICFileNames As udtMASICFileNamesType = New udtMASICFileNamesType
+		Dim udtMASICFileNames = New udtMASICFileNamesType
 
-		Dim dctScanStats As Generic.Dictionary(Of Integer, udtScanStatsType) = New Generic.Dictionary(Of Integer, udtScanStatsType)
-		Dim dctSICStats As Generic.Dictionary(Of Integer, udtSICStatsType) = New Generic.Dictionary(Of Integer, udtSICStatsType)
+		Dim dctScanStats = New Dictionary(Of Integer, udtScanStatsType)
+		Dim dctSICStats = New Dictionary(Of Integer, udtSICStatsType)
 
-		Dim fiMetadataFile As IO.FileInfo
+		Dim fiMetadataFile As FileInfo
 		Dim strMetadataFile As String
 
-		Dim lstColumns As Generic.List(Of String)
+		Dim lstColumns As List(Of String)
 		Dim intJobColumnIndex As Integer = -1
 
 		Dim strHeaderLine As String = String.Empty
@@ -818,15 +819,15 @@ Public Class clsMASICResultsMerger
 		Try
 
 			' Read the Mage Metadata file
-			strMetadataFile = System.IO.Path.Combine(fiInputFile.DirectoryName, IO.Path.GetFileNameWithoutExtension(fiInputFile.Name) & "_metadata.txt")
-			fiMetadataFile = New IO.FileInfo(strMetadataFile)
+			strMetadataFile = Path.Combine(fiInputFile.DirectoryName, Path.GetFileNameWithoutExtension(fiInputFile.Name) & "_metadata.txt")
+			fiMetadataFile = New FileInfo(strMetadataFile)
 			If Not fiMetadataFile.Exists Then
 				ShowErrorMessage("Error: Mage Metadata File not found: " & fiMetadataFile.FullName)
 				SetLocalErrorCode(eResultsProcessorErrorCodes.MissingMageFiles)
 				Return False
 			End If
 
-			Dim dctJobToDatasetMap As Generic.Dictionary(Of Integer, String)
+			Dim dctJobToDatasetMap As Dictionary(Of Integer, String)
 			dctJobToDatasetMap = ReadMageMetadataFile(fiMetadataFile.FullName)
 			If dctJobToDatasetMap Is Nothing OrElse dctJobToDatasetMap.Count = 0 Then
 				ShowErrorMessage("Error: ReadMageMetadataFile returned an empty job mapping")
@@ -834,7 +835,7 @@ Public Class clsMASICResultsMerger
 			End If
 
 			' Open the Mage Extractor data file so that we can validate and cache the header row
-			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(fiInputFile.FullName, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInFile As StreamReader = New StreamReader(New FileStream(fiInputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 				strHeaderLine = srInFile.ReadLine()
 				lstColumns = strHeaderLine.Split(ControlChars.Tab).ToList()
 				intJobColumnIndex = lstColumns.IndexOf("Job")
@@ -845,7 +846,7 @@ Public Class clsMASICResultsMerger
 			End Using
 
 
-			Dim lstAdditionalHeaders As Generic.List(Of String)
+			Dim lstAdditionalHeaders As List(Of String)
 			lstAdditionalHeaders = GetAdditionalMASICHeaders()
 
 			' Populate strBlankAdditionalColumns with tab characters based on the number of items in lstAdditionalHeaders
@@ -854,11 +855,11 @@ Public Class clsMASICResultsMerger
 			strBlankAdditionalSICColumns = New String(ControlChars.Tab, SIC_STAT_COLUMN_COUNT_TO_ADD)
 
 			Dim strOutputFilePath As String
-			strOutputFilePath = IO.Path.GetFileNameWithoutExtension(fiInputFile.Name) & RESULTS_SUFFIX
-			strOutputFilePath = System.IO.Path.Combine(mOutputFolderPath, strOutputFilePath)
+			strOutputFilePath = Path.GetFileNameWithoutExtension(fiInputFile.Name) & RESULTS_SUFFIX
+			strOutputFilePath = Path.Combine(mOutputFolderPath, strOutputFilePath)
 
 			' Initialize the output file
-			Using swOutFile As System.IO.StreamWriter = New System.IO.StreamWriter(New System.IO.FileStream(strOutputFilePath, IO.FileMode.Create, IO.FileAccess.Write, IO.FileShare.Read))
+			Using swOutFile As StreamWriter = New StreamWriter(New FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 
 				' Open the Mage Extractor data file and read the data for each job
@@ -921,8 +922,8 @@ Public Class clsMASICResultsMerger
 							If blnSuccess Then
 
 								' Read and cache the MASIC data 
-								dctScanStats = New Generic.Dictionary(Of Integer, udtScanStatsType)
-								dctSICStats = New Generic.Dictionary(Of Integer, udtSICStatsType)
+								dctScanStats = New Dictionary(Of Integer, udtScanStatsType)
+								dctSICStats = New Dictionary(Of Integer, udtSICStatsType)
 								strReporterIonHeaders = String.Empty
 
 								blnMASICDataLoaded = ReadMASICData(strMASICResultsFolder, udtMASICFileNames, dctScanStats, dctSICStats, strReporterIonHeaders)
@@ -1050,11 +1051,11 @@ Public Class clsMASICResultsMerger
 
 	End Function
 
-	Protected Function ProcessSingleJobFile(ByVal fiInputFile As System.IO.FileInfo, ByVal strMASICResultsFolder As String) As Boolean
+	Protected Function ProcessSingleJobFile(ByVal fiInputFile As FileInfo, ByVal strMASICResultsFolder As String) As Boolean
 		Dim udtMASICFileNames As udtMASICFileNamesType = New udtMASICFileNamesType
 
-		Dim dctScanStats As Generic.Dictionary(Of Integer, udtScanStatsType)
-		Dim dctSICStats As Generic.Dictionary(Of Integer, udtSICStatsType)
+		Dim dctScanStats As Dictionary(Of Integer, udtScanStatsType)
+		Dim dctSICStats As Dictionary(Of Integer, udtSICStatsType)
 
 
 		Dim strReporterIonHeaders As String = String.Empty
@@ -1084,8 +1085,8 @@ Public Class clsMASICResultsMerger
 			End If
 
 			' Read and cache the MASIC data 
-			dctScanStats = New Generic.Dictionary(Of Integer, udtScanStatsType)
-			dctSICStats = New Generic.Dictionary(Of Integer, udtSICStatsType)
+			dctScanStats = New Dictionary(Of Integer, udtScanStatsType)
+			dctSICStats = New Dictionary(Of Integer, udtSICStatsType)
 
 			blnSuccess = ReadMASICData(strMASICResultsFolder, udtMASICFileNames, dctScanStats, dctSICStats, strReporterIonHeaders)
 
@@ -1113,11 +1114,11 @@ Public Class clsMASICResultsMerger
 
 	Protected Function ReadMASICData(ByVal strSourceFolder As String,
 	  ByVal udtMASICFileNames As udtMASICFileNamesType,
-	  ByRef dctScanStats As Generic.Dictionary(Of Integer, udtScanStatsType),
-	  ByRef dctSICStats As Generic.Dictionary(Of Integer, udtSICStatsType),
+	  ByRef dctScanStats As Dictionary(Of Integer, udtScanStatsType),
+	  ByRef dctSICStats As Dictionary(Of Integer, udtSICStatsType),
 	  ByRef strReporterIonHeaders As String) As Boolean
 
-		Dim blnSuccess As Boolean = False
+		Dim blnSuccess As Boolean
 
 		Try
 
@@ -1142,7 +1143,7 @@ Public Class clsMASICResultsMerger
 
 	Protected Function ReadScanStatsFile(ByVal strSourceFolder As String, _
 	 ByVal strScanStatsFileName As String, _
-	 ByRef dctScanStats As Generic.Dictionary(Of Integer, udtScanStatsType)) As Boolean
+	 ByRef dctScanStats As Dictionary(Of Integer, udtScanStatsType)) As Boolean
 
 		Dim strLineIn As String
 		Dim strSplitLine() As String
@@ -1155,7 +1156,7 @@ Public Class clsMASICResultsMerger
 		Try
 			' Initialize dctScanStats
 			If dctScanStats Is Nothing Then
-				dctScanStats = New Generic.Dictionary(Of Integer, udtScanStatsType)
+				dctScanStats = New Dictionary(Of Integer, udtScanStatsType)
 			Else
 				dctScanStats.Clear()
 			End If
@@ -1163,7 +1164,7 @@ Public Class clsMASICResultsMerger
 			MyBase.mProgressStepDescription = "  Reading the MASIC Scan Stats file: " & strScanStatsFileName
 			ShowMessage(MyBase.mProgressStepDescription)
 
-			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(System.IO.Path.Combine(strSourceFolder, strScanStatsFileName), IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInFile As StreamReader = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strScanStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				intLinesRead = 0
 				Do While srInFile.Peek > -1
@@ -1210,7 +1211,7 @@ Public Class clsMASICResultsMerger
 
 	Protected Function ReadMageMetadataFile(ByVal strMetadataFilePath As String) As Generic.Dictionary(Of Integer, String)
 
-		Dim dctJobToDatasetMap As Generic.Dictionary(Of Integer, String) = New Generic.Dictionary(Of Integer, String)
+		Dim dctJobToDatasetMap = New Dictionary(Of Integer, String)
 		Dim strLineIn As String
 		Dim lstData As Generic.List(Of String)
 		Dim blnHeadersParsed As Boolean
@@ -1219,7 +1220,7 @@ Public Class clsMASICResultsMerger
 		Dim intDatasetIndex As Integer = -1
 
 		Try
-			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(strMetadataFilePath, IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInFile As StreamReader = New StreamReader(New FileStream(strMetadataFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				Do While srInFile.Peek > -1
 					strLineIn = srInFile.ReadLine()
@@ -1277,12 +1278,12 @@ Public Class clsMASICResultsMerger
 		Dim intLinesRead As Integer
 		Dim intFragScanNumber As Integer
 
-		Dim blnSuccess As Boolean = False
+		Dim blnSuccess As Boolean
 
 		Try
 			' Initialize dctSICStats
 			If dctSICStats Is Nothing Then
-				dctSICStats = New Generic.Dictionary(Of Integer, udtSICStatsType)
+				dctSICStats = New Dictionary(Of Integer, udtSICStatsType)
 			Else
 				dctSICStats.Clear()
 			End If
@@ -1290,7 +1291,7 @@ Public Class clsMASICResultsMerger
 			MyBase.mProgressStepDescription = "  Reading the MASIC SIC Stats file: " & strSICStatsFileName
 			ShowMessage(MyBase.mProgressStepDescription)
 
-			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(System.IO.Path.Combine(strSourceFolder, strSICStatsFileName), IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInFile As StreamReader = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strSICStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				intLinesRead = 0
 				Do While srInFile.Peek > -1
@@ -1337,7 +1338,7 @@ Public Class clsMASICResultsMerger
 
 	Protected Function ReadReporterIonStatsFile(ByVal strSourceFolder As String, _
 	  ByVal strReporterIonStatsFileName As String, _
-	  ByVal dctScanStats As Generic.Dictionary(Of Integer, udtScanStatsType), _
+	  ByVal dctScanStats As Dictionary(Of Integer, udtScanStatsType), _
 	  ByRef strReporterIonHeaders As String) As Boolean
 
 		Dim strLineIn As String
@@ -1348,7 +1349,7 @@ Public Class clsMASICResultsMerger
 
 		Dim intWarningCount As Integer = 0
 
-		Dim blnSuccess As Boolean = False
+		Dim blnSuccess As Boolean
 
 		Try
 			strReporterIonHeaders = String.Empty
@@ -1356,7 +1357,7 @@ Public Class clsMASICResultsMerger
 			MyBase.mProgressStepDescription = "  Reading the MASIC Reporter Ion Stats file: " & strReporterIonStatsFileName
 			ShowMessage(MyBase.mProgressStepDescription)
 
-			Using srInFile As System.IO.StreamReader = New System.IO.StreamReader(New System.IO.FileStream(System.IO.Path.Combine(strSourceFolder, strReporterIonStatsFileName), IO.FileMode.Open, IO.FileAccess.Read, IO.FileShare.Read))
+			Using srInFile As StreamReader = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strReporterIonStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
 				intLinesRead = 0
 				Do While srInFile.Peek > -1

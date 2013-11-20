@@ -1,7 +1,7 @@
 Option Strict On
 
 ' This program merges the contents of a tab-delimited peptide hit results file
-' (e.g. from Sequest, XTandem, or Inspect) with the corresponding MASIC results files, 
+' (e.g. from Sequest, XTandem, or MSGF+) with the corresponding MASIC results files, 
 ' appending the relevant MASIC stats for each peptide hit result
 '
 ' -------------------------------------------------------------------------------
@@ -26,12 +26,12 @@ Option Strict On
 ' this computer software.
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "February 11, 2013"
+	Public Const PROGRAM_DATE As String = "November 20, 2013"
 
 	Private mInputFilePath As String
 	Private mMageResults As Boolean
 
-    Private mMASICResultsFolderPath As String                   ' Optional
+	Private mMASICResultsFolderPath As String					' Optional
 	Private mOutputFolderPath As String				' Optional
 	Private mParameterFilePath As String						' Optional
 
@@ -48,7 +48,7 @@ Module modMain
 	Private mSeparateByCollisionMode As Boolean
 
 	Private WithEvents mMASICResultsMerger As clsMASICResultsMerger
-	Private mLastProgressReportTime As System.DateTime
+	Private mLastProgressReportTime As DateTime
 	Private mLastProgressReportValue As Integer
 
 	Private Sub DisplayProgressPercent(ByVal intPercentComplete As Integer, ByVal blnAddCarriageReturn As Boolean)
@@ -69,7 +69,6 @@ Module modMain
 		Dim objParseCommandLine As New clsParseCommandLine
 		Dim blnProceed As Boolean
 
-		intReturnCode = 0
 		mInputFilePath = String.Empty
 		mMageResults = False
 
@@ -134,7 +133,7 @@ Module modMain
 			End If
 
 		Catch ex As Exception
-			ShowErrorMessage("Error occurred in modMain->Main: " & System.Environment.NewLine & ex.Message)
+			ShowErrorMessage("Error occurred in modMain->Main: " & Environment.NewLine & ex.Message)
 			intReturnCode = -1
 		End Try
 
@@ -143,7 +142,7 @@ Module modMain
 	End Function
 
 	Private Function GetAppVersion() As String
-		Return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & PROGRAM_DATE & ")"
+		Return Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & PROGRAM_DATE & ")"
 	End Function
 
 	Private Function SetOptionsUsingCommandLineParameters(ByVal objParseCommandLine As clsParseCommandLine) As Boolean
@@ -197,7 +196,7 @@ Module modMain
 			End If
 
 		Catch ex As Exception
-			ShowErrorMessage("Error parsing the command line parameters: " & System.Environment.NewLine & ex.Message)
+			ShowErrorMessage("Error parsing the command line parameters: " & Environment.NewLine & ex.Message)
 		End Try
 
 		Return False
@@ -205,7 +204,7 @@ Module modMain
 	End Function
 
 	Private Sub ShowErrorMessage(ByVal strMessage As String)
-		Dim strSeparator As String = "------------------------------------------------------------------------------"
+		Const strSeparator As String = "------------------------------------------------------------------------------"
 
 		Console.WriteLine()
 		Console.WriteLine(strSeparator)
@@ -216,8 +215,8 @@ Module modMain
 		WriteToErrorStream(strMessage)
 	End Sub
 
-	Private Sub ShowErrorMessage(ByVal strTitle As String, ByVal items As List(Of String))
-		Dim strSeparator As String = "------------------------------------------------------------------------------"
+	Private Sub ShowErrorMessage(ByVal strTitle As String, ByVal items As IEnumerable(Of String))
+		Const strSeparator As String = "------------------------------------------------------------------------------"
 		Dim strMessage As String
 
 		Console.WriteLine()
@@ -239,29 +238,29 @@ Module modMain
 
 		Try
 
-			Console.WriteLine("This program merges the contents of a tab-delimited peptide hit results file (e.g. from Sequest, XTandem, or Inspect) with the corresponding MASIC results files, appending the relevant MASIC stats for each peptide hit result.")
+			Console.WriteLine("This program merges the contents of a tab-delimited peptide hit results file (e.g. from Sequest, XTandem, or MSGF+) with the corresponding MASIC results files, appending the relevant MASIC stats for each peptide hit result.")
 			Console.WriteLine()
-			Console.WriteLine("Program syntax:" & ControlChars.NewLine & System.IO.Path.GetFileName(System.Reflection.Assembly.GetExecutingAssembly().Location) & _
-							  " /I:InputFilePath_fht.txt [/M:MASICResultsFolderPath] [/O:OutputFolderPath]")
+			Console.WriteLine("Program syntax:" & ControlChars.NewLine & IO.Path.GetFileName(Reflection.Assembly.GetExecutingAssembly().Location) & _
+			  " /I:InputFilePath_fht.txt [/M:MASICResultsFolderPath] [/O:OutputFolderPath]")
 			Console.WriteLine(" [/P:ParameterFilePath]")
 			Console.WriteLine(" [/N:ScanNumberColumn] [/C] [/Mage]")
 			Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/Q]")
 			Console.WriteLine()
-			Console.WriteLine("The input file should be a tab-delimited file with scan number in the second column (e.g. Sequest Synopsis or First-Hits file (_syn.txt or _fht.txt), XTandem _xt.txt file, or Inspect syn/fht file (_inspect_fht.txt or _inspect_syn.txt)." & _
-							  "If the MASIC result files are not in the same folder as the input file, then use /M to define the path to the correct folder." & _
-							  "The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file." & _
-							  "The parameter file path is optional.  If included, it should point to a valid XML parameter file.")
+			Console.WriteLine("The input file should be a tab-delimited file with scan number in the second column (e.g. Sequest Synopsis or First-Hits file (_syn.txt or _fht.txt), XTandem _xt.txt file, MSGF+ syn/fht file (_msgfdb_syn.txt or _msgfdb_fht.txt), or Inspect syn/fht file (_inspect_syn.txt or _inspect_fht.txt). " & _
+			  "If the MASIC result files are not in the same folder as the input file, then use /M to define the path to the correct folder. " & _
+			  "The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file. " & _
+			  "The parameter file path is optional.  If included, it should point to a valid XML parameter file.")
 
 			Console.WriteLine()
 			Console.WriteLine("Use /N to change the column number that contains scan number in the input file.  The default is 2 (meaning /N:2)." & _
-							  "When reading data with _ReporterIons.txt files, you can use /C to specify that a separate output file be created for each collision mode type in the input file (typically pqd, cid, and etd).")
+			  "When reading data with _ReporterIons.txt files, you can use /C to specify that a separate output file be created for each collision mode type in the input file (typically pqd, cid, and etd).")
 			Console.WriteLine()
 			Console.WriteLine("Use /Mage to specify that the input file is a results from from Mage Extractor.  This file will contain results from several analysis jobs; the first column in this file must be Job and the remaining columns must be the standard Synopsis or First-Hits columns supported by PHRPReader.  In addition, the input folder must have a column named InputFile_metadata.txt (this file was auto-created by Mage Extractor).")
 			Console.WriteLine()
 			Console.WriteLine("Use /S to process all valid files in the input folder and subfolders. Include a number after /S (like /S:2) to limit the level of subfolders to examine." & _
-							  "When using /S, you can redirect the output of the results using /A." & _
-							  "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined)." & _
-							  "The optional /Q switch will suppress all error messages.")
+			  "When using /S, you can redirect the output of the results using /A." & _
+			  "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined)." & _
+			  "The optional /Q switch will suppress all error messages.")
 			Console.WriteLine()
 
 			Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2008")
@@ -272,7 +271,7 @@ Module modMain
 			Console.WriteLine("Website: http://panomics.pnnl.gov/ or http://omics.pnl.gov")
 			Console.WriteLine()
 			' Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
-			System.Threading.Thread.Sleep(750)
+			Threading.Thread.Sleep(750)
 
 		Catch ex As Exception
 			ShowErrorMessage("Error displaying the program syntax: " & ex.Message)
@@ -282,7 +281,7 @@ Module modMain
 
 	Private Sub WriteToErrorStream(strErrorMessage As String)
 		Try
-			Using swErrorStream As System.IO.StreamWriter = New System.IO.StreamWriter(Console.OpenStandardError())
+			Using swErrorStream As IO.StreamWriter = New IO.StreamWriter(Console.OpenStandardError())
 				swErrorStream.WriteLine(strErrorMessage)
 			End Using
 		Catch ex As Exception
@@ -320,8 +319,8 @@ Module modMain
 		End If
 	End Sub
 
-    Private Sub mMASICResultsMerger_ProgressReset() Handles mMASICResultsMerger.ProgressReset
-        mLastProgressReportTime = DateTime.UtcNow
-        mLastProgressReportValue = 0
-    End Sub
+	Private Sub mMASICResultsMerger_ProgressReset() Handles mMASICResultsMerger.ProgressReset
+		mLastProgressReportTime = DateTime.UtcNow
+		mLastProgressReportValue = 0
+	End Sub
 End Module
