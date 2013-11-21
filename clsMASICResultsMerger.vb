@@ -30,7 +30,7 @@ Public Class clsMASICResultsMerger
 	Inherits clsProcessFilesBaseClass
 
 	Public Sub New()
-		MyBase.mFileDate = "November 20, 2013"
+		MyBase.mFileDate = "November 21, 2013"
 		InitializeLocalVariables()
 	End Sub
 
@@ -106,6 +106,11 @@ Public Class clsMASICResultsMerger
 #End Region
 
 #Region "Structures"
+
+	Protected Structure udtDatasetInfoType
+		Public DatasetName As String
+		Public DatasetID As Integer
+	End Structure
 
 	Protected Structure udtMASICFileNamesType
 		Public DatasetName As String
@@ -233,21 +238,22 @@ Public Class clsMASICResultsMerger
 	End Property
 #End Region
 
-	Protected Function FindMASICFiles(ByVal strMASICResultsFolder As String, ByVal strInputFilePath As String, ByRef udtMASICFileNames As udtMASICFileNamesType) As Boolean
+	Protected Function FindMASICFiles(ByVal strMASICResultsFolder As String, ByVal udtDatasetInfo As udtDatasetInfoType, ByRef udtMASICFileNames As udtMASICFileNamesType) As Boolean
 
 		Dim blnSuccess As Boolean = False
 		Dim strDatasetName As String
+		Dim blnTriedDatasetID As Boolean = False
+
 		Dim strCandidateFilePath As String
 
 		Dim intCharIndex As Integer
 
 		Try
 			Console.WriteLine()
-			MyBase.mProgressStepDescription = "Looking for MASIC data files that correspond to " & Path.GetFileName(strInputFilePath)
+			MyBase.mProgressStepDescription = "Looking for MASIC data files that correspond to " & udtDatasetInfo.DatasetName
 			ShowMessage(MyBase.mProgressStepDescription)
 
-			' Parse out the dataset name and parent folder from strInputFilePath
-			strDatasetName = Path.GetFileNameWithoutExtension(strInputFilePath)
+			strDatasetName = String.Copy(udtDatasetInfo.DatasetName)
 
 			' Use a Do loop to try various possible dataset names
 			Do
@@ -279,8 +285,14 @@ Public Class clsMASICResultsMerger
 					If intCharIndex > 0 Then
 						strDatasetName = strDatasetName.Substring(0, intCharIndex)
 					Else
-						' No more underscores; we're unable to determine the dataset name
-						Exit Do
+						If Not blnTriedDatasetID AndAlso udtDatasetInfo.DatasetID > 0 Then
+							strDatasetName = udtDatasetInfo.DatasetID & "_" & udtDatasetInfo.DatasetName
+							blnTriedDatasetID = True
+						Else
+							' No more underscores; we're unable to determine the dataset name
+							Exit Do
+						End If
+						
 					End If
 				End If
 
@@ -827,7 +839,9 @@ Public Class clsMASICResultsMerger
 				Return False
 			End If
 
-			Dim dctJobToDatasetMap As Dictionary(Of Integer, String)
+			' Keys in this dictionary are the job, values are the DatasetID and DatasetName
+			Dim dctJobToDatasetMap As Dictionary(Of Integer, udtDatasetInfoType)
+
 			dctJobToDatasetMap = ReadMageMetadataFile(fiMetadataFile.FullName)
 			If dctJobToDatasetMap Is Nothing OrElse dctJobToDatasetMap.Count = 0 Then
 				ShowErrorMessage("Error: ReadMageMetadataFile returned an empty job mapping")
@@ -892,9 +906,9 @@ Public Class clsMASICResultsMerger
 						' New job; read and cache the MASIC data
 						blnMASICDataLoaded = False
 
-						Dim strDatasetName As String = String.Empty
+						Dim udtDatasetInfo As udtDatasetInfoType = New udtDatasetInfoType
 
-						If Not dctJobToDatasetMap.TryGetValue(intJob, strDatasetName) Then
+						If Not dctJobToDatasetMap.TryGetValue(intJob, udtDatasetInfo) Then
 							ShowErrorMessage("Error: Job " & intJob & " was not defined in the Metadata file; unable to determine the dataset")
 						Else
 
@@ -902,18 +916,18 @@ Public Class clsMASICResultsMerger
 							Dim blnSuccess As Boolean
 
 							udtMASICFileNames.Initialize()
-							blnSuccess = FindMASICFiles(strMASICResultsFolder, strDatasetName, udtMASICFileNames)
+							blnSuccess = FindMASICFiles(strMASICResultsFolder, udtDatasetInfo, udtMASICFileNames)
 
 							If Not blnSuccess Then
-								ShowMessage("  Error: Unable to find the MASIC data files for dataset " & strDatasetName & " in " & strMASICResultsFolder)
+								ShowMessage("  Error: Unable to find the MASIC data files for dataset " & udtDatasetInfo.DatasetName & " in " & strMASICResultsFolder)
 								ShowMessage("         Job " & intJob & " will not have MASIC results")
 							Else
 								If udtMASICFileNames.SICStatsFileName.Length = 0 Then
-									ShowMessage("  Error: the SIC stats file was not found for dataset " & strDatasetName & " in " & strMASICResultsFolder)
+									ShowMessage("  Error: the SIC stats file was not found for dataset " & udtDatasetInfo.DatasetName & " in " & strMASICResultsFolder)
 									ShowMessage("         Job " & intJob & " will not have MASIC results")
 									blnSuccess = False
 								ElseIf udtMASICFileNames.ScanStatsFileName.Length = 0 Then
-									ShowMessage("  Error: the Scan stats file was not found for dataset " & strDatasetName & " in " & strMASICResultsFolder)
+									ShowMessage("  Error: the Scan stats file was not found for dataset " & udtDatasetInfo.DatasetName & " in " & strMASICResultsFolder)
 									ShowMessage("         Job " & intJob & " will not have MASIC results")
 									blnSuccess = False
 								End If
@@ -1063,10 +1077,16 @@ Public Class clsMASICResultsMerger
 		Dim blnSuccess As Boolean
 
 		Try
+			Dim udtDatasetInfo As udtDatasetInfoType = New udtDatasetInfoType
+
+			' Note that FindMASICFiles will first try the full filename, and if it doesn't find a match, 
+			' it will start removing text from the end of the filename by looking for underscores
+			udtDatasetInfo.DatasetName = Path.GetFileNameWithoutExtension(fiInputFile.FullName)
+			udtDatasetInfo.DatasetID = 0
 
 			' Look for the corresponding MASIC files in the input folder
 			udtMASICFileNames.Initialize()
-			blnSuccess = FindMASICFiles(strMASICResultsFolder, fiInputFile.FullName, udtMASICFileNames)
+			blnSuccess = FindMASICFiles(strMASICResultsFolder, udtDatasetInfo, udtMASICFileNames)
 
 			If Not blnSuccess Then
 				ShowErrorMessage("Error: Unable to find the MASIC data files in " & strMASICResultsFolder)
@@ -1161,7 +1181,7 @@ Public Class clsMASICResultsMerger
 				dctScanStats.Clear()
 			End If
 
-			MyBase.mProgressStepDescription = "  Reading the MASIC Scan Stats file: " & strScanStatsFileName
+			MyBase.mProgressStepDescription = "  Reading: " & strScanStatsFileName
 			ShowMessage(MyBase.mProgressStepDescription)
 
 			Using srInFile As StreamReader = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strScanStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -1209,15 +1229,16 @@ Public Class clsMASICResultsMerger
 
 	End Function
 
-	Protected Function ReadMageMetadataFile(ByVal strMetadataFilePath As String) As Generic.Dictionary(Of Integer, String)
+	Protected Function ReadMageMetadataFile(ByVal strMetadataFilePath As String) As Dictionary(Of Integer, udtDatasetInfoType)
 
-		Dim dctJobToDatasetMap = New Dictionary(Of Integer, String)
+		Dim dctJobToDatasetMap = New Dictionary(Of Integer, udtDatasetInfoType)
 		Dim strLineIn As String
-		Dim lstData As Generic.List(Of String)
+		Dim lstData As List(Of String)
 		Dim blnHeadersParsed As Boolean
 
 		Dim intJobIndex As Integer = -1
 		Dim intDatasetIndex As Integer = -1
+		Dim intDatasetIDIndex As Integer = -1
 
 		Try
 			Using srInFile As StreamReader = New StreamReader(New FileStream(strMetadataFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -1232,14 +1253,16 @@ Public Class clsMASICResultsMerger
 							' Look for the Job and Dataset columns
 							intJobIndex = lstData.IndexOf("Job")
 							intDatasetIndex = lstData.IndexOf("Dataset")
+							intDatasetIDIndex = lstData.IndexOf("Dataset_ID")
 
 							If intJobIndex < 0 Then
 								ShowErrorMessage("Job column not found in the metadata file: " & strMetadataFilePath)
 								Return Nothing
-							End If
-
-							If intDatasetIndex < 0 Then
+							ElseIf intDatasetIndex < 0 Then
 								ShowErrorMessage("Dataset column not found in the metadata file: " & strMetadataFilePath)
+								Return Nothing
+							ElseIf intDatasetIDIndex < 0 Then
+								ShowErrorMessage("Dataset_ID column not found in the metadata file: " & strMetadataFilePath)
 								Return Nothing
 							End If
 
@@ -1249,8 +1272,18 @@ Public Class clsMASICResultsMerger
 
 						If lstData.Count > intDatasetIndex Then
 							Dim intJobNumber As Integer
+							Dim intDatasetID As Integer
+
 							If Integer.TryParse(lstData(intJobIndex), intJobNumber) Then
-								dctJobToDatasetMap.Add(intJobNumber, lstData(intDatasetIndex))
+								If Integer.TryParse(lstData(intDatasetIDIndex), intDatasetID) Then
+									Dim udtDatasetInfo = New udtDatasetInfoType
+									udtDatasetInfo.DatasetID = intDatasetID
+									udtDatasetInfo.DatasetName = lstData(intDatasetIndex)
+
+									dctJobToDatasetMap.Add(intJobNumber, udtDatasetInfo)
+								Else
+									ShowMessage("Warning: Dataest_ID number not numeric in metadata file, line " & strLineIn)
+								End If
 							Else
 								ShowMessage("Warning: Job number not numeric in metadata file, line " & strLineIn)
 							End If
@@ -1270,7 +1303,7 @@ Public Class clsMASICResultsMerger
 
 	Protected Function ReadSICStatsFile(ByVal strSourceFolder As String, _
 	   ByVal strSICStatsFileName As String, _
-	   ByRef dctSICStats As Generic.Dictionary(Of Integer, udtSICStatsType)) As Boolean
+	   ByRef dctSICStats As Dictionary(Of Integer, udtSICStatsType)) As Boolean
 
 		Dim strLineIn As String
 		Dim strSplitLine() As String
@@ -1288,7 +1321,7 @@ Public Class clsMASICResultsMerger
 				dctSICStats.Clear()
 			End If
 
-			MyBase.mProgressStepDescription = "  Reading the MASIC SIC Stats file: " & strSICStatsFileName
+			MyBase.mProgressStepDescription = "  Reading: " & strSICStatsFileName
 			ShowMessage(MyBase.mProgressStepDescription)
 
 			Using srInFile As StreamReader = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strSICStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
@@ -1354,7 +1387,7 @@ Public Class clsMASICResultsMerger
 		Try
 			strReporterIonHeaders = String.Empty
 
-			MyBase.mProgressStepDescription = "  Reading the MASIC Reporter Ion Stats file: " & strReporterIonStatsFileName
+			MyBase.mProgressStepDescription = "  Reading: " & strReporterIonStatsFileName
 			ShowMessage(MyBase.mProgressStepDescription)
 
 			Using srInFile As StreamReader = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strReporterIonStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
