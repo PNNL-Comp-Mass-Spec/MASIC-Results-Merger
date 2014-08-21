@@ -26,10 +26,11 @@ Option Strict On
 ' this computer software.
 
 Module modMain
-	Public Const PROGRAM_DATE As String = "November 21, 2013"
+	Public Const PROGRAM_DATE As String = "August 20, 2014"
 
 	Private mInputFilePath As String
 	Private mMageResults As Boolean
+	Private mMergeWildcardResults As Boolean
 
 	Private mMASICResultsFolderPath As String					' Optional
 	Private mOutputFolderPath As String				' Optional
@@ -71,6 +72,7 @@ Module modMain
 
 		mInputFilePath = String.Empty
 		mMageResults = False
+		mMergeWildcardResults = False
 
 		mMASICResultsFolderPath = String.Empty
 		mOutputFolderPath = String.Empty
@@ -109,7 +111,7 @@ Module modMain
 					.ScanNumberColumn = mScanNumberColumn
 					.SeparateByCollisionMode = mSeparateByCollisionMode
 
-					.MageResults = mMageResults
+					.MageResults = mMageResults					
 				End With
 
 				If mRecurseFolders Then
@@ -127,6 +129,10 @@ Module modMain
 							Console.WriteLine("Error while processing: " & mMASICResultsMerger.GetErrorMessage())
 						End If
 					End If
+				End If
+
+				If mMergeWildcardResults AndAlso mMASICResultsMerger.ProcessedDatasets.Count > 0 Then
+					mMASICResultsMerger.MergeProcessedDatasets()
 				End If
 
 				DisplayProgressPercent(mLastProgressReportValue, True)
@@ -149,7 +155,7 @@ Module modMain
 		' Returns True if no problems; otherwise, returns false
 
 		Dim strValue As String = String.Empty
-		Dim lstValidParameters As List(Of String) = New List(Of String) From {"I", "M", "O", "P", "N", "C", "Mage", "S", "A", "R", "Q"}
+		Dim lstValidParameters As List(Of String) = New List(Of String) From {"I", "M", "O", "P", "N", "C", "Mage", "Append", "S", "A", "R", "Q"}
 		Dim intValue As Integer
 
 		Try
@@ -177,8 +183,10 @@ Module modMain
 						End If
 					End If
 
-					If .RetrieveValueForParameter("C", strValue) Then mSeparateByCollisionMode = True
-					If .RetrieveValueForParameter("Mage", strValue) Then mMageResults = True
+					If .IsParameterPresent("C") Then mSeparateByCollisionMode = True
+					If .IsParameterPresent("Mage") Then mMageResults = True
+
+					If .IsParameterPresent("Append") Then mMergeWildcardResults = True
 
 					If .RetrieveValueForParameter("S", strValue) Then
 						mRecurseFolders = True
@@ -241,9 +249,9 @@ Module modMain
 			Console.WriteLine("This program merges the contents of a tab-delimited peptide hit results file (e.g. from Sequest, XTandem, or MSGF+) with the corresponding MASIC results files, appending the relevant MASIC stats for each peptide hit result.")
 			Console.WriteLine()
 			Console.WriteLine("Program syntax:" & ControlChars.NewLine & IO.Path.GetFileName(Reflection.Assembly.GetExecutingAssembly().Location) & _
-			  " /I:InputFilePath_fht.txt [/M:MASICResultsFolderPath] [/O:OutputFolderPath]")
+			  " InputFilePathSpec [/M:MASICResultsFolderPath] [/O:OutputFolderPath]")
 			Console.WriteLine(" [/P:ParameterFilePath]")
-			Console.WriteLine(" [/N:ScanNumberColumn] [/C] [/Mage]")
+			Console.WriteLine(" [/N:ScanNumberColumn] [/C] [/Mage] [/Append]")
 			Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/Q]")
 			Console.WriteLine()
 			Console.WriteLine("The input file should be a tab-delimited file with scan number in the second column (e.g. Sequest Synopsis or First-Hits file (_syn.txt or _fht.txt), XTandem _xt.txt file, MSGF+ syn/fht file (_msgfdb_syn.txt or _msgfdb_fht.txt), or Inspect syn/fht file (_inspect_syn.txt or _inspect_fht.txt). " & _
@@ -256,6 +264,9 @@ Module modMain
 			  "When reading data with _ReporterIons.txt files, you can use /C to specify that a separate output file be created for each collision mode type in the input file (typically pqd, cid, and etd).")
 			Console.WriteLine()
 			Console.WriteLine("Use /Mage to specify that the input file is a results from from Mage Extractor.  This file will contain results from several analysis jobs; the first column in this file must be Job and the remaining columns must be the standard Synopsis or First-Hits columns supported by PHRPReader.  In addition, the input folder must have a column named InputFile_metadata.txt (this file was auto-created by Mage Extractor).")
+			Console.WriteLine()
+			Console.WriteLine("Use /Append to merge results from multiple datasets together as a single file; this is only applicable when the InputFilePathSpec includes a * wildcard and multiple files are matched")
+			Console.WriteLine("The merged results file will have DatasetID values of 1, 2, 3, etc. along with a second file mapping DatasetID to Dataset Name")
 			Console.WriteLine()
 			Console.WriteLine("Use /S to process all valid files in the input folder and subfolders. Include a number after /S (like /S:2) to limit the level of subfolders to examine." & _
 			  "When using /S, you can redirect the output of the results using /A." & _

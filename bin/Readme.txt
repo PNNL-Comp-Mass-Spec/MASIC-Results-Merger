@@ -30,12 +30,16 @@ or First-Hits columns supported by PHRPReader.  In addition, the input folder
 must have a column named InputFile_metadata.txt (this file was auto-created by 
 Mage Extractor).
 
+Use /Append to merge results from multiple datasets together as a single file; 
+this is only applicable when the InputFilePathSpec includes a * wildcard and 
+multiple files are matched
+
 -------------------------------------------------------------------------------
 Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
 Copyright 2008, Battelle Memorial Institute.  All Rights Reserved.
 
-E-mail: matthew.monroe@pnl.gov or matt@alchemistmatt.com
-Website: http://ncrr.pnl.gov/ or http://omics.pnl.gov
+E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
+Website: http://panomics.pnnl.gov/ or http://omics.pnl.gov
 -------------------------------------------------------------------------------
 
 Licensed under the Apache License, Version 2.0; you may not use this file except 

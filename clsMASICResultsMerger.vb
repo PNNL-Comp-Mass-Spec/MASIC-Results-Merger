@@ -183,6 +183,10 @@ Public Class clsMASICResultsMerger
 
 	Protected WithEvents mPHRPReader As PHRPReader.clsPHRPReader
 
+	' For each KeyValuePair, the key is the base file name and the values are the output file paths for the base file
+	' There will be one output file for each base file if mSeparateByCollisionMode=false; multiple files if it is true
+	Protected mProcessedDatasets As List(Of clsProcessedFileInfo)
+
 #End Region
 
 #Region "Properties"
@@ -211,6 +215,13 @@ Public Class clsMASICResultsMerger
 			mMASICResultsFolderPath = value
 		End Set
 	End Property
+
+	Public ReadOnly Property ProcessedDatasets() As List(Of clsProcessedFileInfo)
+		Get
+			Return mProcessedDatasets
+		End Get
+	End Property
+
 	Public Property SeparateByCollisionMode() As Boolean
 		Get
 			Return mSeparateByCollisionMode
@@ -228,6 +239,7 @@ Public Class clsMASICResultsMerger
 			mScanNumberColumn = value
 		End Set
 	End Property
+
 	Public Property WarnMissingParameterFileSection() As Boolean
 		Get
 			Return mWarnMissingParameterFileSection
@@ -292,7 +304,7 @@ Public Class clsMASICResultsMerger
 							' No more underscores; we're unable to determine the dataset name
 							Exit Do
 						End If
-						
+
 					End If
 				End If
 
@@ -410,6 +422,8 @@ Public Class clsMASICResultsMerger
 
 		mLocalErrorCode = eResultsProcessorErrorCodes.NoError
 
+		mProcessedDatasets = New List(Of clsProcessedFileInfo)
+
 	End Sub
 
 	Private Function LoadParameterFileSettings(ByVal strParameterFilePath As String) As Boolean
@@ -465,7 +479,11 @@ Public Class clsMASICResultsMerger
 		Dim intLinesWritten() As Integer
 
 		Dim intOutputFileCount As Integer
-		Dim strOutputFilePaths() As String
+
+		' The Key is the collision mode and the value is the path
+		Dim strOutputFilePaths() As KeyValuePair(Of String, String)
+
+		Dim baseFileName = String.Empty
 
 		Dim strLineIn As String
 
@@ -479,7 +497,6 @@ Public Class clsMASICResultsMerger
 		Dim strBlankAdditionalSICColumns As String = String.Empty
 		Dim strBlankAdditionalReporterIonColumns As String = String.Empty
 
-		Dim intIndex As Integer
 		Dim intOutFileIndex As Integer
 		Dim intEmptyOutFileCount As Integer
 
@@ -492,6 +509,8 @@ Public Class clsMASICResultsMerger
 		Dim blnSuccess As Boolean
 
 		Try
+
+			baseFileName = Path.GetFileNameWithoutExtension(strInputFilePath)
 
 			If String.IsNullOrWhiteSpace(strReporterIonHeaders) Then strReporterIonHeaders = String.Empty
 
@@ -518,18 +537,18 @@ Public Class clsMASICResultsMerger
 				ReDim strOutputFilePaths(intOutputFileCount - 1)
 
 				If dctCollisionModeFileMap.Count = 0 Then
-					strOutputFilePaths(intIndex) = Path.Combine(strOutputFolderPath, Path.GetFileNameWithoutExtension(strInputFilePath) & "_na" & RESULTS_SUFFIX)
+					strOutputFilePaths(0) = New KeyValuePair(Of String, String)("na", Path.Combine(strOutputFolderPath, baseFileName & "_na" & RESULTS_SUFFIX))
 				Else
 					For Each oItem In dctCollisionModeFileMap
 						Dim strCollisionMode As String = oItem.Key
 						If String.IsNullOrWhiteSpace(strCollisionMode) Then strCollisionMode = "na"
-						strOutputFilePaths(oItem.Value) = Path.Combine(strOutputFolderPath, Path.GetFileNameWithoutExtension(strInputFilePath) & "_" & strCollisionMode & RESULTS_SUFFIX)
+						strOutputFilePaths(oItem.Value) = New KeyValuePair(Of String, String)(strCollisionMode, Path.Combine(strOutputFolderPath, baseFileName & "_" & strCollisionMode & RESULTS_SUFFIX))
 					Next
 				End If
 			Else
 				intOutputFileCount = 1
 				ReDim strOutputFilePaths(0)
-				strOutputFilePaths(0) = Path.Combine(strOutputFolderPath, Path.GetFileNameWithoutExtension(strInputFilePath) & RESULTS_SUFFIX)
+				strOutputFilePaths(0) = New KeyValuePair(Of String, String)("", Path.Combine(strOutputFolderPath, baseFileName & RESULTS_SUFFIX))
 			End If
 
 			ReDim swOutfile(intOutputFileCount - 1)
@@ -537,7 +556,7 @@ Public Class clsMASICResultsMerger
 
 			' Open the output file(s)
 			For intIndex = 0 To intOutputFileCount - 1
-				swOutfile(intIndex) = New StreamWriter(New FileStream(strOutputFilePaths(intIndex), FileMode.Create, FileAccess.Write, FileShare.Read))
+				swOutfile(intIndex) = New StreamWriter(New FileStream(strOutputFilePaths(intIndex).Value, FileMode.Create, FileAccess.Write, FileShare.Read))
 			Next
 
 		Catch ex As Exception
@@ -547,7 +566,7 @@ Public Class clsMASICResultsMerger
 
 
 		Try
-			MyBase.mProgressStepDescription = "Parsing " & Path.GetFileName(strInputFilePath) & " and writing " & Path.GetFileName(strOutputFilePaths(0))
+			MyBase.mProgressStepDescription = "Parsing " & Path.GetFileName(strInputFilePath) & " and writing " & Path.GetFileName(strOutputFilePaths(0).Value)
 			ShowMessage(MyBase.mProgressStepDescription)
 
 			If mScanNumberColumn < 1 Then
@@ -718,7 +737,13 @@ Public Class clsMASICResultsMerger
 				End If
 			Next
 
-			If intEmptyOutFileCount > 0 Then
+			Dim outputPathEntry = New clsProcessedFileInfo(baseFileName)
+
+			If intEmptyOutFileCount = 0 Then
+				For Each item In strOutputFilePaths.ToList()
+					outputPathEntry.AddOutputFile(item.Key, item.Value)
+				Next
+			Else
 				If intEmptyOutFileCount = intOutputFileCount Then
 					' All output files are empty
 					' Pretend the first output file actually contains data
@@ -731,13 +756,19 @@ Public Class clsMASICResultsMerger
 
 					If intLinesWritten(intIndex) = 0 Then
 						Try
-							ShowMessage("Deleting empty output file: " & ControlChars.NewLine & " --> " & Path.GetFileName(strOutputFilePaths(intIndex)))
-							File.Delete(strOutputFilePaths(intIndex))
+							ShowMessage("Deleting empty output file: " & ControlChars.NewLine & " --> " & Path.GetFileName(strOutputFilePaths(intIndex).Value))
+							File.Delete(strOutputFilePaths(intIndex).Value)
 						Catch ex As Exception
 							' Ignore errors here
 						End Try
+					Else
+						outputPathEntry.AddOutputFile(strOutputFilePaths(intIndex).Key, strOutputFilePaths(intIndex).Value)
 					End If
 				Next
+			End If
+
+			If outputPathEntry.OutputFiles.Count > 0 Then
+				mProcessedDatasets.Add(outputPathEntry)
 			End If
 
 			blnSuccess = True
@@ -748,6 +779,158 @@ Public Class clsMASICResultsMerger
 		End Try
 
 		Return blnSuccess
+
+	End Function
+
+	Public Function MergeProcessedDatasets() As Boolean
+
+		Try
+			If mProcessedDatasets.Count = 1 Then
+				' Nothing to merge
+				ShowMessage("Only one dataset has been processed by the MASICResultsMerger; nothing to merge")
+				Return True
+			End If
+
+			' Determine the base filename and collision modes used
+			Dim baseFileName = String.Empty
+
+			Dim collisionModes = New SortedSet(Of String)
+			Dim datasetNameIdMap = New Dictionary(Of String, Integer)
+
+			For Each processedDataset In mProcessedDatasets
+
+				For Each processedFile In processedDataset.OutputFiles
+					If Not collisionModes.Contains(processedFile.Key) Then
+						collisionModes.Add(processedFile.Key)
+					End If
+				Next				
+
+				If Not datasetNameIdMap.ContainsKey(processedDataset.BaseName) Then
+					datasetNameIdMap.Add(processedDataset.BaseName, datasetNameIdMap.Count + 1)
+				End If
+
+				' Find the characters common to all of the processed datasets
+				Dim candidateName = processedDataset.BaseName
+
+				If String.IsNullOrEmpty(baseFileName) Then
+					baseFileName = String.Copy(candidateName)
+				Else
+					Dim charsInCommon = 0
+
+					For intIndex = 0 To baseFileName.Length - 1
+						If intIndex >= candidateName.Length Then
+							Exit For
+						End If
+
+						If candidateName.ToLower().Chars(intIndex) <> baseFileName.ToLower().Chars(intIndex) Then
+							Exit For
+						End If
+
+						charsInCommon += 1
+					Next
+
+					If charsInCommon > 1 Then
+						baseFileName = baseFileName.Substring(0, charsInCommon)
+
+						' Possibly backtrack to the previous underscore
+						Dim lastUnderscore = baseFileName.LastIndexOf("_", System.StringComparison.Ordinal)
+						If lastUnderscore >= 4 Then
+							baseFileName = baseFileName.Substring(0, lastUnderscore)
+						End If
+					End If
+
+				End If
+			Next
+
+			If collisionModes.Count = 0 Then
+				ShowErrorMessage("None of the processed datasets had any output files")
+			End If
+
+			baseFileName = "MergedData_" & baseFileName
+
+			' Open the output files
+			Dim outputFileHandles = New Dictionary(Of String, StreamWriter)
+			Dim outputFileHeaderWritten = New Dictionary(Of String, Boolean)
+
+			For Each collisionMode In collisionModes
+				Dim outputFileName As String
+
+				If collisionMode = clsProcessedFileInfo.COLLISION_MODE_NOT_DEFINED Then
+					outputFileName = baseFileName & RESULTS_SUFFIX
+				Else
+					outputFileName = baseFileName & "_" & collisionMode & RESULTS_SUFFIX
+				End If				
+
+				outputFileHandles.Add(collisionMode, New StreamWriter(New FileStream(Path.Combine(mOutputFolderPath, outputFileName), FileMode.Create, FileAccess.Write)))
+				outputFileHeaderWritten.Add(collisionMode, False)
+			Next
+
+			' Create the DatasetMap file
+			Using swOutFile = New StreamWriter(New FileStream(Path.Combine(mOutputFolderPath, baseFileName & "_DatasetMap.txt"), FileMode.Create, FileAccess.Write))
+
+				swOutFile.WriteLine("DatasetID" & ControlChars.Tab & "DatasetName")
+
+				For Each datasetMapping In datasetNameIdMap
+					swOutFile.WriteLine(datasetMapping.Value & ControlChars.Tab & datasetMapping.Key)
+				Next
+
+			End Using
+
+			' Merge the files
+			For Each processedDataset In mProcessedDatasets
+				Dim datasetId As Integer = datasetNameIdMap(processedDataset.BaseName)
+
+				For Each sourcefile In processedDataset.OutputFiles
+
+					Dim collisionMode = sourcefile.Key
+
+					Dim swOutFile As StreamWriter = Nothing
+					If Not outputFileHandles.TryGetValue(collisionMode, swOutFile) Then
+						Console.WriteLine("Warning: unrecognized collison mode; skipping " & sourcefile.Value)
+						Continue For
+					End If
+
+					If Not File.Exists(sourcefile.Value) Then
+						Console.WriteLine("Warning: input file not found; skipping " & sourcefile.Value)
+						Continue For
+					End If
+
+					Using srSourceFile = New StreamReader(New FileStream(sourcefile.Value, FileMode.Open, FileAccess.Read, FileShare.Read))
+						Dim linesRead = 0
+						While srSourceFile.Peek > -1
+
+							Dim lineIn = srSourceFile.ReadLine()
+							linesRead += 1
+
+							If linesRead = 1 Then
+								If outputFileHeaderWritten(collisionMode) Then
+									' skip this line
+									Continue While
+								End If
+
+								swOutFile.WriteLine("DatasetID" & ControlChars.Tab & lineIn)
+								outputFileHeaderWritten(collisionMode) = True
+
+							Else
+								swOutFile.WriteLine(datasetId & ControlChars.Tab & lineIn)
+							End If
+
+						End While
+					End Using
+
+				Next
+			Next
+
+			For Each outputFile In outputFileHandles
+				outputFile.Value.Close()
+			Next
+
+		Catch ex As Exception
+			HandleException("Error in MergeProcessedDatasets", ex)
+			Return False
+		End Try
+
+		Return True
 
 	End Function
 
@@ -1489,4 +1672,5 @@ Public Class clsMASICResultsMerger
 	Private Sub mPHRPReader_WarningEvent(strWarningMessage As String) Handles mPHRPReader.WarningEvent
 		ShowMessage("Warning: " & strWarningMessage)
 	End Sub
+
 End Class

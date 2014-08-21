@@ -110,6 +110,7 @@
   <ItemGroup>
     <Compile Include="clsMASICResultsMerger.vb" />
     <Compile Include="clsParseCommandLine.vb" />
+    <Compile Include="clsProcessedFileInfo.vb" />
     <Compile Include="clsProcessFilesBaseClass.vb" />
     <Compile Include="clsProcessFilesOrFoldersBase.vb" />
     <Compile Include="clsXmlSettingsFileAccessor.vb" />
