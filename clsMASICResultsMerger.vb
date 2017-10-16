@@ -1,5 +1,6 @@
 Option Strict On
 Imports System.IO
+Imports PRISM
 
 ' This class merges the contents of a tab-delimited peptide hit results file
 ' (e.g. from Sequest, XTandem, or MSGF+) with the corresponding MASIC results files, 
