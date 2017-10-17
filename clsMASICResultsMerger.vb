@@ -1,5 +1,9 @@
 Option Strict On
 Imports System.IO
+Imports System.Reflection
+Imports System.Text
+Imports System.Threading
+Imports PHRPReader
 Imports PRISM
 
 ' This class merges the contents of a tab-delimited peptide hit results file
@@ -173,16 +177,14 @@ Public Class clsMASICResultsMerger
 #End Region
 
 #Region "Classwide Variables"
-    Protected mWarnMissingParameterFileSection As Boolean
+
     Protected mLocalErrorCode As eResultsProcessorErrorCodes
 
-    Protected mMageResults As Boolean
-
     Protected mMASICResultsFolderPath As String = String.Empty
-    Protected mScanNumberColumn As Integer          ' For the input file, defines which column tracks scan number; the first column is column 1 (not zero)
-    Protected mSeparateByCollisionMode As Boolean   ' When true, then a separate output file will be created for each collision mode type; this is only possible if a _ReporterIons.txt file exists
+    ' For the input file, defines which column tracks scan number; the first column is column 1 (not zero)
+    ' When true, then a separate output file will be created for each collision mode type; this is only possible if a _ReporterIons.txt file exists
 
-    Protected WithEvents mPHRPReader As PHRPReader.clsPHRPReader
+    Protected WithEvents mPHRPReader As clsPHRPReader
 
     ' For each KeyValuePair, the key is the base file name and the values are the output file paths for the base file
     ' There will be one output file for each base file if mSeparateByCollisionMode=false; multiple files if it is true
@@ -191,71 +193,44 @@ Public Class clsMASICResultsMerger
 #End Region
 
 #Region "Properties"
-    Public ReadOnly Property LocalErrorCode() As eResultsProcessorErrorCodes
+    Public ReadOnly Property LocalErrorCode As eResultsProcessorErrorCodes
         Get
             Return mLocalErrorCode
         End Get
     End Property
 
-    Public Property MageResults() As Boolean
-        Get
-            Return mMageResults
-        End Get
-        Set(value As Boolean)
-            mMageResults = value
-        End Set
-    End Property
+    Public Property MageResults As Boolean
 
-    Public Property MASICResultsFolderPath() As String
+    Public Property MASICResultsFolderPath As String
         Get
             If mMASICResultsFolderPath Is Nothing Then mMASICResultsFolderPath = String.Empty
             Return mMASICResultsFolderPath
         End Get
-        Set(ByVal value As String)
-            If value Is Nothing Then value = String.Empty
-            mMASICResultsFolderPath = value
+        Set
+            If Value Is Nothing Then Value = String.Empty
+            mMASICResultsFolderPath = Value
         End Set
     End Property
 
-    Public ReadOnly Property ProcessedDatasets() As List(Of clsProcessedFileInfo)
+    Public ReadOnly Property ProcessedDatasets As List(Of clsProcessedFileInfo)
         Get
             Return mProcessedDatasets
         End Get
     End Property
 
-    Public Property SeparateByCollisionMode() As Boolean
-        Get
-            Return mSeparateByCollisionMode
-        End Get
-        Set(ByVal value As Boolean)
-            mSeparateByCollisionMode = value
-        End Set
-    End Property
+    Public Property SeparateByCollisionMode As Boolean
 
-    Public Property ScanNumberColumn() As Integer
-        Get
-            Return mScanNumberColumn
-        End Get
-        Set(ByVal value As Integer)
-            mScanNumberColumn = value
-        End Set
-    End Property
+    Public Property ScanNumberColumn As Integer
 
-    Public Property WarnMissingParameterFileSection() As Boolean
-        Get
-            Return mWarnMissingParameterFileSection
-        End Get
-        Set(ByVal Value As Boolean)
-            mWarnMissingParameterFileSection = Value
-        End Set
-    End Property
+    Public Property WarnMissingParameterFileSection As Boolean
+
 #End Region
 
-    Protected Function FindMASICFiles(ByVal strMASICResultsFolder As String, ByVal udtDatasetInfo As udtDatasetInfoType, ByRef udtMASICFileNames As udtMASICFileNamesType) As Boolean
+    Protected Function FindMASICFiles(strMASICResultsFolder As String, udtDatasetInfo As udtDatasetInfoType, ByRef udtMASICFileNames As udtMASICFileNamesType) As Boolean
 
-        Dim blnSuccess As Boolean = False
+        Dim blnSuccess = False
         Dim strDatasetName As String
-        Dim blnTriedDatasetID As Boolean = False
+        Dim blnTriedDatasetID = False
 
         Dim strCandidateFilePath As String
 
@@ -343,11 +318,11 @@ Public Class clsMASICResultsMerger
         Return lstAddonColumns
     End Function
 
-    Protected Function FlattenList(ByVal lstData As List(Of String)) As String
+    Protected Function FlattenList(lstData As List(Of String)) As String
 
-        Dim sbFlattened As Text.StringBuilder = New Text.StringBuilder
+        Dim sbFlattened = New StringBuilder
 
-        For intIndex As Integer = 0 To lstData.Count - 1
+        For intIndex = 0 To lstData.Count - 1
             If intIndex > 0 Then
                 sbFlattened.Append(ControlChars.Tab)
             End If
@@ -358,7 +333,7 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function FlattenArray(ByVal strSplitLine() As String, ByVal intIndexStart As Integer) As String
+    Protected Function FlattenArray(strSplitLine() As String, intIndexStart As Integer) As String
         Dim strText As String = String.Empty
         Dim strColumn As String
 
@@ -390,8 +365,8 @@ Public Class clsMASICResultsMerger
 
         Dim strErrorMessage As String
 
-        If MyBase.ErrorCode = clsProcessFilesBaseClass.eProcessFilesErrorCodes.LocalizedError Or
-           MyBase.ErrorCode = clsProcessFilesBaseClass.eProcessFilesErrorCodes.NoError Then
+        If MyBase.ErrorCode = eProcessFilesErrorCodes.LocalizedError Or
+           MyBase.ErrorCode = eProcessFilesErrorCodes.NoError Then
             Select Case mLocalErrorCode
                 Case eResultsProcessorErrorCodes.NoError
                     strErrorMessage = ""
@@ -416,10 +391,10 @@ Public Class clsMASICResultsMerger
         MyBase.ShowMessages = False
 
         mMASICResultsFolderPath = String.Empty
-        mScanNumberColumn = DEFAULT_SCAN_NUMBER_COLUMN
-        mSeparateByCollisionMode = False
+        ScanNumberColumn = DEFAULT_SCAN_NUMBER_COLUMN
+        SeparateByCollisionMode = False
 
-        mWarnMissingParameterFileSection = True
+        WarnMissingParameterFileSection = True
 
         mLocalErrorCode = eResultsProcessorErrorCodes.NoError
 
@@ -427,9 +402,9 @@ Public Class clsMASICResultsMerger
 
     End Sub
 
-    Private Function LoadParameterFileSettings(ByVal strParameterFilePath As String) As Boolean
+    Private Function LoadParameterFileSettings(strParameterFilePath As String) As Boolean
 
-        Const OPTIONS_SECTION As String = "MASICResultsMerger"
+        Const OPTIONS_SECTION = "MASICResultsMerger"
 
         Dim objSettingsFile As New XmlSettingsFileAccessor
 
@@ -442,9 +417,9 @@ Public Class clsMASICResultsMerger
 
             If Not File.Exists(strParameterFilePath) Then
                 ' See if strParameterFilePath points to a file in the same directory as the application
-                strParameterFilePath = Path.Combine(Path.GetDirectoryName(Reflection.Assembly.GetExecutingAssembly().Location), Path.GetFileName(strParameterFilePath))
+                strParameterFilePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), Path.GetFileName(strParameterFilePath))
                 If Not File.Exists(strParameterFilePath) Then
-                    MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.ParameterFileNotFound)
+                    MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.ParameterFileNotFound)
                     Return False
                 End If
             End If
@@ -452,11 +427,11 @@ Public Class clsMASICResultsMerger
             If objSettingsFile.LoadSettings(strParameterFilePath) Then
                 If Not objSettingsFile.SectionPresent(OPTIONS_SECTION) Then
                     ShowErrorMessage("The node '<section name=""" & OPTIONS_SECTION & """> was not found in the parameter file: " & strParameterFilePath)
-                    MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidParameterFile)
+                    MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.InvalidParameterFile)
                     Return False
                 Else
-                    mScanNumberColumn = objSettingsFile.GetParam(OPTIONS_SECTION, "ScanNumberColumn", DEFAULT_SCAN_NUMBER_COLUMN)
-                    mSeparateByCollisionMode = objSettingsFile.GetParam(OPTIONS_SECTION, "SeparateByCollisionMode", False)
+                    ScanNumberColumn = objSettingsFile.GetParam(OPTIONS_SECTION, "ScanNumberColumn", DEFAULT_SCAN_NUMBER_COLUMN)
+                    SeparateByCollisionMode = objSettingsFile.GetParam(OPTIONS_SECTION, "SeparateByCollisionMode", False)
                 End If
             End If
 
@@ -469,11 +444,11 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function MergePeptideHitAndMASICFiles(ByVal strInputFilePath As String,
-      ByVal strOutputFolderPath As String,
-      ByVal dctScanStats As Dictionary(Of Integer, udtScanStatsType),
-      ByVal dctSICStats As Dictionary(Of Integer, udtSICStatsType),
-      ByVal strReporterIonHeaders As String) As Boolean
+    Protected Function MergePeptideHitAndMASICFiles(strInputFilePath As String,
+      strOutputFolderPath As String,
+      dctScanStats As Dictionary(Of Integer, udtScanStatsType),
+      dctSICStats As Dictionary(Of Integer, udtSICStatsType),
+      strReporterIonHeaders As String) As Boolean
 
 
         Dim swOutfile() As StreamWriter
@@ -506,7 +481,7 @@ Public Class clsMASICResultsMerger
 
         Dim dctCollisionModeFileMap As Dictionary(Of String, Integer)
 
-        Dim blnWriteReporterIonStats As Boolean = False
+        Dim blnWriteReporterIonStats = False
         Dim blnSuccess As Boolean
 
         Try
@@ -522,7 +497,7 @@ Public Class clsMASICResultsMerger
 
             dctCollisionModeFileMap = New Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
 
-            If mSeparateByCollisionMode Then
+            If SeparateByCollisionMode Then
                 ' Construct a list of the different collision modes in dctScanStats
 
                 intOutputFileCount = 0
@@ -570,14 +545,14 @@ Public Class clsMASICResultsMerger
             MyBase.mProgressStepDescription = "Parsing " & Path.GetFileName(strInputFilePath) & " and writing " & Path.GetFileName(strOutputFilePaths(0).Value)
             ShowMessage(MyBase.mProgressStepDescription)
 
-            If mScanNumberColumn < 1 Then
+            If ScanNumberColumn < 1 Then
                 ' Assume the scan number is in the second column
-                mScanNumberColumn = DEFAULT_SCAN_NUMBER_COLUMN
+                ScanNumberColumn = DEFAULT_SCAN_NUMBER_COLUMN
             End If
 
 
             ' Read from srInFile and write out to the file(s) in swOutFile
-            Using srInFile As StreamReader = New StreamReader(New FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 intLinesRead = 0
                 Do While srInFile.Peek > -1
@@ -591,7 +566,7 @@ Public Class clsMASICResultsMerger
 
                         If intLinesRead = 1 Then
                             ' Write out an updated header line
-                            If strSplitLine.Length >= mScanNumberColumn AndAlso Integer.TryParse(strSplitLine(mScanNumberColumn - 1), intScanNumber) Then
+                            If strSplitLine.Length >= ScanNumberColumn AndAlso Integer.TryParse(strSplitLine(ScanNumberColumn - 1), intScanNumber) Then
                                 ' The input file doesn't have a header line; we will add one, using generic column names for the data in the input file
 
                                 strHeaderLine = String.Empty
@@ -639,9 +614,9 @@ Public Class clsMASICResultsMerger
 
                         End If
 
-                        If strSplitLine.Length >= mScanNumberColumn AndAlso Integer.TryParse(strSplitLine(mScanNumberColumn - 1), intScanNumber) Then
+                        If strSplitLine.Length >= ScanNumberColumn AndAlso Integer.TryParse(strSplitLine(ScanNumberColumn - 1), intScanNumber) Then
                             ' Look for intScanNumber in dctScanStats
-                            Dim udtScanStats As udtScanStatsType = New udtScanStatsType
+                            Dim udtScanStats = New udtScanStatsType
                             If Not dctScanStats.TryGetValue(intScanNumber, udtScanStats) Then
                                 ' Match not found; use the blank columns in strBlankAdditionalColumns
                                 strAddonColumns = String.Copy(strBlankAdditionalColumns)
@@ -654,7 +629,7 @@ Public Class clsMASICResultsMerger
                                        .BasePeakMZ
                                 End With
 
-                                Dim udtSICStats As udtSICStatsType = New udtSICStatsType
+                                Dim udtSICStats = New udtSICStatsType
                                 If Not dctSICStats.TryGetValue(intScanNumber, udtSICStats) Then
                                     ' Match not found; use the blank columns in strBlankAdditionalSICColumns
                                     strAddonColumns &= ControlChars.Tab & strBlankAdditionalSICColumns
@@ -700,7 +675,7 @@ Public Class clsMASICResultsMerger
                             End If
 
                             intOutFileIndex = 0
-                            If mSeparateByCollisionMode AndAlso intOutputFileCount > 1 Then
+                            If SeparateByCollisionMode AndAlso intOutputFileCount > 1 Then
                                 If Not strCollisionModeCurrentScan Is Nothing Then
                                     ' Determine the correct output file
                                     If Not dctCollisionModeFileMap.TryGetValue(strCollisionModeCurrentScan, intOutFileIndex) Then
@@ -753,7 +728,7 @@ Public Class clsMASICResultsMerger
 
                 For intIndex = 0 To intOutputFileCount - 1
                     ' Wait 250 msec before continuing
-                    Threading.Thread.Sleep(250)
+                    Thread.Sleep(250)
 
                     If intLinesWritten(intIndex) = 0 Then
                         Try
@@ -834,7 +809,7 @@ Public Class clsMASICResultsMerger
                         baseFileName = baseFileName.Substring(0, charsInCommon)
 
                         ' Possibly backtrack to the previous underscore
-                        Dim lastUnderscore = baseFileName.LastIndexOf("_", System.StringComparison.Ordinal)
+                        Dim lastUnderscore = baseFileName.LastIndexOf("_", StringComparison.Ordinal)
                         If lastUnderscore >= 4 Then
                             baseFileName = baseFileName.Substring(0, lastUnderscore)
                         End If
@@ -936,7 +911,7 @@ Public Class clsMASICResultsMerger
     End Function
 
     ' Main processing function
-    Public Overloads Overrides Function ProcessFile(ByVal strInputFilePath As String, ByVal strOutputFolderPath As String, ByVal strParameterFilePath As String, ByVal blnResetErrorCode As Boolean) As Boolean
+    Public Overloads Overrides Function ProcessFile(strInputFilePath As String, strOutputFolderPath As String, strParameterFilePath As String, blnResetErrorCode As Boolean) As Boolean
         ' Returns True if success, False if failure
 
         Dim blnSuccess As Boolean
@@ -949,21 +924,21 @@ Public Class clsMASICResultsMerger
         If Not LoadParameterFileSettings(strParameterFilePath) Then
             ShowErrorMessage("Parameter file load error: " & strParameterFilePath)
 
-            If MyBase.ErrorCode = clsProcessFilesBaseClass.eProcessFilesErrorCodes.NoError Then
-                MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidParameterFile)
+            If MyBase.ErrorCode = eProcessFilesErrorCodes.NoError Then
+                MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.InvalidParameterFile)
             End If
             Return False
         End If
 
         If strInputFilePath Is Nothing OrElse strInputFilePath.Length = 0 Then
             ShowMessage("Input file name is empty")
-            MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.InvalidInputFilePath)
+            MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.InvalidInputFilePath)
             Return False
         End If
 
         ' Note that CleanupFilePaths() will update mOutputFolderPath, which is used by LogMessage()
         If Not CleanupFilePaths(strInputFilePath, strOutputFolderPath) Then
-            MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.FilePathError)
+            MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.FilePathError)
             Return False
         End If
 
@@ -976,7 +951,7 @@ Public Class clsMASICResultsMerger
             strMASICResultsFolder = String.Copy(mMASICResultsFolderPath)
         End If
 
-        If mMageResults Then
+        If MageResults Then
             blnSuccess = ProcessMageExtractorFile(fiInputFile, strMASICResultsFolder)
         Else
             blnSuccess = ProcessSingleJobFile(fiInputFile, strMASICResultsFolder)
@@ -985,7 +960,7 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function ProcessMageExtractorFile(ByVal fiInputFile As FileInfo, ByVal strMASICResultsFolder As String) As Boolean
+    Protected Function ProcessMageExtractorFile(fiInputFile As FileInfo, strMASICResultsFolder As String) As Boolean
 
         Dim udtMASICFileNames = New udtMASICFileNamesType
 
@@ -996,21 +971,21 @@ Public Class clsMASICResultsMerger
         Dim strMetadataFile As String
 
         Dim lstColumns As List(Of String)
-        Dim intJobColumnIndex As Integer = -1
+        Dim intJobColumnIndex As Integer
 
-        Dim strHeaderLine As String = String.Empty
-        Dim blnHeaderLineWritten As Boolean = False
-        Dim blnWriteReporterIonStats As Boolean = False
+        Dim strHeaderLine As String
+        Dim blnHeaderLineWritten = False
+        Dim blnWriteReporterIonStats = False
 
         Dim strAddonColumns As String
 
-        Dim strBlankAdditionalColumns As String = String.Empty
-        Dim strBlankAdditionalSICColumns As String = String.Empty
+        Dim strBlankAdditionalColumns As String
+        Dim strBlankAdditionalSICColumns As String
         Dim strBlankAdditionalReporterIonColumns As String = String.Empty
 
         Dim strReporterIonHeaders As String = String.Empty
 
-        Dim intJobsSuccessfullyMerged As Integer = 0
+        Dim intJobsSuccessfullyMerged = 0
 
         Try
 
@@ -1033,7 +1008,7 @@ Public Class clsMASICResultsMerger
             End If
 
             ' Open the Mage Extractor data file so that we can validate and cache the header row
-            Using srInFile As StreamReader = New StreamReader(New FileStream(fiInputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(fiInputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
                 strHeaderLine = srInFile.ReadLine()
                 lstColumns = strHeaderLine.Split(ControlChars.Tab).ToList()
                 intJobColumnIndex = lstColumns.IndexOf("Job")
@@ -1057,11 +1032,11 @@ Public Class clsMASICResultsMerger
             strOutputFilePath = Path.Combine(mOutputFolderPath, strOutputFilePath)
 
             ' Initialize the output file
-            Using swOutFile As StreamWriter = New StreamWriter(New FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using swOutFile = New StreamWriter(New FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
 
                 ' Open the Mage Extractor data file and read the data for each job
-                mPHRPReader = New PHRPReader.clsPHRPReader(fiInputFile.FullName, PHRPReader.clsPHRPReader.ePeptideHitResultType.Unknown, False, False, False)
+                mPHRPReader = New clsPHRPReader(fiInputFile.FullName, clsPHRPReader.ePeptideHitResultType.Unknown, False, False, False)
                 mPHRPReader.EchoMessagesToConsole = False
                 mPHRPReader.SkipDuplicatePSMs = False
 
@@ -1072,11 +1047,11 @@ Public Class clsMASICResultsMerger
 
                 Dim intLastJob As Integer = -1
                 Dim intJob As Integer = -1
-                Dim blnMASICDataLoaded As Boolean = False
+                Dim blnMASICDataLoaded = False
 
                 Do While mPHRPReader.MoveNext()
 
-                    Dim oPSM As PHRPReader.clsPSM = mPHRPReader.CurrentPSM
+                    Dim oPSM As clsPSM = mPHRPReader.CurrentPSM
                     ' Parse out the job from the current line
                     lstColumns = oPSM.DataLineText.Split(ControlChars.Tab).ToList()
 
@@ -1090,7 +1065,7 @@ Public Class clsMASICResultsMerger
                         ' New job; read and cache the MASIC data
                         blnMASICDataLoaded = False
 
-                        Dim udtDatasetInfo As udtDatasetInfoType = New udtDatasetInfoType
+                        Dim udtDatasetInfo = New udtDatasetInfoType
 
                         If Not dctJobToDatasetMap.TryGetValue(intJob, udtDatasetInfo) Then
                             ShowErrorMessage("Error: Job " & intJob & " was not defined in the Metadata file; unable to determine the dataset")
@@ -1161,7 +1136,7 @@ Public Class clsMASICResultsMerger
 
 
                         ' Look for intScanNumber in dctScanStats
-                        Dim udtScanStats As udtScanStatsType = New udtScanStatsType
+                        Dim udtScanStats = New udtScanStatsType
                         If Not dctScanStats.TryGetValue(oPSM.ScanNumber, udtScanStats) Then
                             ' Match not found; use the blank columns in strBlankAdditionalColumns
                             strAddonColumns = String.Copy(strBlankAdditionalColumns)
@@ -1174,7 +1149,7 @@ Public Class clsMASICResultsMerger
                                    .BasePeakMZ
                             End With
 
-                            Dim udtSICStats As udtSICStatsType = New udtSICStatsType
+                            Dim udtSICStats = New udtSICStatsType
                             If Not dctSICStats.TryGetValue(oPSM.ScanNumber, udtSICStats) Then
                                 ' Match not found; use the blank columns in strBlankAdditionalSICColumns
                                 strAddonColumns &= ControlChars.Tab & strBlankAdditionalSICColumns
@@ -1249,8 +1224,8 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function ProcessSingleJobFile(ByVal fiInputFile As FileInfo, ByVal strMASICResultsFolder As String) As Boolean
-        Dim udtMASICFileNames As udtMASICFileNamesType = New udtMASICFileNamesType
+    Protected Function ProcessSingleJobFile(fiInputFile As FileInfo, strMASICResultsFolder As String) As Boolean
+        Dim udtMASICFileNames = New udtMASICFileNamesType
 
         Dim dctScanStats As Dictionary(Of Integer, udtScanStatsType)
         Dim dctSICStats As Dictionary(Of Integer, udtSICStatsType)
@@ -1261,7 +1236,7 @@ Public Class clsMASICResultsMerger
         Dim blnSuccess As Boolean
 
         Try
-            Dim udtDatasetInfo As udtDatasetInfoType = New udtDatasetInfoType
+            Dim udtDatasetInfo = New udtDatasetInfoType
 
             ' Note that FindMASICFiles will first try the full filename, and if it doesn't find a match,
             ' it will start removing text from the end of the filename by looking for underscores
@@ -1316,8 +1291,8 @@ Public Class clsMASICResultsMerger
         Return blnSuccess
     End Function
 
-    Protected Function ReadMASICData(ByVal strSourceFolder As String,
-      ByVal udtMASICFileNames As udtMASICFileNamesType,
+    Protected Function ReadMASICData(strSourceFolder As String,
+      udtMASICFileNames As udtMASICFileNamesType,
       ByRef dctScanStats As Dictionary(Of Integer, udtScanStatsType),
       ByRef dctSICStats As Dictionary(Of Integer, udtSICStatsType),
       ByRef strReporterIonHeaders As String) As Boolean
@@ -1345,8 +1320,8 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function ReadScanStatsFile(ByVal strSourceFolder As String,
-     ByVal strScanStatsFileName As String,
+    Protected Function ReadScanStatsFile(strSourceFolder As String,
+     strScanStatsFileName As String,
      ByRef dctScanStats As Dictionary(Of Integer, udtScanStatsType)) As Boolean
 
         Dim strLineIn As String
@@ -1355,7 +1330,7 @@ Public Class clsMASICResultsMerger
         Dim intLinesRead As Integer
         Dim intScanNumber As Integer
 
-        Dim blnSuccess As Boolean = False
+        Dim blnSuccess = False
 
         Try
             ' Initialize dctScanStats
@@ -1368,7 +1343,7 @@ Public Class clsMASICResultsMerger
             MyBase.mProgressStepDescription = "  Reading: " & strScanStatsFileName
             ShowMessage(MyBase.mProgressStepDescription)
 
-            Using srInFile As StreamReader = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strScanStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strScanStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 intLinesRead = 0
                 Do While srInFile.Peek > -1
@@ -1413,7 +1388,7 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function ReadMageMetadataFile(ByVal strMetadataFilePath As String) As Dictionary(Of Integer, udtDatasetInfoType)
+    Protected Function ReadMageMetadataFile(strMetadataFilePath As String) As Dictionary(Of Integer, udtDatasetInfoType)
 
         Dim dctJobToDatasetMap = New Dictionary(Of Integer, udtDatasetInfoType)
         Dim strLineIn As String
@@ -1425,7 +1400,7 @@ Public Class clsMASICResultsMerger
         Dim intDatasetIDIndex As Integer = -1
 
         Try
-            Using srInFile As StreamReader = New StreamReader(New FileStream(strMetadataFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(strMetadataFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 Do While srInFile.Peek > -1
                     strLineIn = srInFile.ReadLine()
@@ -1485,8 +1460,8 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function ReadSICStatsFile(ByVal strSourceFolder As String,
-       ByVal strSICStatsFileName As String,
+    Protected Function ReadSICStatsFile(strSourceFolder As String,
+       strSICStatsFileName As String,
        ByRef dctSICStats As Dictionary(Of Integer, udtSICStatsType)) As Boolean
 
         Dim strLineIn As String
@@ -1508,7 +1483,7 @@ Public Class clsMASICResultsMerger
             MyBase.mProgressStepDescription = "  Reading: " & strSICStatsFileName
             ShowMessage(MyBase.mProgressStepDescription)
 
-            Using srInFile As StreamReader = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strSICStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strSICStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 intLinesRead = 0
                 Do While srInFile.Peek > -1
@@ -1553,9 +1528,9 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function ReadReporterIonStatsFile(ByVal strSourceFolder As String,
-      ByVal strReporterIonStatsFileName As String,
-      ByVal dctScanStats As Dictionary(Of Integer, udtScanStatsType),
+    Protected Function ReadReporterIonStatsFile(strSourceFolder As String,
+      strReporterIonStatsFileName As String,
+      dctScanStats As Dictionary(Of Integer, udtScanStatsType),
       ByRef strReporterIonHeaders As String) As Boolean
 
         Dim strLineIn As String
@@ -1564,7 +1539,7 @@ Public Class clsMASICResultsMerger
         Dim intLinesRead As Integer
         Dim intScanNumber As Integer
 
-        Dim intWarningCount As Integer = 0
+        Dim intWarningCount = 0
 
         Dim blnSuccess As Boolean
 
@@ -1574,7 +1549,7 @@ Public Class clsMASICResultsMerger
             MyBase.mProgressStepDescription = "  Reading: " & strReporterIonStatsFileName
             ShowMessage(MyBase.mProgressStepDescription)
 
-            Using srInFile As StreamReader = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strReporterIonStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strReporterIonStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 intLinesRead = 0
                 Do While srInFile.Peek > -1
@@ -1600,7 +1575,7 @@ Public Class clsMASICResultsMerger
                         If strSplitLine.Length >= eReporterIonStatsColumns.ReporterIonIntensityMax + 1 AndAlso Integer.TryParse(strSplitLine(eReporterIonStatsColumns.ScanNumber), intScanNumber) Then
 
                             ' Look for intScanNumber in intScanNumbers
-                            Dim udtScanStats As udtScanStatsType = New udtScanStatsType
+                            Dim udtScanStats = New udtScanStatsType
 
                             If Not dctScanStats.TryGetValue(intScanNumber, udtScanStats) Then
                                 If intWarningCount < 10 Then
@@ -1640,11 +1615,11 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Private Sub SetLocalErrorCode(ByVal eNewErrorCode As eResultsProcessorErrorCodes)
+    Private Sub SetLocalErrorCode(eNewErrorCode As eResultsProcessorErrorCodes)
         SetLocalErrorCode(eNewErrorCode, False)
     End Sub
 
-    Private Sub SetLocalErrorCode(ByVal eNewErrorCode As eResultsProcessorErrorCodes, ByVal blnLeaveExistingErrorCodeUnchanged As Boolean)
+    Private Sub SetLocalErrorCode(eNewErrorCode As eResultsProcessorErrorCodes, blnLeaveExistingErrorCodeUnchanged As Boolean)
 
         If blnLeaveExistingErrorCodeUnchanged AndAlso mLocalErrorCode <> eResultsProcessorErrorCodes.NoError Then
             ' An error code is already defined; do not change it
@@ -1652,11 +1627,11 @@ Public Class clsMASICResultsMerger
             mLocalErrorCode = eNewErrorCode
 
             If eNewErrorCode = eResultsProcessorErrorCodes.NoError Then
-                If MyBase.ErrorCode = clsProcessFilesBaseClass.eProcessFilesErrorCodes.LocalizedError Then
-                    MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.NoError)
+                If MyBase.ErrorCode = eProcessFilesErrorCodes.LocalizedError Then
+                    MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.NoError)
                 End If
             Else
-                MyBase.SetBaseClassErrorCode(clsProcessFilesBaseClass.eProcessFilesErrorCodes.LocalizedError)
+                MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.LocalizedError)
             End If
         End If
 

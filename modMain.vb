@@ -53,7 +53,7 @@ Module modMain
     Private mLastProgressReportTime As DateTime
     Private mLastProgressReportValue As Integer
 
-    Private Sub DisplayProgressPercent(ByVal intPercentComplete As Integer, ByVal blnAddCarriageReturn As Boolean)
+    Private Sub DisplayProgressPercent(intPercentComplete As Integer, blnAddCarriageReturn As Boolean)
         If blnAddCarriageReturn Then
             Console.WriteLine()
         End If
@@ -152,11 +152,11 @@ Module modMain
         Return Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & PROGRAM_DATE & ")"
     End Function
 
-    Private Function SetOptionsUsingCommandLineParameters(ByVal objParseCommandLine As clsParseCommandLine) As Boolean
+    Private Function SetOptionsUsingCommandLineParameters(objParseCommandLine As clsParseCommandLine) As Boolean
         ' Returns True if no problems; otherwise, returns false
 
         Dim strValue As String = String.Empty
-        Dim lstValidParameters As List(Of String) = New List(Of String) From {"I", "M", "O", "P", "N", "C", "Mage", "Append", "S", "A", "R", "Q"}
+        Dim lstValidParameters = New List(Of String) From {"I", "M", "O", "P", "N", "C", "Mage", "Append", "S", "A", "R", "Q"}
         Dim intValue As Integer
 
         Try
@@ -212,11 +212,11 @@ Module modMain
 
     End Function
 
-    Private Sub ShowErrorMessage(ByVal message As String)
+    Private Sub ShowErrorMessage(message As String)
         ConsoleMsgUtils.ShowError(message)
     End Sub
 
-    Private Sub ShowErrorMessage(ByVal title As String, ByVal errorMessages As IEnumerable(Of String))
+    Private Sub ShowErrorMessage(title As String, errorMessages As IEnumerable(Of String))
         ConsoleMsgUtils.ShowErrors(title, errorMessages)
     End Sub
 
@@ -268,9 +268,9 @@ Module modMain
 
     End Sub
 
-    Private Sub mMASICResultsMerger_ProgressChanged(ByVal taskDescription As String, ByVal percentComplete As Single) Handles mMASICResultsMerger.ProgressChanged
-        Const PERCENT_REPORT_INTERVAL As Integer = 25
-        Const PROGRESS_DOT_INTERVAL_MSEC As Integer = 250
+    Private Sub mMASICResultsMerger_ProgressChanged(taskDescription As String, percentComplete As Single) Handles mMASICResultsMerger.ProgressChanged
+        Const PERCENT_REPORT_INTERVAL = 25
+        Const PROGRESS_DOT_INTERVAL_MSEC = 250
 
         If percentComplete >= mLastProgressReportValue Then
             If mMageResults Then

@@ -13,17 +13,17 @@
 		End Get
 	End Property
 
-	Public Sub New(ByVal strBaseName As String)
-		BaseName = strBaseName
-		mOutputFiles = New Dictionary(Of String, String)
-	End Sub
+    Public Sub New(strBaseName As String)
+        BaseName = strBaseName
+        mOutputFiles = New Dictionary(Of String, String)
+    End Sub
 
-	Public Sub AddOutputFile(ByVal collisionMode As String, ByVal outputFilePath As String)
-		If String.IsNullOrEmpty(collisionMode) Then
-			mOutputFiles.Add(COLLISION_MODE_NOT_DEFINED, outputFilePath)
-		Else
-			mOutputFiles.Add(collisionMode, outputFilePath)
-		End If
+    Public Sub AddOutputFile(collisionMode As String, outputFilePath As String)
+        If String.IsNullOrEmpty(collisionMode) Then
+            mOutputFiles.Add(COLLISION_MODE_NOT_DEFINED, outputFilePath)
+        Else
+            mOutputFiles.Add(collisionMode, outputFilePath)
+        End If
 
-	End Sub
+    End Sub
 End Class
