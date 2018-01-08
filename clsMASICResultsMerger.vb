@@ -854,7 +854,7 @@ Public Class clsMASICResultsMerger
 
                     Using srSourceFile = New StreamReader(New FileStream(sourcefile.Value, FileMode.Open, FileAccess.Read, FileShare.Read))
                         Dim linesRead = 0
-                        While srSourceFile.Peek > -1
+                        While Not srSourceFile.EndOfStream
 
                             Dim lineIn = srSourceFile.ReadLine()
                             linesRead += 1
@@ -1328,7 +1328,7 @@ Public Class clsMASICResultsMerger
             Using srInFile = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strScanStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 intLinesRead = 0
-                Do While srInFile.Peek > -1
+                While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine
 
                     If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
@@ -1355,7 +1355,7 @@ Public Class clsMASICResultsMerger
                             dctScanStats.Add(intScanNumber, udtScanStats)
                         End If
                     End If
-                Loop
+                End While
 
             End Using
 
@@ -1384,7 +1384,7 @@ Public Class clsMASICResultsMerger
         Try
             Using srInFile = New StreamReader(New FileStream(strMetadataFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-                Do While srInFile.Peek > -1
+                While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine()
 
                     If Not String.IsNullOrWhiteSpace(strLineIn) Then
@@ -1408,7 +1408,7 @@ Public Class clsMASICResultsMerger
                             End If
 
                             blnHeadersParsed = True
-                            Continue Do
+                            Continue While
                         End If
 
                         If lstData.Count > intDatasetIndex Then
@@ -1430,7 +1430,7 @@ Public Class clsMASICResultsMerger
                             End If
                         End If
                     End If
-                Loop
+                End While
             End Using
 
         Catch ex As Exception
@@ -1467,7 +1467,7 @@ Public Class clsMASICResultsMerger
             Using srInFile = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strSICStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 intLinesRead = 0
-                Do While srInFile.Peek > -1
+                While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine
 
                     If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
@@ -1494,7 +1494,7 @@ Public Class clsMASICResultsMerger
                             dctSICStats.Add(intFragScanNumber, udtSICStats)
                         End If
                     End If
-                Loop
+                End While
 
             End Using
 
@@ -1532,7 +1532,7 @@ Public Class clsMASICResultsMerger
             Using srInFile = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strReporterIonStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 intLinesRead = 0
-                Do While srInFile.Peek > -1
+                While Not srInFile.EndOfStream
                     strLineIn = srInFile.ReadLine
 
                     If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
@@ -1580,7 +1580,7 @@ Public Class clsMASICResultsMerger
 
                         End If
                     End If
-                Loop
+                End While
 
             End Using
 
