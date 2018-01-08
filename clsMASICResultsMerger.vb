@@ -15,27 +15,19 @@ Imports PRISM
 ' Program started November 26, 2008
 '
 ' E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
-' Website: http://ncrr.pnnl.gov/ or http://omics.pnnl.gov
+' Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/
 ' -------------------------------------------------------------------------------
 '
 ' Licensed under the Apache License, Version 2.0; you may not use this file except
 ' in compliance with the License.  You may obtain a copy of the License at
 ' http://www.apache.org/licenses/LICENSE-2.0
 '
-' Notice: This computer software was prepared by Battelle Memorial Institute,
-' hereinafter the Contractor, under Contract No. DE-AC05-76RL0 1830 with the
-' Department of Energy (DOE).  All rights in the computer software are reserved
-' by DOE on behalf of the United States Government and the Contractor as
-' provided in the Contract.  NEITHER THE GOVERNMENT NOR THE CONTRACTOR MAKES ANY
-' WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LIABILITY FOR THE USE OF THIS
-' SOFTWARE.  This notice including this sentence must appear on any copies of
-' this computer software.
 
 Public Class clsMASICResultsMerger
-    Inherits clsProcessFilesBaseClass
+    Inherits FileProcessor.ProcessFilesBase
 
     Public Sub New()
-        MyBase.mFileDate = "November 21, 2013"
+        MyBase.mFileDate = "January 8, 2018"
         InitializeLocalVariables()
     End Sub
 
@@ -184,7 +176,7 @@ Public Class clsMASICResultsMerger
     ' For the input file, defines which column tracks scan number; the first column is column 1 (not zero)
     ' When true, then a separate output file will be created for each collision mode type; this is only possible if a _ReporterIons.txt file exists
 
-    Protected WithEvents mPHRPReader As clsPHRPReader
+    Protected mPHRPReader As clsPHRPReader
 
     ' For each KeyValuePair, the key is the base file name and the values are the output file paths for the base file
     ' There will be one output file for each base file if mSeparateByCollisionMode=false; multiple files if it is true
@@ -238,8 +230,7 @@ Public Class clsMASICResultsMerger
 
         Try
             Console.WriteLine()
-            MyBase.mProgressStepDescription = "Looking for MASIC data files that correspond to " & udtDatasetInfo.DatasetName
-            ShowMessage(MyBase.mProgressStepDescription)
+            ShowMessage("Looking for MASIC data files that correspond to " & udtDatasetInfo.DatasetName)
 
             strDatasetName = String.Copy(udtDatasetInfo.DatasetName)
 
@@ -388,7 +379,6 @@ Public Class clsMASICResultsMerger
     End Function
 
     Private Sub InitializeLocalVariables()
-        MyBase.ShowMessages = False
 
         mMASICResultsFolderPath = String.Empty
         ScanNumberColumn = DEFAULT_SCAN_NUMBER_COLUMN
@@ -1034,11 +1024,13 @@ Public Class clsMASICResultsMerger
             ' Initialize the output file
             Using swOutFile = New StreamWriter(New FileStream(strOutputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
-
                 ' Open the Mage Extractor data file and read the data for each job
-                mPHRPReader = New clsPHRPReader(fiInputFile.FullName, clsPHRPReader.ePeptideHitResultType.Unknown, False, False, False)
-                mPHRPReader.EchoMessagesToConsole = False
-                mPHRPReader.SkipDuplicatePSMs = False
+                mPHRPReader = New clsPHRPReader(fiInputFile.FullName, clsPHRPReader.ePeptideHitResultType.Unknown, False, False, False) With {
+                    .EchoMessagesToConsole = False,
+                    .SkipDuplicatePSMs = False
+                }
+
+                RegisterEvents(mPHRPReader)
 
                 If Not mPHRPReader.CanRead Then
                     ShowErrorMessage("Aborting since PHRPReader is not ready: " & mPHRPReader.ErrorMessage)
@@ -1199,7 +1191,7 @@ Public Class clsMASICResultsMerger
                         swOutFile.WriteLine(oPSM.DataLineText & ControlChars.Tab & strBlankAdditionalColumns)
                     End If
 
-                    UpdateProgress(mPHRPReader.PercentComplete)
+                    UpdateProgress("Loading data from " & fiInputFile.Name, mPHRPReader.PercentComplete)
                     intLastJob = intJob
                 Loop
 
@@ -1340,8 +1332,7 @@ Public Class clsMASICResultsMerger
                 dctScanStats.Clear()
             End If
 
-            MyBase.mProgressStepDescription = "  Reading: " & strScanStatsFileName
-            ShowMessage(MyBase.mProgressStepDescription)
+            ShowMessage("  Reading: " & strScanStatsFileName)
 
             Using srInFile = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strScanStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
@@ -1480,8 +1471,7 @@ Public Class clsMASICResultsMerger
                 dctSICStats.Clear()
             End If
 
-            MyBase.mProgressStepDescription = "  Reading: " & strSICStatsFileName
-            ShowMessage(MyBase.mProgressStepDescription)
+            ShowMessage("  Reading: " & strSICStatsFileName)
 
             Using srInFile = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strSICStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
@@ -1546,8 +1536,7 @@ Public Class clsMASICResultsMerger
         Try
             strReporterIonHeaders = String.Empty
 
-            MyBase.mProgressStepDescription = "  Reading: " & strReporterIonStatsFileName
-            ShowMessage(MyBase.mProgressStepDescription)
+            ShowMessage("  Reading: " & strReporterIonStatsFileName)
 
             Using srInFile = New StreamReader(New FileStream(Path.Combine(strSourceFolder, strReporterIonStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
@@ -1635,18 +1624,6 @@ Public Class clsMASICResultsMerger
             End If
         End If
 
-    End Sub
-
-    Private Sub mPHRPReader_ErrorEvent(strErrorMessage As String) Handles mPHRPReader.ErrorEvent
-        ShowErrorMessage(strErrorMessage)
-    End Sub
-
-    Private Sub mPHRPReader_MessageEvent(strMessage As String) Handles mPHRPReader.MessageEvent
-        ShowMessage(strMessage)
-    End Sub
-
-    Private Sub mPHRPReader_WarningEvent(strWarningMessage As String) Handles mPHRPReader.WarningEvent
-        ShowMessage("Warning: " & strWarningMessage)
     End Sub
 
 End Class

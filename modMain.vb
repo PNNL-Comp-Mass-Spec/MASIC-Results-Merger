@@ -10,24 +10,16 @@ Imports PRISM
 ' Program started November 26, 2008
 '
 ' E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
-' Website: http://omics.pnl.gov/ or http://www.sysbio.org/resources/staff/ or http://panomics.pnnl.gov/
+' Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/
 ' -------------------------------------------------------------------------------
 '
 ' Licensed under the Apache License, Version 2.0; you may not use this file except
 ' in compliance with the License.  You may obtain a copy of the License at
 ' http://www.apache.org/licenses/LICENSE-2.0
 '
-' Notice: This computer software was prepared by Battelle Memorial Institute,
-' hereinafter the Contractor, under Contract No. DE-AC05-76RL0 1830 with the
-' Department of Energy (DOE).  All rights in the computer software are reserved
-' by DOE on behalf of the United States Government and the Contractor as
-' provided in the Contract.  NEITHER THE GOVERNMENT NOR THE CONTRACTOR MAKES ANY
-' WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LIABILITY FOR THE USE OF THIS
-' SOFTWARE.  This notice including this sentence must appear on any copies of
-' this computer software.
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "August 20, 2014"
+    Public Const PROGRAM_DATE As String = "January 8, 2018"
 
     Private mInputFilePath As String
     Private mMageResults As Boolean
@@ -44,12 +36,11 @@ Module modMain
     Private mRecurseFoldersMaxLevels As Integer
 
     Private mLogMessagesToFile As Boolean
-    Private mQuietMode As Boolean
 
     Private mScanNumberColumn As Integer
     Private mSeparateByCollisionMode As Boolean
 
-    Private WithEvents mMASICResultsMerger As clsMASICResultsMerger
+    Private mMASICResultsMerger As clsMASICResultsMerger
     Private mLastProgressReportTime As DateTime
     Private mLastProgressReportValue As Integer
 
@@ -57,7 +48,9 @@ Module modMain
         If blnAddCarriageReturn Then
             Console.WriteLine()
         End If
+
         If intPercentComplete > 100 Then intPercentComplete = 100
+
         Console.Write("Processing: " & intPercentComplete.ToString & "% ")
         If blnAddCarriageReturn Then
             Console.WriteLine()
@@ -82,7 +75,6 @@ Module modMain
         mRecurseFolders = False
         mRecurseFoldersMaxLevels = 0
 
-        mQuietMode = False
         mLogMessagesToFile = False
 
         mScanNumberColumn = clsMASICResultsMerger.DEFAULT_SCAN_NUMBER_COLUMN
@@ -101,10 +93,15 @@ Module modMain
                 ShowProgramHelp()
                 intReturnCode = -1
             Else
-                mMASICResultsMerger = New clsMASICResultsMerger
+                mMASICResultsMerger = New clsMASICResultsMerger()
+                AddHandler mMASICResultsMerger.ErrorEvent, AddressOf mMASICResultsMerger_ErrorEvent
+                AddHandler mMASICResultsMerger.WarningEvent, AddressOf mMASICResultsMerger_WarningEvent
+                AddHandler mMASICResultsMerger.StatusEvent, AddressOf mMASICResultsMerger_StatusEvent
+                AddHandler mMASICResultsMerger.DebugEvent, AddressOf mMASICResultsMerger_DebugEvent
+                AddHandler mMASICResultsMerger.ProgressUpdate, AddressOf mMASICResultsMerger_ProgressUpdate
+                AddHandler mMASICResultsMerger.ProgressReset, AddressOf mMASICResultsMerger_ProgressReset
 
                 With mMASICResultsMerger
-                    .ShowMessages = Not mQuietMode
                     .LogMessagesToFile = mLogMessagesToFile
 
                     ' Note: Define other options here; they will get overridden if defined in the parameter file
@@ -126,8 +123,8 @@ Module modMain
                         intReturnCode = 0
                     Else
                         intReturnCode = mMASICResultsMerger.ErrorCode
-                        If intReturnCode <> 0 AndAlso Not mQuietMode Then
-                            Console.WriteLine("Error while processing: " & mMASICResultsMerger.GetErrorMessage())
+                        If intReturnCode <> 0 Then
+                            ShowErrorMessage("Error while processing: " & mMASICResultsMerger.GetErrorMessage())
                         End If
                     End If
                 End If
@@ -136,7 +133,10 @@ Module modMain
                     mMASICResultsMerger.MergeProcessedDatasets()
                 End If
 
-                DisplayProgressPercent(mLastProgressReportValue, True)
+                If mLastProgressReportValue > 0 Then
+                    DisplayProgressPercent(mLastProgressReportValue, True)
+                End If
+
             End If
 
         Catch ex As Exception
@@ -156,7 +156,7 @@ Module modMain
         ' Returns True if no problems; otherwise, returns false
 
         Dim strValue As String = String.Empty
-        Dim lstValidParameters = New List(Of String) From {"I", "M", "O", "P", "N", "C", "Mage", "Append", "S", "A", "R", "Q"}
+        Dim lstValidParameters = New List(Of String) From {"I", "M", "O", "P", "N", "C", "Mage", "Append", "S", "A", "R"}
         Dim intValue As Integer
 
         Try
@@ -197,8 +197,6 @@ Module modMain
                     End If
                     If .RetrieveValueForParameter("A", strValue) Then mOutputFolderAlternatePath = strValue
                     If .RetrieveValueForParameter("R", strValue) Then mRecreateFolderHierarchyInAlternatePath = True
-
-                    If .RetrieveValueForParameter("Q", strValue) Then mQuietMode = True
                 End With
 
                 Return True
@@ -241,15 +239,14 @@ Module modMain
             Console.WriteLine("Use /N to change the column number that contains scan number in the input file.  The default is 2 (meaning /N:2)." &
               "When reading data with _ReporterIons.txt files, you can use /C to specify that a separate output file be created for each collision mode type in the input file (typically pqd, cid, and etd).")
             Console.WriteLine()
-            Console.WriteLine("Use /Mage to specify that the input file is a results from from Mage Extractor.  This file will contain results from several analysis jobs; the first column in this file must be Job and the remaining columns must be the standard Synopsis or First-Hits columns supported by PHRPReader.  In addition, the input folder must have a column named InputFile_metadata.txt (this file was auto-created by Mage Extractor).")
+            Console.WriteLine("Use /Mage to specify that the input file is a results from from Mage Extractor.  This file will contain results from several analysis jobs; the first column in this file must be Job and the remaining columns must be the standard Synopsis or First-Hits columns supported by PHRPReader.  In addition, the input folder must have a file named InputFile_metadata.txt (this file was auto-created by Mage Extractor).")
             Console.WriteLine()
             Console.WriteLine("Use /Append to merge results from multiple datasets together as a single file; this is only applicable when the InputFilePathSpec includes a * wildcard and multiple files are matched")
             Console.WriteLine("The merged results file will have DatasetID values of 1, 2, 3, etc. along with a second file mapping DatasetID to Dataset Name")
             Console.WriteLine()
             Console.WriteLine("Use /S to process all valid files in the input folder and subfolders. Include a number after /S (like /S:2) to limit the level of subfolders to examine." &
               "When using /S, you can redirect the output of the results using /A." &
-              "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined)." &
-              "The optional /Q switch will suppress all error messages.")
+              "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined).")
             Console.WriteLine()
 
             Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2008")
@@ -257,8 +254,9 @@ Module modMain
             Console.WriteLine()
 
             Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com")
-            Console.WriteLine("Website: http://omics.pnl.gov/ or http://panomics.pnnl.gov/")
+            Console.WriteLine("Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/")
             Console.WriteLine()
+
             ' Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
             Threading.Thread.Sleep(750)
 
@@ -268,7 +266,23 @@ Module modMain
 
     End Sub
 
-    Private Sub mMASICResultsMerger_ProgressChanged(taskDescription As String, percentComplete As Single) Handles mMASICResultsMerger.ProgressChanged
+    Private Sub mMASICResultsMerger_ErrorEvent(message As String, ex As Exception)
+        ConsoleMsgUtils.ShowError(message, ex)
+    End Sub
+
+    Private Sub mMASICResultsMerger_WarningEvent(message As String)
+        ConsoleMsgUtils.ShowWarning(message)
+    End Sub
+
+    Private Sub mMASICResultsMerger_StatusEvent(message As String)
+        Console.WriteLine(message)
+    End Sub
+
+    Private Sub mMASICResultsMerger_DebugEvent(message As String)
+        ConsoleMsgUtils.ShowDebug(message)
+    End Sub
+
+    Private Sub mMASICResultsMerger_ProgressUpdate(taskDescription As String, percentComplete As Single)
         Const PERCENT_REPORT_INTERVAL = 25
         Const PROGRESS_DOT_INTERVAL_MSEC = 250
 
@@ -298,7 +312,7 @@ Module modMain
         End If
     End Sub
 
-    Private Sub mMASICResultsMerger_ProgressReset() Handles mMASICResultsMerger.ProgressReset
+    Private Sub mMASICResultsMerger_ProgressReset()
         mLastProgressReportTime = DateTime.UtcNow
         mLastProgressReportValue = 0
     End Sub
