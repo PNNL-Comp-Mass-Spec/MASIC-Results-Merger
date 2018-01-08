@@ -561,6 +561,19 @@ Public Class clsMASICResultsMerger
                                 ' The input file does have a text-based header
                                 strHeaderLine = String.Copy(strLineIn)
 
+                                ' Check for a column named "ScanNum" or "ScanNumber" or "Scan Num" or "Scan Number"
+                                ' If found, override ScanNumberColumn
+                                For colIndex = 0 To strSplitLine.Length - 1
+                                    Select Case strSplitLine(colIndex).ToLower()
+                                        Case "scan", "scannum", "scan num", "scannumber", "scan number", "scan#", "scan #"
+                                            If ScanNumberColumn <> colIndex + 1 Then
+                                                ScanNumberColumn = colIndex + 1
+                                                ShowWarning(
+                                                    String.Format("Reading scan numbers from column {0} ({1}) in file {2}",
+                                                                  ScanNumberColumn, strSplitLine(colIndex), inputFile.Name))
+                                            End If
+                                    End Select
+                                Next
                                 ' Clear strSplitLine so that this line gets skipped
                                 ReDim strSplitLine(-1)
                             End If
