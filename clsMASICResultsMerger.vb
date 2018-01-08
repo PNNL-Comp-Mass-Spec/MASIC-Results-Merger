@@ -434,12 +434,12 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function MergePeptideHitAndMASICFiles(strInputFilePath As String,
-      strOutputFolderPath As String,
+    Protected Function MergePeptideHitAndMASICFiles(
+      inputFile As FileInfo,
+      outputFolderPath As String,
       dctScanStats As Dictionary(Of Integer, udtScanStatsType),
       dctSICStats As Dictionary(Of Integer, udtSICStatsType),
-      strReporterIonHeaders As String) As Boolean
-
+      reporterIonHeaders As String) As Boolean
 
         Dim swOutfile() As StreamWriter
         Dim intLinesWritten() As Integer
@@ -451,41 +451,26 @@ Public Class clsMASICResultsMerger
 
         Dim baseFileName = String.Empty
 
-        Dim strLineIn As String
-
-        Dim strSplitLine() As String
-
-        Dim strHeaderLine As String
-        Dim strAddonColumns As String
-        Dim strCollisionModeCurrentScan As String
-
         Dim strBlankAdditionalColumns As String = String.Empty
         Dim strBlankAdditionalSICColumns As String = String.Empty
         Dim strBlankAdditionalReporterIonColumns As String = String.Empty
 
-        Dim intOutFileIndex As Integer
-        Dim intEmptyOutFileCount As Integer
-
-        Dim intLinesRead As Integer
-        Dim intScanNumber As Integer
-
-        Dim dctCollisionModeFileMap As Dictionary(Of String, Integer)
-
-        Dim blnWriteReporterIonStats = False
-        Dim blnSuccess As Boolean
+        Dim dctCollisionModeFileMap = New Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
 
         Try
-
-            baseFileName = Path.GetFileNameWithoutExtension(strInputFilePath)
-
-            If String.IsNullOrWhiteSpace(strReporterIonHeaders) Then strReporterIonHeaders = String.Empty
-
-            ' Define the output file path
-            If strOutputFolderPath Is Nothing Then
-                strOutputFolderPath = String.Empty
+            If Not inputFile.Exists Then
+                ShowErrorMessage("File not found: " & inputFile.FullName)
+                Return False
             End If
 
-            dctCollisionModeFileMap = New Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
+            baseFileName = Path.GetFileNameWithoutExtension(inputFile.Name)
+
+            If String.IsNullOrWhiteSpace(reporterIonHeaders) Then reporterIonHeaders = String.Empty
+
+            ' Define the output file path
+            If outputFolderPath Is Nothing Then
+                outputFolderPath = String.Empty
+            End If
 
             If SeparateByCollisionMode Then
                 ' Construct a list of the different collision modes in dctScanStats
@@ -503,18 +488,19 @@ Public Class clsMASICResultsMerger
                 ReDim strOutputFilePaths(intOutputFileCount - 1)
 
                 If dctCollisionModeFileMap.Count = 0 Then
-                    strOutputFilePaths(0) = New KeyValuePair(Of String, String)("na", Path.Combine(strOutputFolderPath, baseFileName & "_na" & RESULTS_SUFFIX))
+                    strOutputFilePaths(0) = New KeyValuePair(Of String, String)("na", Path.Combine(outputFolderPath, baseFileName & "_na" & RESULTS_SUFFIX))
                 Else
                     For Each oItem In dctCollisionModeFileMap
                         Dim strCollisionMode As String = oItem.Key
                         If String.IsNullOrWhiteSpace(strCollisionMode) Then strCollisionMode = "na"
-                        strOutputFilePaths(oItem.Value) = New KeyValuePair(Of String, String)(strCollisionMode, Path.Combine(strOutputFolderPath, baseFileName & "_" & strCollisionMode & RESULTS_SUFFIX))
+                        strOutputFilePaths(oItem.Value) = New KeyValuePair(Of String, String)(
+                            strCollisionMode, Path.Combine(outputFolderPath, baseFileName & "_" & strCollisionMode & RESULTS_SUFFIX))
                     Next
                 End If
             Else
                 intOutputFileCount = 1
                 ReDim strOutputFilePaths(0)
-                strOutputFilePaths(0) = New KeyValuePair(Of String, String)("", Path.Combine(strOutputFolderPath, baseFileName & RESULTS_SUFFIX))
+                strOutputFilePaths(0) = New KeyValuePair(Of String, String)("", Path.Combine(outputFolderPath, baseFileName & RESULTS_SUFFIX))
             End If
 
             ReDim swOutfile(intOutputFileCount - 1)
@@ -530,33 +516,37 @@ Public Class clsMASICResultsMerger
             Return False
         End Try
 
-
         Try
-            MyBase.mProgressStepDescription = "Parsing " & Path.GetFileName(strInputFilePath) & " and writing " & Path.GetFileName(strOutputFilePaths(0).Value)
-            ShowMessage(MyBase.mProgressStepDescription)
+            Console.WriteLine()
+            ShowMessage("Parsing " & inputFile.Name & " and writing " & Path.GetFileName(strOutputFilePaths(0).Value))
 
             If ScanNumberColumn < 1 Then
                 ' Assume the scan number is in the second column
                 ScanNumberColumn = DEFAULT_SCAN_NUMBER_COLUMN
             End If
 
-
             ' Read from srInFile and write out to the file(s) in swOutFile
-            Using srInFile = New StreamReader(New FileStream(strInputFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-                intLinesRead = 0
-                Do While srInFile.Peek > -1
-                    strLineIn = srInFile.ReadLine
-                    strCollisionModeCurrentScan = String.Empty
+                Dim intLinesRead = 0
+                Dim blnWriteReporterIonStats = False
+
+                While Not srInFile.EndOfStream
+                    Dim strLineIn = srInFile.ReadLine
+                    Dim strCollisionModeCurrentScan = String.Empty
 
                     If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
                         intLinesRead += 1
-                        strSplitLine = strLineIn.Split(ControlChars.Tab)
-                        strAddonColumns = String.Empty
+                        Dim strSplitLine = strLineIn.Split(ControlChars.Tab)
 
                         If intLinesRead = 1 Then
+
+                            Dim strHeaderLine As String
+
+                            Dim integerValue As Integer
+
                             ' Write out an updated header line
-                            If strSplitLine.Length >= ScanNumberColumn AndAlso Integer.TryParse(strSplitLine(ScanNumberColumn - 1), intScanNumber) Then
+                            If strSplitLine.Length >= ScanNumberColumn AndAlso Integer.TryParse(strSplitLine(ScanNumberColumn - 1), integerValue) Then
                                 ' The input file doesn't have a header line; we will add one, using generic column names for the data in the input file
 
                                 strHeaderLine = String.Empty
@@ -568,15 +558,14 @@ Public Class clsMASICResultsMerger
                                     End If
                                 Next
                             Else
-                                ' The input file does have a text-based
+                                ' The input file does have a text-based header
                                 strHeaderLine = String.Copy(strLineIn)
 
                                 ' Clear strSplitLine so that this line gets skipped
                                 ReDim strSplitLine(-1)
                             End If
 
-                            Dim lstAdditionalHeaders As List(Of String)
-                            lstAdditionalHeaders = GetAdditionalMASICHeaders()
+                            Dim lstAdditionalHeaders = GetAdditionalMASICHeaders()
 
                             ' Populate strBlankAdditionalColumns with tab characters based on the number of items in lstAdditionalHeaders
                             strBlankAdditionalColumns = New String(ControlChars.Tab, lstAdditionalHeaders.Count - 1)
@@ -584,103 +573,107 @@ Public Class clsMASICResultsMerger
                             strBlankAdditionalSICColumns = New String(ControlChars.Tab, SIC_STAT_COLUMN_COUNT_TO_ADD)
 
                             ' Initialize strBlankAdditionalReporterIonColumns
-                            If strReporterIonHeaders.Length > 0 Then
-                                strBlankAdditionalReporterIonColumns = New String(ControlChars.Tab, strReporterIonHeaders.Split(ControlChars.Tab).ToList().Count - 1)
+                            If reporterIonHeaders.Length > 0 Then
+                                strBlankAdditionalReporterIonColumns = New String(ControlChars.Tab, reporterIonHeaders.Split(ControlChars.Tab).ToList().Count - 1)
                             End If
 
-                            ' Initialize the AddOn Columns
-                            strAddonColumns = FlattenList(lstAdditionalHeaders)
+                            ' Initialize the AddOn header columns
+                            Dim strAddonHeaders = FlattenList(lstAdditionalHeaders)
 
-                            If strReporterIonHeaders.Length > 0 Then
+                            If reporterIonHeaders.Length > 0 Then
                                 ' Append the reporter ion stats columns
-                                strAddonColumns &= ControlChars.Tab & strReporterIonHeaders
+                                strAddonHeaders &= ControlChars.Tab & reporterIonHeaders
                                 blnWriteReporterIonStats = True
                             End If
 
                             ' Write out the headers
                             For intIndex = 0 To intOutputFileCount - 1
-                                swOutfile(intIndex).WriteLine(strHeaderLine & ControlChars.Tab & strAddonColumns)
+                                swOutfile(intIndex).WriteLine(strHeaderLine & ControlChars.Tab & strAddonHeaders)
                             Next
 
                         End If
 
-                        If strSplitLine.Length >= ScanNumberColumn AndAlso Integer.TryParse(strSplitLine(ScanNumberColumn - 1), intScanNumber) Then
-                            ' Look for intScanNumber in dctScanStats
-                            Dim udtScanStats = New udtScanStatsType
-                            If Not dctScanStats.TryGetValue(intScanNumber, udtScanStats) Then
-                                ' Match not found; use the blank columns in strBlankAdditionalColumns
-                                strAddonColumns = String.Copy(strBlankAdditionalColumns)
-                            Else
-                                With udtScanStats
-                                    strAddonColumns = .ElutionTime & ControlChars.Tab &
-                                       .ScanType & ControlChars.Tab &
-                                       .TotalIonIntensity & ControlChars.Tab &
-                                       .BasePeakIntensity & ControlChars.Tab &
-                                       .BasePeakMZ
-                                End With
-
-                                Dim udtSICStats = New udtSICStatsType
-                                If Not dctSICStats.TryGetValue(intScanNumber, udtSICStats) Then
-                                    ' Match not found; use the blank columns in strBlankAdditionalSICColumns
-                                    strAddonColumns &= ControlChars.Tab & strBlankAdditionalSICColumns
-
-                                    If blnWriteReporterIonStats Then
-                                        strAddonColumns &= ControlChars.Tab &
-                                          String.Empty & ControlChars.Tab &
-                                          strBlankAdditionalReporterIonColumns
-                                    End If
-                                Else
-                                    With udtSICStats
-                                        strAddonColumns &= ControlChars.Tab &
-                                         .OptimalScanNumber & ControlChars.Tab &
-                                         .PeakMaxIntensity & ControlChars.Tab &
-                                         .PeakSignalToNoiseRatio & ControlChars.Tab &
-                                         .FWHMInScans & ControlChars.Tab &
-                                         .PeakArea & ControlChars.Tab &
-                                         .ParentIonIntensity & ControlChars.Tab &
-                                         .ParentIonMZ & ControlChars.Tab &
-                                         .StatMomentsArea
-                                    End With
-                                End If
-
-                                If blnWriteReporterIonStats Then
-                                    With udtScanStats
-                                        If String.IsNullOrWhiteSpace(.CollisionMode) Then
-                                            ' Collision mode is not defined; append blank columns
-                                            strAddonColumns &= ControlChars.Tab &
-                                             String.Empty & ControlChars.Tab &
-                                             strBlankAdditionalReporterIonColumns
-                                        Else
-                                            ' Collision mode is defined
-                                            strAddonColumns &= ControlChars.Tab &
-                                             .CollisionMode & ControlChars.Tab &
-                                             .ReporterIonData
-
-                                            strCollisionModeCurrentScan = String.Copy(.CollisionMode)
-                                        End If
-                                    End With
-
-
-                                End If
-                            End If
-
-                            intOutFileIndex = 0
-                            If SeparateByCollisionMode AndAlso intOutputFileCount > 1 Then
-                                If Not strCollisionModeCurrentScan Is Nothing Then
-                                    ' Determine the correct output file
-                                    If Not dctCollisionModeFileMap.TryGetValue(strCollisionModeCurrentScan, intOutFileIndex) Then
-                                        intOutFileIndex = 0
-                                    End If
-                                End If
-                            End If
-
-                            swOutfile(intOutFileIndex).WriteLine(strLineIn & ControlChars.Tab & strAddonColumns)
-                            intLinesWritten(intOutFileIndex) += 1
-
+                        Dim intScanNumber As Integer
+                        If strSplitLine.Length < ScanNumberColumn OrElse Not Integer.TryParse(strSplitLine(ScanNumberColumn - 1), intScanNumber) Then
+                            Continue While
                         End If
 
+                        ' Look for intScanNumber in dctScanStats
+                        Dim udtScanStats = New udtScanStatsType
+                        Dim strAddonColumns As String
+
+                        If Not dctScanStats.TryGetValue(intScanNumber, udtScanStats) Then
+                            ' Match not found; use the blank columns in strBlankAdditionalColumns
+                            strAddonColumns = String.Copy(strBlankAdditionalColumns)
+                        Else
+                            With udtScanStats
+                                strAddonColumns = .ElutionTime & ControlChars.Tab &
+                                                  .ScanType & ControlChars.Tab &
+                                                  .TotalIonIntensity & ControlChars.Tab &
+                                                  .BasePeakIntensity & ControlChars.Tab &
+                                                  .BasePeakMZ
+                            End With
+
+                            Dim udtSICStats = New udtSICStatsType
+                            If Not dctSICStats.TryGetValue(intScanNumber, udtSICStats) Then
+                                ' Match not found; use the blank columns in strBlankAdditionalSICColumns
+                                strAddonColumns &= ControlChars.Tab & strBlankAdditionalSICColumns
+
+                                If blnWriteReporterIonStats Then
+                                    strAddonColumns &= ControlChars.Tab &
+                                                       String.Empty & ControlChars.Tab &
+                                                       strBlankAdditionalReporterIonColumns
+                                End If
+                            Else
+                                With udtSICStats
+                                    strAddonColumns &= ControlChars.Tab &
+                                                       .OptimalScanNumber & ControlChars.Tab &
+                                                       .PeakMaxIntensity & ControlChars.Tab &
+                                                       .PeakSignalToNoiseRatio & ControlChars.Tab &
+                                                       .FWHMInScans & ControlChars.Tab &
+                                                       .PeakArea & ControlChars.Tab &
+                                                       .ParentIonIntensity & ControlChars.Tab &
+                                                       .ParentIonMZ & ControlChars.Tab &
+                                                       .StatMomentsArea
+                                End With
+                            End If
+
+                            If blnWriteReporterIonStats Then
+                                With udtScanStats
+                                    If String.IsNullOrWhiteSpace(.CollisionMode) Then
+                                        ' Collision mode is not defined; append blank columns
+                                        strAddonColumns &= ControlChars.Tab &
+                                                           String.Empty & ControlChars.Tab &
+                                                           strBlankAdditionalReporterIonColumns
+                                    Else
+                                        ' Collision mode is defined
+                                        strAddonColumns &= ControlChars.Tab &
+                                                           .CollisionMode & ControlChars.Tab &
+                                                           .ReporterIonData
+
+                                        strCollisionModeCurrentScan = String.Copy(.CollisionMode)
+                                    End If
+                                End With
+
+
+                            End If
+                        End If
+
+                        Dim intOutFileIndex = 0
+                        If SeparateByCollisionMode AndAlso intOutputFileCount > 1 Then
+                            If Not strCollisionModeCurrentScan Is Nothing Then
+                                ' Determine the correct output file
+                                If Not dctCollisionModeFileMap.TryGetValue(strCollisionModeCurrentScan, intOutFileIndex) Then
+                                    intOutFileIndex = 0
+                                End If
+                            End If
+                        End If
+
+                        swOutfile(intOutFileIndex).WriteLine(strLineIn & ControlChars.Tab & strAddonColumns)
+                        intLinesWritten(intOutFileIndex) += 1
+
                     End If
-                Loop
+                End While
 
             End Using
 
@@ -696,7 +689,7 @@ Public Class clsMASICResultsMerger
             ' See if any of the files had no data written to them
             ' If there are, then delete the empty output file
             ' However, retain at least one output file
-            intEmptyOutFileCount = 0
+            Dim intEmptyOutFileCount = 0
             For intIndex = 0 To intOutputFileCount - 1
                 If intLinesWritten(intIndex) = 0 Then
                     intEmptyOutFileCount += 1
@@ -737,14 +730,12 @@ Public Class clsMASICResultsMerger
                 mProcessedDatasets.Add(outputPathEntry)
             End If
 
-            blnSuccess = True
+            Return True
 
         Catch ex As Exception
             HandleException("Error in MergePeptideHitAndMASICFiles", ex)
-            blnSuccess = False
+            Return False
         End Try
-
-        Return blnSuccess
 
     End Function
 
@@ -1009,8 +1000,7 @@ Public Class clsMASICResultsMerger
             End Using
 
 
-            Dim lstAdditionalHeaders As List(Of String)
-            lstAdditionalHeaders = GetAdditionalMASICHeaders()
+            Dim lstAdditionalHeaders = GetAdditionalMASICHeaders()
 
             ' Populate strBlankAdditionalColumns with tab characters based on the number of items in lstAdditionalHeaders
             strBlankAdditionalColumns = New String(ControlChars.Tab, lstAdditionalHeaders.Count - 1)
@@ -1044,6 +1034,7 @@ Public Class clsMASICResultsMerger
                 Do While mPHRPReader.MoveNext()
 
                     Dim oPSM As clsPSM = mPHRPReader.CurrentPSM
+
                     ' Parse out the job from the current line
                     lstColumns = oPSM.DataLineText.Split(ControlChars.Tab).ToList()
 
@@ -1263,7 +1254,7 @@ Public Class clsMASICResultsMerger
 
             If blnSuccess Then
                 ' Merge the MASIC data with the input file
-                blnSuccess = MergePeptideHitAndMASICFiles(fiInputFile.FullName, mOutputFolderPath,
+                blnSuccess = MergePeptideHitAndMASICFiles(fiInputFile, mOutputFolderPath,
                  dctScanStats,
                  dctSICStats,
                  strReporterIonHeaders)
