@@ -43,15 +43,15 @@ Module modMain
     Private mLastProgressReportTime As DateTime
     Private mLastProgressReportValue As Integer
 
-    Private Sub DisplayProgressPercent(intPercentComplete As Integer, blnAddCarriageReturn As Boolean)
-        If blnAddCarriageReturn Then
+    Private Sub DisplayProgressPercent(percentComplete As Integer, addCarriageReturn As Boolean)
+        If addCarriageReturn Then
             Console.WriteLine()
         End If
 
-        If intPercentComplete > 100 Then intPercentComplete = 100
+        If percentComplete > 100 Then percentComplete = 100
 
-        Console.Write("Processing: " & intPercentComplete.ToString & "% ")
-        If blnAddCarriageReturn Then
+        Console.Write("Processing: " & percentComplete.ToString & "% ")
+        If addCarriageReturn Then
             Console.WriteLine()
         End If
     End Sub
@@ -59,9 +59,9 @@ Module modMain
     Public Function Main() As Integer
         ' Returns 0 if no error, error code if an error
 
-        Dim intReturnCode As Integer
+        Dim returnCode As Integer
         Dim objParseCommandLine As New clsParseCommandLine
-        Dim blnProceed As Boolean
+        Dim proceed As Boolean
 
         mInputFilePath = String.Empty
         mMageResults = False
@@ -79,17 +79,17 @@ Module modMain
         mSeparateByCollisionMode = False
 
         Try
-            blnProceed = False
+            proceed = False
             If objParseCommandLine.ParseCommandLine Then
-                If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then blnProceed = True
+                If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then proceed = True
             End If
 
-            If Not blnProceed OrElse
+            If Not proceed OrElse
                objParseCommandLine.NeedToShowHelp OrElse
                objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount = 0 OrElse
                mInputFilePath.Length = 0 Then
                 ShowProgramHelp()
-                intReturnCode = -1
+                returnCode = -1
             Else
                 mMASICResultsMerger = New clsMASICResultsMerger()
                 AddHandler mMASICResultsMerger.ErrorEvent, AddressOf mMASICResultsMerger_ErrorEvent
@@ -112,16 +112,16 @@ Module modMain
 
                 If mRecurseFolders Then
                     If mMASICResultsMerger.ProcessFilesAndRecurseFolders(mInputFilePath, mOutputFolderPath, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, "", mRecurseFoldersMaxLevels) Then
-                        intReturnCode = 0
+                        returnCode = 0
                     Else
-                        intReturnCode = mMASICResultsMerger.ErrorCode
+                        returnCode = mMASICResultsMerger.ErrorCode
                     End If
                 Else
                     If mMASICResultsMerger.ProcessFilesWildcard(mInputFilePath, mOutputFolderPath) Then
-                        intReturnCode = 0
+                        returnCode = 0
                     Else
-                        intReturnCode = mMASICResultsMerger.ErrorCode
-                        If intReturnCode <> 0 Then
+                        returnCode = mMASICResultsMerger.ErrorCode
+                        If returnCode <> 0 Then
                             ShowErrorMessage("Error while processing: " & mMASICResultsMerger.GetErrorMessage())
                         End If
                     End If
@@ -139,10 +139,10 @@ Module modMain
 
         Catch ex As Exception
             ShowErrorMessage("Error occurred in modMain->Main: " & Environment.NewLine & ex.Message)
-            intReturnCode = -1
+            returnCode = -1
         End Try
 
-        Return intReturnCode
+        Return returnCode
 
     End Function
 

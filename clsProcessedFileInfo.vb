@@ -16,12 +16,12 @@
         End Get
     End Property
 
-    Public Sub New(strBaseName As String)
-        BaseName = strBaseName
     ''' <summary>
     ''' Constructor
     ''' </summary>
     ''' <param name="baseDatasetName"></param>
+    Public Sub New(baseDatasetName As String)
+        BaseName = baseDatasetName
         mOutputFiles = New Dictionary(Of String, String)
     End Sub
 
