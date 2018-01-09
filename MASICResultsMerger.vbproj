@@ -114,6 +114,8 @@
   <ItemGroup>
     <Compile Include="clsMASICResultsMerger.vb" />
     <Compile Include="clsProcessedFileInfo.vb" />
+    <Compile Include="clsScanStatsData.vb" />
+    <Compile Include="clsSICStatsData.vb" />
     <Compile Include="modMain.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
   </ItemGroup>

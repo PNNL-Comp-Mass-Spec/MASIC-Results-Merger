@@ -122,50 +122,6 @@ Public Class clsMASICResultsMerger
         End Sub
     End Structure
 
-    Protected Structure udtScanStatsType : Implements IComparable(Of udtScanStatsType)
-
-        Public ScanNumber As Integer
-        Public ElutionTime As String
-        Public ScanType As String
-        Public TotalIonIntensity As String
-        Public BasePeakIntensity As String
-        Public BasePeakMZ As String
-        Public CollisionMode As String          ' Comes from _ReporterIons.txt file (Nothing if the file doesn't exist)
-        Public ReporterIonData As String        ' Comes from _ReporterIons.txt file (Nothing if the file doesn't exist)
-
-        Public Function CompareTo(other As udtScanStatsType) As Integer Implements IComparable(Of udtScanStatsType).CompareTo
-            If Me.ScanNumber < other.ScanNumber Then
-                Return -1
-            ElseIf Me.ScanNumber > other.ScanNumber Then
-                Return 1
-            Else
-                Return 0
-            End If
-        End Function
-    End Structure
-
-    Protected Structure udtSICStatsType : Implements IComparable(Of udtSICStatsType)
-        Public FragScanNumber As Integer
-        Public OptimalScanNumber As String
-        Public PeakMaxIntensity As String
-        Public PeakSignalToNoiseRatio As String
-        Public FWHMInScans As String
-        Public PeakArea As String
-        Public ParentIonIntensity As String
-        Public ParentIonMZ As String
-        Public StatMomentsArea As String
-
-        Public Function CompareTo(other As udtSICStatsType) As Integer Implements IComparable(Of udtSICStatsType).CompareTo
-            If Me.FragScanNumber < other.FragScanNumber Then
-                Return -1
-            ElseIf Me.FragScanNumber > other.FragScanNumber Then
-                Return 1
-            Else
-                Return 0
-            End If
-        End Function
-    End Structure
-
 #End Region
 
 #Region "Classwide Variables"
@@ -434,11 +390,10 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function MergePeptideHitAndMASICFiles(
-      inputFile As FileInfo,
+      inputFile As FileSystemInfo,
       outputFolderPath As String,
-      dctScanStats As Dictionary(Of Integer, udtScanStatsType),
-      dctSICStats As Dictionary(Of Integer, udtSICStatsType),
+      dctScanStats As Dictionary(Of Integer, clsScanStatsData),
+      dctSICStats As IReadOnlyDictionary(Of Integer, clsSICStatsData),
       reporterIonHeaders As String) As Boolean
 
         Dim swOutfile() As StreamWriter
@@ -611,15 +566,15 @@ Public Class clsMASICResultsMerger
                             Continue While
                         End If
 
-                        ' Look for intScanNumber in dctScanStats
-                        Dim udtScanStats = New udtScanStatsType
+                        ' Look for scanNumber in dctScanStats
+                        Dim scanStatsEntry As clsScanStatsData = Nothing
                         Dim strAddonColumns As String
 
-                        If Not dctScanStats.TryGetValue(intScanNumber, udtScanStats) Then
+                        If Not dctScanStats.TryGetValue(scanNumber, scanStatsEntry) Then
                             ' Match not found; use the blank columns in strBlankAdditionalColumns
                             strAddonColumns = String.Copy(strBlankAdditionalColumns)
                         Else
-                            With udtScanStats
+                            With scanStatsEntry
                                 strAddonColumns = .ElutionTime & ControlChars.Tab &
                                                   .ScanType & ControlChars.Tab &
                                                   .TotalIonIntensity & ControlChars.Tab &
@@ -627,8 +582,8 @@ Public Class clsMASICResultsMerger
                                                   .BasePeakMZ
                             End With
 
-                            Dim udtSICStats = New udtSICStatsType
-                            If Not dctSICStats.TryGetValue(intScanNumber, udtSICStats) Then
+                            Dim sicStatsEntry As clsSICStatsData = Nothing
+                            If Not dctSICStats.TryGetValue(scanNumber, sicStatsEntry) Then
                                 ' Match not found; use the blank columns in strBlankAdditionalSICColumns
                                 strAddonColumns &= ControlChars.Tab & strBlankAdditionalSICColumns
 
@@ -638,7 +593,7 @@ Public Class clsMASICResultsMerger
                                                        strBlankAdditionalReporterIonColumns
                                 End If
                             Else
-                                With udtSICStats
+                                With sicStatsEntry
                                     strAddonColumns &= ControlChars.Tab &
                                                        .OptimalScanNumber & ControlChars.Tab &
                                                        .PeakMaxIntensity & ControlChars.Tab &
@@ -652,7 +607,7 @@ Public Class clsMASICResultsMerger
                             End If
 
                             If blnWriteReporterIonStats Then
-                                With udtScanStats
+                                With scanStatsEntry
                                     If String.IsNullOrWhiteSpace(.CollisionMode) Then
                                         ' Collision mode is not defined; append blank columns
                                         strAddonColumns &= ControlChars.Tab &
@@ -958,8 +913,8 @@ Public Class clsMASICResultsMerger
 
         Dim udtMASICFileNames = New udtMASICFileNamesType
 
-        Dim dctScanStats = New Dictionary(Of Integer, udtScanStatsType)
-        Dim dctSICStats = New Dictionary(Of Integer, udtSICStatsType)
+        Dim dctScanStats = New Dictionary(Of Integer, clsScanStatsData)
+        Dim dctSICStats = New Dictionary(Of Integer, clsSICStatsData)
 
         Dim fiMetadataFile As FileInfo
         Dim strMetadataFile As String
@@ -1091,8 +1046,8 @@ Public Class clsMASICResultsMerger
                             If blnSuccess Then
 
                                 ' Read and cache the MASIC data
-                                dctScanStats = New Dictionary(Of Integer, udtScanStatsType)
-                                dctSICStats = New Dictionary(Of Integer, udtSICStatsType)
+                                dctScanStats = New Dictionary(Of Integer, clsScanStatsData)
+                                dctSICStats = New Dictionary(Of Integer, clsSICStatsData)
                                 strReporterIonHeaders = String.Empty
 
                                 blnMASICDataLoaded = ReadMASICData(strMASICResultsFolder, udtMASICFileNames, dctScanStats, dctSICStats, strReporterIonHeaders)
@@ -1132,12 +1087,12 @@ Public Class clsMASICResultsMerger
 
 
                         ' Look for intScanNumber in dctScanStats
-                        Dim udtScanStats = New udtScanStatsType
-                        If Not dctScanStats.TryGetValue(oPSM.ScanNumber, udtScanStats) Then
+                        Dim scanStatsEntry As clsScanStatsData = Nothing
+                        If Not dctScanStats.TryGetValue(oPSM.ScanNumber, scanStatsEntry) Then
                             ' Match not found; use the blank columns in strBlankAdditionalColumns
                             strAddonColumns = String.Copy(strBlankAdditionalColumns)
                         Else
-                            With udtScanStats
+                            With scanStatsEntry
                                 strAddonColumns = .ElutionTime & ControlChars.Tab &
                                    .ScanType & ControlChars.Tab &
                                    .TotalIonIntensity & ControlChars.Tab &
@@ -1145,8 +1100,8 @@ Public Class clsMASICResultsMerger
                                    .BasePeakMZ
                             End With
 
-                            Dim udtSICStats = New udtSICStatsType
-                            If Not dctSICStats.TryGetValue(oPSM.ScanNumber, udtSICStats) Then
+                            Dim sicStatsEntry As clsSICStatsData = Nothing
+                            If Not dctSICStats.TryGetValue(oPSM.ScanNumber, sicStatsEntry) Then
                                 ' Match not found; use the blank columns in strBlankAdditionalSICColumns
                                 strAddonColumns &= ControlChars.Tab & strBlankAdditionalSICColumns
 
@@ -1156,7 +1111,7 @@ Public Class clsMASICResultsMerger
                                       strBlankAdditionalReporterIonColumns
                                 End If
                             Else
-                                With udtSICStats
+                                With sicStatsEntry
                                     strAddonColumns &= ControlChars.Tab &
                                      .OptimalScanNumber & ControlChars.Tab &
                                      .PeakMaxIntensity & ControlChars.Tab &
@@ -1171,7 +1126,7 @@ Public Class clsMASICResultsMerger
 
                             If blnWriteReporterIonStats Then
 
-                                With udtScanStats
+                                With scanStatsEntry
                                     If String.IsNullOrWhiteSpace(.CollisionMode) Then
                                         ' Collision mode is not defined; append blank columns
                                         strAddonColumns &= ControlChars.Tab &
@@ -1223,8 +1178,8 @@ Public Class clsMASICResultsMerger
     Protected Function ProcessSingleJobFile(fiInputFile As FileInfo, strMASICResultsFolder As String) As Boolean
         Dim udtMASICFileNames = New udtMASICFileNamesType
 
-        Dim dctScanStats As Dictionary(Of Integer, udtScanStatsType)
-        Dim dctSICStats As Dictionary(Of Integer, udtSICStatsType)
+        Dim dctScanStats As Dictionary(Of Integer, clsScanStatsData)
+        Dim dctSICStats As Dictionary(Of Integer, clsSICStatsData)
 
 
         Dim strReporterIonHeaders As String = String.Empty
@@ -1260,8 +1215,8 @@ Public Class clsMASICResultsMerger
             End If
 
             ' Read and cache the MASIC data
-            dctScanStats = New Dictionary(Of Integer, udtScanStatsType)
-            dctSICStats = New Dictionary(Of Integer, udtSICStatsType)
+            dctScanStats = New Dictionary(Of Integer, clsScanStatsData)
+            dctSICStats = New Dictionary(Of Integer, clsSICStatsData)
 
             blnSuccess = ReadMASICData(strMASICResultsFolder, udtMASICFileNames, dctScanStats, dctSICStats, strReporterIonHeaders)
 
@@ -1289,8 +1244,8 @@ Public Class clsMASICResultsMerger
 
     Protected Function ReadMASICData(strSourceFolder As String,
       udtMASICFileNames As udtMASICFileNamesType,
-      ByRef dctScanStats As Dictionary(Of Integer, udtScanStatsType),
-      ByRef dctSICStats As Dictionary(Of Integer, udtSICStatsType),
+      ByRef dctScanStats As Dictionary(Of Integer, clsScanStatsData),
+      ByRef dctSICStats As Dictionary(Of Integer, clsSICStatsData),
       ByRef strReporterIonHeaders As String) As Boolean
 
         Dim blnSuccess As Boolean
@@ -1318,7 +1273,7 @@ Public Class clsMASICResultsMerger
 
     Protected Function ReadScanStatsFile(strSourceFolder As String,
      strScanStatsFileName As String,
-     ByRef dctScanStats As Dictionary(Of Integer, udtScanStatsType)) As Boolean
+     ByRef dctScanStats As Dictionary(Of Integer, clsScanStatsData)) As Boolean
 
         Dim strLineIn As String
         Dim strSplitLine() As String
@@ -1331,7 +1286,7 @@ Public Class clsMASICResultsMerger
         Try
             ' Initialize dctScanStats
             If dctScanStats Is Nothing Then
-                dctScanStats = New Dictionary(Of Integer, udtScanStatsType)
+                dctScanStats = New Dictionary(Of Integer, clsScanStatsData)
             Else
                 dctScanStats.Clear()
             End If
@@ -1350,10 +1305,8 @@ Public Class clsMASICResultsMerger
 
                         If strSplitLine.Length >= eScanStatsColumns.BasePeakMZ + 1 AndAlso Integer.TryParse(strSplitLine(eScanStatsColumns.ScanNumber), intScanNumber) Then
 
-                            Dim udtScanStats As udtScanStatsType
-                            With udtScanStats
-                                .ScanNumber = intScanNumber
-
+                            Dim scanStatsEntry = New clsScanStatsData(intScanNumber)
+                            With scanStatsEntry
                                 ' Note: the remaining values are stored as strings to prevent the number format from changing
                                 .ElutionTime = String.Copy(strSplitLine(eScanStatsColumns.ScanTime))
                                 .ScanType = String.Copy(strSplitLine(eScanStatsColumns.ScanType))
@@ -1365,7 +1318,7 @@ Public Class clsMASICResultsMerger
                                 .ReporterIonData = String.Empty
                             End With
 
-                            dctScanStats.Add(intScanNumber, udtScanStats)
+                            dctScanStats.Add(intScanNumber, scanStatsEntry)
                         End If
                     End If
                 End While
@@ -1456,8 +1409,8 @@ Public Class clsMASICResultsMerger
     End Function
 
     Protected Function ReadSICStatsFile(strSourceFolder As String,
-       strSICStatsFileName As String,
-       ByRef dctSICStats As Dictionary(Of Integer, udtSICStatsType)) As Boolean
+      strSICStatsFileName As String,
+      dctSICStats As IDictionary(Of Integer, clsSICStatsData)) As Boolean
 
         Dim strLineIn As String
         Dim strSplitLine() As String
@@ -1469,11 +1422,7 @@ Public Class clsMASICResultsMerger
 
         Try
             ' Initialize dctSICStats
-            If dctSICStats Is Nothing Then
-                dctSICStats = New Dictionary(Of Integer, udtSICStatsType)
-            Else
-                dctSICStats.Clear()
-            End If
+            dctSICStats.Clear()
 
             ShowMessage("  Reading: " & strSICStatsFileName)
 
@@ -1481,18 +1430,16 @@ Public Class clsMASICResultsMerger
 
                 intLinesRead = 0
                 While Not srInFile.EndOfStream
-                    strLineIn = srInFile.ReadLine
+                    strLineIn = srInFile.ReadLine()
 
                     If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
                         intLinesRead += 1
                         strSplitLine = strLineIn.Split(ControlChars.Tab)
 
-                        If strSplitLine.Length >= eSICStatsColumns.StatMomentsArea + 1 AndAlso Integer.TryParse(strSplitLine(eSICStatsColumns.FragScanNumber), intFragScanNumber) Then
+                        If strSplitLine.Length >= eSICStatsColumns.StatMomentsArea + 1 AndAlso Integer.TryParse(strSplitLine(eSICStatsColumns.FragScanNumber), fragScanNumber) Then
 
-                            Dim udtSICStats As udtSICStatsType
-                            With udtSICStats
-                                .FragScanNumber = intFragScanNumber
-
+                            Dim sicStatsEntry = New clsSICStatsData(fragScanNumber)
+                            With sicStatsEntry
                                 ' Note: the remaining values are stored as strings to prevent the number format from changing
                                 .OptimalScanNumber = String.Copy(strSplitLine(eSICStatsColumns.OptimalPeakApexScanNumber))
                                 .PeakMaxIntensity = String.Copy(strSplitLine(eSICStatsColumns.PeakMaxIntensity))
@@ -1504,7 +1451,7 @@ Public Class clsMASICResultsMerger
                                 .StatMomentsArea = String.Copy(strSplitLine(eSICStatsColumns.StatMomentsArea))
                             End With
 
-                            dctSICStats.Add(intFragScanNumber, udtSICStats)
+                            dctSICStats.Add(fragScanNumber, sicStatsEntry)
                         End If
                     End If
                 End While
@@ -1524,7 +1471,7 @@ Public Class clsMASICResultsMerger
 
     Protected Function ReadReporterIonStatsFile(strSourceFolder As String,
       strReporterIonStatsFileName As String,
-      dctScanStats As Dictionary(Of Integer, udtScanStatsType),
+      dctScanStats As IDictionary(Of Integer, clsScanStatsData),
       ByRef strReporterIonHeaders As String) As Boolean
 
         Dim strLineIn As String
@@ -1568,9 +1515,9 @@ Public Class clsMASICResultsMerger
                         If strSplitLine.Length >= eReporterIonStatsColumns.ReporterIonIntensityMax + 1 AndAlso Integer.TryParse(strSplitLine(eReporterIonStatsColumns.ScanNumber), intScanNumber) Then
 
                             ' Look for intScanNumber in intScanNumbers
-                            Dim udtScanStats = New udtScanStatsType
+                            Dim scanStatsEntry As clsScanStatsData = Nothing
 
-                            If Not dctScanStats.TryGetValue(intScanNumber, udtScanStats) Then
+                            If Not dctScanStats.TryGetValue(intScanNumber, scanStatsEntry) Then
                                 If intWarningCount < 10 Then
                                     ShowMessage("Warning: " & REPORTER_IONS_FILE_EXTENSION & " file refers to scan " & intScanNumber.ToString & ", but that scan was not in the _ScanStats.txt file")
                                 ElseIf intWarningCount = 10 Then
@@ -1579,14 +1526,12 @@ Public Class clsMASICResultsMerger
                                 intWarningCount += 1
                             Else
 
-                                If udtScanStats.ScanNumber <> intScanNumber Then
+                                If scanStatsEntry.ScanNumber <> intScanNumber Then
                                     ' Scan number mismatch; this shouldn't happen
-                                    ShowMessage("Error: Scan number mismatch in ReadReporterIonStatsFile: " & udtScanStats.ScanNumber.ToString & " vs. " & intScanNumber.ToString)
+                                    ShowMessage("Error: Scan number mismatch in ReadReporterIonStatsFile: " & scanStatsEntry.ScanNumber.ToString & " vs. " & intScanNumber.ToString)
                                 Else
-                                    udtScanStats.CollisionMode = String.Copy(strSplitLine(eReporterIonStatsColumns.CollisionMode))
-                                    udtScanStats.ReporterIonData = FlattenArray(strSplitLine, eReporterIonStatsColumns.ReporterIonIntensityMax)
-
-                                    dctScanStats(intScanNumber) = udtScanStats
+                                    scanStatsEntry.CollisionMode = String.Copy(strSplitLine(eReporterIonStatsColumns.CollisionMode))
+                                    scanStatsEntry.ReporterIonData = FlattenArray(strSplitLine, eReporterIonStatsColumns.ReporterIonIntensityMax)
                                 End If
 
                             End If
