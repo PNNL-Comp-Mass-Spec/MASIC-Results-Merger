@@ -40,7 +40,7 @@ Public Class clsMASICResultsMerger
     Public Const RESULTS_SUFFIX As String = "_PlusSICStats.txt"
     Public Const DEFAULT_SCAN_NUMBER_COLUMN As Integer = 2
 
-    Protected Const SIC_STAT_COLUMN_COUNT_TO_ADD As Integer = 7
+    Private Const SIC_STAT_COLUMN_COUNT_TO_ADD As Integer = 7
 
     ' Error codes specialized for this class
     Public Enum eResultsProcessorErrorCodes As Integer
@@ -50,7 +50,7 @@ Public Class clsMASICResultsMerger
         UnspecifiedError = -1
     End Enum
 
-    Protected Enum eScanStatsColumns
+    Private Enum eScanStatsColumns
         Dataset = 0
         ScanNumber = 1
         ScanTime = 2
@@ -63,7 +63,7 @@ Public Class clsMASICResultsMerger
         IonCountRaw = 9
     End Enum
 
-    Protected Enum eSICStatsColumns
+    Private Enum eSICStatsColumns
         Dataset = 0
         ParentIonIndex = 1
         MZ = 2
@@ -91,7 +91,7 @@ Public Class clsMASICResultsMerger
         StatMomentsDataCountUsed = 24
     End Enum
 
-    Protected Enum eReporterIonStatsColumns
+    Private Enum eReporterIonStatsColumns
         Dataset = 0
         ScanNumber = 1
         CollisionMode = 2
@@ -104,12 +104,12 @@ Public Class clsMASICResultsMerger
 
 #Region "Structures"
 
-    Protected Structure udtDatasetInfoType
+    Private Structure udtDatasetInfoType
         Public DatasetName As String
         Public DatasetID As Integer
     End Structure
 
-    Protected Structure udtMASICFileNamesType
+    Private Structure udtMASICFileNamesType
         Public DatasetName As String
         Public ScanStatsFileName As String
         Public SICStatsFileName As String
@@ -126,17 +126,17 @@ Public Class clsMASICResultsMerger
 
 #Region "Classwide Variables"
 
-    Protected mLocalErrorCode As eResultsProcessorErrorCodes
+    Private mLocalErrorCode As eResultsProcessorErrorCodes
 
-    Protected mMASICResultsFolderPath As String = String.Empty
+    Private mMASICResultsFolderPath As String = String.Empty
     ' For the input file, defines which column tracks scan number; the first column is column 1 (not zero)
     ' When true, then a separate output file will be created for each collision mode type; this is only possible if a _ReporterIons.txt file exists
 
-    Protected mPHRPReader As clsPHRPReader
+    Private mPHRPReader As clsPHRPReader
 
     ' For each KeyValuePair, the key is the base file name and the values are the output file paths for the base file
     ' There will be one output file for each base file if mSeparateByCollisionMode=false; multiple files if it is true
-    Protected mProcessedDatasets As List(Of clsProcessedFileInfo)
+    Private mProcessedDatasets As List(Of clsProcessedFileInfo)
 
 #End Region
 
@@ -174,7 +174,7 @@ Public Class clsMASICResultsMerger
 
 #End Region
 
-    Protected Function FindMASICFiles(strMASICResultsFolder As String, udtDatasetInfo As udtDatasetInfoType, ByRef udtMASICFileNames As udtMASICFileNamesType) As Boolean
+    Private Function FindMASICFiles(strMASICResultsFolder As String, udtDatasetInfo As udtDatasetInfoType, ByRef udtMASICFileNames As udtMASICFileNamesType) As Boolean
 
         Dim blnSuccess = False
         Dim strDatasetName As String
@@ -265,7 +265,7 @@ Public Class clsMASICResultsMerger
         Return lstAddonColumns
     End Function
 
-    Protected Function FlattenList(lstData As List(Of String)) As String
+    Private Function FlattenList(lstData As IReadOnlyList(Of String)) As String
 
         Dim sbFlattened = New StringBuilder
 
@@ -280,7 +280,7 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function FlattenArray(strSplitLine() As String, intIndexStart As Integer) As String
+    Private Function FlattenArray(strSplitLine As IList(Of String), intIndexStart As Integer) As String
         Dim strText As String = String.Empty
         Dim strColumn As String
 
@@ -909,7 +909,7 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function ProcessMageExtractorFile(fiInputFile As FileInfo, strMASICResultsFolder As String) As Boolean
+    Private Function ProcessMageExtractorFile(fiInputFile As FileInfo, strMASICResultsFolder As String) As Boolean
 
         Dim udtMASICFileNames = New udtMASICFileNamesType
 
@@ -1175,7 +1175,7 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function ProcessSingleJobFile(fiInputFile As FileInfo, strMASICResultsFolder As String) As Boolean
+    Private Function ProcessSingleJobFile(fiInputFile As FileSystemInfo, strMASICResultsFolder As String) As Boolean
         Dim udtMASICFileNames = New udtMASICFileNamesType
 
         Dim dctScanStats As Dictionary(Of Integer, clsScanStatsData)
@@ -1242,7 +1242,7 @@ Public Class clsMASICResultsMerger
         Return blnSuccess
     End Function
 
-    Protected Function ReadMASICData(strSourceFolder As String,
+    Private Function ReadMASICData(strSourceFolder As String,
       udtMASICFileNames As udtMASICFileNamesType,
       ByRef dctScanStats As Dictionary(Of Integer, clsScanStatsData),
       ByRef dctSICStats As Dictionary(Of Integer, clsSICStatsData),
@@ -1271,9 +1271,9 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function ReadScanStatsFile(strSourceFolder As String,
      strScanStatsFileName As String,
      ByRef dctScanStats As Dictionary(Of Integer, clsScanStatsData)) As Boolean
+    Private Function ReadScanStatsFile(strSourceFolder As String,
 
         Dim strLineIn As String
         Dim strSplitLine() As String
@@ -1336,7 +1336,7 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function ReadMageMetadataFile(strMetadataFilePath As String) As Dictionary(Of Integer, udtDatasetInfoType)
+    Private Function ReadMageMetadataFile(strMetadataFilePath As String) As Dictionary(Of Integer, udtDatasetInfoType)
 
         Dim dctJobToDatasetMap = New Dictionary(Of Integer, udtDatasetInfoType)
         Dim strLineIn As String
@@ -1408,7 +1408,7 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function ReadSICStatsFile(strSourceFolder As String,
+    Private Function ReadSICStatsFile(strSourceFolder As String,
       strSICStatsFileName As String,
       dctSICStats As IDictionary(Of Integer, clsSICStatsData)) As Boolean
 
@@ -1469,7 +1469,7 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Protected Function ReadReporterIonStatsFile(strSourceFolder As String,
+    Private Function ReadReporterIonStatsFile(strSourceFolder As String,
       strReporterIonStatsFileName As String,
       dctScanStats As IDictionary(Of Integer, clsScanStatsData),
       ByRef strReporterIonHeaders As String) As Boolean
