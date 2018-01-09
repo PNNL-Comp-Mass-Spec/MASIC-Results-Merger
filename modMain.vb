@@ -222,34 +222,63 @@ Module modMain
 
         Try
 
-            Console.WriteLine("This program merges the contents of a tab-delimited peptide hit results file (e.g. from Sequest, XTandem, or MSGF+) with the corresponding MASIC results files, appending the relevant MASIC stats for each peptide hit result.")
+            Console.WriteLine("This program merges the contents of a tab-delimited peptide hit results file " &
+                              "(e.g. from X!Tandem or MSGF+) with the corresponding MASIC results files, " &
+                              "appending the relevant MASIC stats for each peptide hit result, " &
+                              "writing the merged data to a new tab-delimited text file.")
+            Console.WriteLine()
+            Console.WriteLine("It also supports TSV files, e.g. as created by the MzidToTsvConverter")
+            Console.WriteLine()
+            Console.WriteLine("If the input directory includes a MASIC _ReporterIons.txt file, " &
+                              "the reporter ion intensities will also be included in the new text file.")
             Console.WriteLine()
             Console.WriteLine("Program syntax:" & ControlChars.NewLine & IO.Path.GetFileName(Reflection.Assembly.GetExecutingAssembly().Location) &
               " InputFilePathSpec [/M:MASICResultsFolderPath] [/O:OutputFolderPath]")
-            Console.WriteLine(" [/P:ParameterFilePath]")
             Console.WriteLine(" [/N:ScanNumberColumn] [/C] [/Mage] [/Append]")
-            Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R] [/Q]")
+            Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R]")
             Console.WriteLine()
-            Console.WriteLine("The input file should be a tab-delimited file with scan number in the second column (e.g. Sequest Synopsis or First-Hits file (_syn.txt or _fht.txt), XTandem _xt.txt file, MSGF+ syn/fht file (_msgfdb_syn.txt or _msgfdb_fht.txt), or Inspect syn/fht file (_inspect_syn.txt or _inspect_fht.txt). " &
-              "If the MASIC result files are not in the same folder as the input file, then use /M to define the path to the correct folder. " &
-              "The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file. " &
-              "The parameter file path is optional.  If included, it should point to a valid XML parameter file.")
+            Console.WriteLine("The input file should be a tab-delimited file where one column has scan numbers. " &
+                              "By default, this program assumes the second column has scan number, but the " &
+                              "/N switch can be used to change this (see below).")
+            Console.WriteLine()
+            Console.WriteLine("Common input files are:")
+            Console.WriteLine("- Peptide Hit Results Processor (https://github.com/PNNL-Comp-Mass-Spec/PHRP) tab-delimited files")
+            Console.WriteLine("  - MSGF+ syn/fht file (_msgfplus_syn.txt or _msgfplus_fht.txt)")
+            Console.WriteLine("  - Sequest Synopsis or First-Hits file (_syn.txt or _fht.txt)")
+            Console.WriteLine("  - XTandem _xt.txt file")
+            Console.WriteLine("- MzidToTSVConverter (https://github.com/PNNL-Comp-Mass-Spec/Mzid-To-Tsv-Converter) .TSV files")
+            Console.WriteLine("  - This is a tab-delimited text file created from a .mzid file (e.g. from MSGF+)")
+            Console.WriteLine()
+            Console.WriteLine("If the MASIC result files are not in the same folder as the input file, use /M to define the path to the correct folder.")
+            Console.WriteLine("The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file. ")
+            Console.WriteLine("")
 
+            Console.WriteLine("Use /N to change the column number that contains scan number in the input file. " &
+                              "The default is 2 (meaning /N:2). ")
             Console.WriteLine()
-            Console.WriteLine("Use /N to change the column number that contains scan number in the input file.  The default is 2 (meaning /N:2)." &
-              "When reading data with _ReporterIons.txt files, you can use /C to specify that a separate output file be created for each collision mode type in the input file (typically pqd, cid, and etd).")
+            Console.WriteLine("When reading data with _ReporterIons.txt files, you can use /C to specify " &
+                              "that a separate output file be created for each collision mode type " &
+                              "in the input file (typically pqd, cid, and etd).")
             Console.WriteLine()
-            Console.WriteLine("Use /Mage to specify that the input file is a results from from Mage Extractor.  This file will contain results from several analysis jobs; the first column in this file must be Job and the remaining columns must be the standard Synopsis or First-Hits columns supported by PHRPReader.  In addition, the input folder must have a file named InputFile_metadata.txt (this file was auto-created by Mage Extractor).")
+            Console.WriteLine("Use /Mage to specify that the input file is a results file from Mage Extractor. " &
+                              "This file will contain results from several analysis jobs; the first column " &
+                              "in this file must be Job and the remaining columns must be the standard " &
+                              "Synopsis or First-Hits columns supported by PHRPReader. " &
+                              "In addition, the input folder must have a file named InputFile_metadata.txt " &
+                              "(this file will have been auto-created by Mage Extractor).")
             Console.WriteLine()
-            Console.WriteLine("Use /Append to merge results from multiple datasets together as a single file; this is only applicable when the InputFilePathSpec includes a * wildcard and multiple files are matched")
-            Console.WriteLine("The merged results file will have DatasetID values of 1, 2, 3, etc. along with a second file mapping DatasetID to Dataset Name")
+            Console.WriteLine("Use /Append to merge results from multiple datasets together as a single file; " &
+                              "this is only applicable when the InputFilePathSpec includes a * wildcard and multiple files are matched.")
+            Console.WriteLine("The merged results file will have DatasetID values of 1, 2, 3, etc. " &
+                              "along with a second file mapping DatasetID to Dataset Name")
             Console.WriteLine()
-            Console.WriteLine("Use /S to process all valid files in the input folder and subfolders. Include a number after /S (like /S:2) to limit the level of subfolders to examine." &
-              "When using /S, you can redirect the output of the results using /A." &
-              "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined).")
+            Console.WriteLine("Use /S to process all valid files in the input folder and subfolders. " &
+                              "Include a number after /S (like /S:2) to limit the level of subfolders to examine." &
+                              "When using /S, you can redirect the output of the results using /A to specify an alternate output folder." &
+                              "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined).")
             Console.WriteLine()
 
-            Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2008")
+            Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2008; updated in 2017")
             Console.WriteLine("Version: " & GetAppVersion())
             Console.WriteLine()
 

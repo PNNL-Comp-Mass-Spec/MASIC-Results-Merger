@@ -6,5 +6,33 @@ MASICResultsMerger
 </name>
 </assembly>
 <members>
+<member name="M:MASICResultsMerger.clsMASICResultsMerger.GetErrorMessage">
+ <summary>
+ Get the current error state, if any
+ </summary>
+ <returns>Returns an empty string if no error</returns>
+</member>
+<member name="M:MASICResultsMerger.clsMASICResultsMerger.ProcessFile(System.String,System.String,System.String,System.Boolean)">
+ <summary>
+ Main processing function
+ </summary>
+ <param name="strInputFilePath">Input file path</param>
+ <param name="strOutputFolderPath">Output folder path</param>
+ <param name="strParameterFilePath">Parameter file path (Ignored)</param>
+ <param name="blnResetErrorCode">If true, reset the error code</param>
+ <returns>True if success, False if failure</returns>
+</member>
+<member name="M:MASICResultsMerger.clsScanStatsData.#ctor(System.Int32)">
+ <summary>
+ Constructor
+ </summary>
+ <param name="scanNum"></param>
+</member>
+<member name="M:MASICResultsMerger.clsSICStatsData.#ctor(System.Int32)">
+ <summary>
+ Constructor
+ </summary>
+ <param name="fragScanNum"></param>
+</member>
 </members>
 </doc>

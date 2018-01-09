@@ -324,8 +324,11 @@ Public Class clsMASICResultsMerger
 
     End Function
 
+    ''' <summary>
+    ''' Get the current error state, if any
+    ''' </summary>
+    ''' <returns>Returns an empty string if no error</returns>
     Public Overrides Function GetErrorMessage() As String
-        ' Returns "" if no error
 
         Dim strErrorMessage As String
 
@@ -856,9 +859,15 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    ' Main processing function
+    ''' <summary>
+    ''' Main processing function
+    ''' </summary>
+    ''' <param name="strInputFilePath">Input file path</param>
+    ''' <param name="strOutputFolderPath">Output folder path</param>
+    ''' <param name="strParameterFilePath">Parameter file path (Ignored)</param>
+    ''' <param name="blnResetErrorCode">If true, reset the error code</param>
+    ''' <returns>True if success, False if failure</returns>
     Public Overloads Overrides Function ProcessFile(strInputFilePath As String, strOutputFolderPath As String, strParameterFilePath As String, blnResetErrorCode As Boolean) As Boolean
-        ' Returns True if success, False if failure
 
         Dim blnSuccess As Boolean
         Dim strMASICResultsFolder As String
