@@ -619,7 +619,8 @@ Public Class clsMASICResultsMerger
                                     End If
                                 End With
 
-
+                            ElseIf SeparateByCollisionMode Then
+                                strCollisionModeCurrentScan = String.Copy(scanStatsEntry.CollisionMode)
                             End If
                         End If
 
@@ -1592,6 +1593,86 @@ Public Class clsMASICResultsMerger
             End If
         Next
 
+        If (dctCollisionModeFileMap.Count = 0) OrElse
+           (dctCollisionModeFileMap.Count = 1 AndAlso String.IsNullOrWhiteSpace(dctCollisionModeFileMap.First.Key)) Then
+
+            ' Try to load the collision mode info from the intput file
+            ' MSGF+ results report this in the FragMethod column
+
+            dctCollisionModeFileMap.Clear()
+            collisionModeTypeCount = 0
+
+            Try
+
+                Using srInFile = New StreamReader(New FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+
+                    Dim intLinesRead = 0
+                    Dim fragMethodColNumber = 0
+
+                    While Not srInFile.EndOfStream
+                        Dim strLineIn = srInFile.ReadLine()
+
+                        If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
+                            intLinesRead += 1
+                            Dim strSplitLine = strLineIn.Split(ControlChars.Tab)
+                            If intLinesRead = 1 Then
+                                ' Header line; look for the FragMethod column
+                                For colIndex = 0 To strSplitLine.Length - 1
+                                    If String.Equals(strSplitLine(colIndex), "FragMethod", StringComparison.OrdinalIgnoreCase) Then
+                                        fragMethodColNumber = colIndex + 1
+                                        Exit For
+                                    End If
+                                Next
+
+                                If fragMethodColNumber = 0 Then
+                                    ' Fragmentation method column not found
+                                    ShowWarning("Unable to determine the collision mode for results being merged. " &
+                                                "This is typically obtained from a MASIC _ReporterIons.txt file " &
+                                                "or from the FragMethod column in the MSGF+ results file")
+                                    Exit While
+                                End If
+
+                                ' Also look for the scan number column, auto-updating ScanNumberColumn if necessary
+                                FindScanNumColumn(inputFile, strSplitLine)
+
+                                Continue While
+                            End If
+
+                            Dim scanNumber As Integer
+                            If strSplitLine.Length < ScanNumberColumn OrElse Not Integer.TryParse(strSplitLine(ScanNumberColumn - 1), scanNumber) Then
+                                Continue While
+                            End If
+
+                            If strSplitLine.Length < fragMethodColNumber Then
+                                Continue While
+                            End If
+
+                            Dim collisionMode = strSplitLine(fragMethodColNumber - 1)
+
+                            If Not dctCollisionModeFileMap.ContainsKey(collisionMode) Then
+                                ' Store this collision mode in htCollisionModes; the value stored will be the index in strCollisionModes()
+                                dctCollisionModeFileMap.Add(collisionMode, collisionModeTypeCount)
+                                collisionModeTypeCount += 1
+                            End If
+
+                            Dim scanStatsEntry As clsScanStatsData = Nothing
+                            If Not dctScanStats.TryGetValue(scanNumber, scanStatsEntry) Then
+                                scanStatsEntry = New clsScanStatsData(scanNumber)
+                                scanStatsEntry.CollisionMode = collisionMode
+                                dctScanStats.Add(scanNumber, scanStatsEntry)
+                            Else
+                                scanStatsEntry.CollisionMode = collisionMode
+                            End If
+                        End If
+                    End While
+                End Using
+
+            Catch ex As Exception
+                HandleException("Error extraction collision mode information from the intput file", ex)
+                Return New KeyValuePair(Of String, String)(collisionModeTypeCount - 1) {}
+            End Try
+
+        End If
 
         If collisionModeTypeCount = 0 Then collisionModeTypeCount = 1
 
