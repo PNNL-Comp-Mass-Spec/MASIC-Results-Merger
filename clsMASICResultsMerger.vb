@@ -42,7 +42,9 @@ Public Class clsMASICResultsMerger
 
     Private Const SIC_STAT_COLUMN_COUNT_TO_ADD As Integer = 7
 
-    ' Error codes specialized for this class
+    ''' <summary>
+    ''' Error codes specialized for this class
+    ''' </summary>
     Public Enum eResultsProcessorErrorCodes As Integer
         NoError = 0
         MissingMASICFiles = 1
@@ -129,13 +131,9 @@ Public Class clsMASICResultsMerger
     Private mLocalErrorCode As eResultsProcessorErrorCodes
 
     Private mMASICResultsFolderPath As String = String.Empty
-    ' For the input file, defines which column tracks scan number; the first column is column 1 (not zero)
-    ' When true, then a separate output file will be created for each collision mode type; this is only possible if a _ReporterIons.txt file exists
 
     Private mPHRPReader As clsPHRPReader
 
-    ' For each KeyValuePair, the key is the base file name and the values are the output file paths for the base file
-    ' There will be one output file for each base file if mSeparateByCollisionMode=false; multiple files if it is true
     Private mProcessedDatasets As List(Of clsProcessedFileInfo)
 
 #End Region
@@ -166,8 +164,16 @@ Public Class clsMASICResultsMerger
         End Get
     End Property
 
+    ''' <summary>
+    ''' When true, a separate output file will be created for each collision mode type; this is only possible if a _ReporterIons.txt file exists
+    ''' </summary>
+    ''' <returns></returns>
     Public Property SeparateByCollisionMode As Boolean
 
+    ''' <summary>
+    ''' For the input file, defines which column tracks scan number; the first column is column 1 (not zero)
+    ''' </summary>
+    ''' <returns></returns>
     Public Property ScanNumberColumn As Integer
 
 #End Region

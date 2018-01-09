@@ -6,6 +6,23 @@ MASICResultsMerger
 </name>
 </assembly>
 <members>
+<member name="T:MASICResultsMerger.clsMASICResultsMerger.eResultsProcessorErrorCodes">
+ <summary>
+ Error codes specialized for this class
+ </summary>
+</member>
+<member name="P:MASICResultsMerger.clsMASICResultsMerger.SeparateByCollisionMode">
+ <summary>
+ When true, a separate output file will be created for each collision mode type; this is only possible if a _ReporterIons.txt file exists
+ </summary>
+ <returns></returns>
+</member>
+<member name="P:MASICResultsMerger.clsMASICResultsMerger.ScanNumberColumn">
+ <summary>
+ For the input file, defines which column tracks scan number; the first column is column 1 (not zero)
+ </summary>
+ <returns></returns>
+</member>
 <member name="M:MASICResultsMerger.clsMASICResultsMerger.GetErrorMessage">
  <summary>
  Get the current error state, if any
@@ -16,11 +33,23 @@ MASICResultsMerger
  <summary>
  Main processing function
  </summary>
- <param name="strInputFilePath">Input file path</param>
- <param name="strOutputFolderPath">Output folder path</param>
- <param name="strParameterFilePath">Parameter file path (Ignored)</param>
- <param name="blnResetErrorCode">If true, reset the error code</param>
+ <param name="inputFilePath">Input file path</param>
+ <param name="outputFolderPath">Output folder path</param>
+ <param name="parameterFilePath">Parameter file path (Ignored)</param>
+ <param name="resetErrorCode">If true, reset the error code</param>
  <returns>True if success, False if failure</returns>
+</member>
+<member name="P:MASICResultsMerger.clsProcessedFileInfo.OutputFiles">
+ <summary>
+ The Key is the collision mode and the value is the output file path
+ </summary>
+ <returns></returns>
+</member>
+<member name="M:MASICResultsMerger.clsProcessedFileInfo.#ctor(System.String)">
+ <summary>
+ Constructor
+ </summary>
+ <param name="baseDatasetName"></param>
 </member>
 <member name="M:MASICResultsMerger.clsScanStatsData.#ctor(System.Int32)">
  <summary>

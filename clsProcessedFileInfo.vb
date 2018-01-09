@@ -6,7 +6,10 @@
 
     Protected ReadOnly mOutputFiles As Dictionary(Of String, String)
 
-    ' The Key is the collision mode and the value is the output file path
+    ''' <summary>
+    ''' The Key is the collision mode and the value is the output file path
+    ''' </summary>
+    ''' <returns></returns>
     Public ReadOnly Property OutputFiles As Dictionary(Of String, String)
         Get
             Return mOutputFiles
@@ -15,6 +18,10 @@
 
     Public Sub New(strBaseName As String)
         BaseName = strBaseName
+    ''' <summary>
+    ''' Constructor
+    ''' </summary>
+    ''' <param name="baseDatasetName"></param>
         mOutputFiles = New Dictionary(Of String, String)
     End Sub
 
