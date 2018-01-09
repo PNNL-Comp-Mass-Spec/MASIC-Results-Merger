@@ -1,0 +1,1 @@
+..\..\Bin\MASICResultsMerger.exe AThaliana_Sequest_Syn.txt /Mage
