@@ -26,8 +26,7 @@ Module modMain
     Private mMergeWildcardResults As Boolean
 
     Private mMASICResultsFolderPath As String                   ' Optional
-    Private mOutputFolderPath As String             ' Optional
-    Private mParameterFilePath As String                        ' Optional
+    Private mOutputFolderPath As String                         ' Optional
 
     Private mOutputFolderAlternatePath As String                ' Optional
     Private mRecreateFolderHierarchyInAlternatePath As Boolean  ' Optional
@@ -70,7 +69,6 @@ Module modMain
 
         mMASICResultsFolderPath = String.Empty
         mOutputFolderPath = String.Empty
-        mParameterFilePath = String.Empty
 
         mRecurseFolders = False
         mRecurseFoldersMaxLevels = 0
@@ -113,13 +111,13 @@ Module modMain
                 End With
 
                 If mRecurseFolders Then
-                    If mMASICResultsMerger.ProcessFilesAndRecurseFolders(mInputFilePath, mOutputFolderPath, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, mParameterFilePath, mRecurseFoldersMaxLevels) Then
+                    If mMASICResultsMerger.ProcessFilesAndRecurseFolders(mInputFilePath, mOutputFolderPath, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, "", mRecurseFoldersMaxLevels) Then
                         intReturnCode = 0
                     Else
                         intReturnCode = mMASICResultsMerger.ErrorCode
                     End If
                 Else
-                    If mMASICResultsMerger.ProcessFilesWildcard(mInputFilePath, mOutputFolderPath, mParameterFilePath) Then
+                    If mMASICResultsMerger.ProcessFilesWildcard(mInputFilePath, mOutputFolderPath) Then
                         intReturnCode = 0
                     Else
                         intReturnCode = mMASICResultsMerger.ErrorCode
@@ -156,7 +154,7 @@ Module modMain
         ' Returns True if no problems; otherwise, returns false
 
         Dim strValue As String = String.Empty
-        Dim lstValidParameters = New List(Of String) From {"I", "M", "O", "P", "N", "C", "Mage", "Append", "S", "A", "R"}
+        Dim lstValidParameters = New List(Of String) From {"I", "M", "O", "N", "C", "Mage", "Append", "S", "A", "R"}
         Dim intValue As Integer
 
         Try
@@ -176,7 +174,6 @@ Module modMain
 
                     If .RetrieveValueForParameter("M", strValue) Then mMASICResultsFolderPath = strValue
                     If .RetrieveValueForParameter("O", strValue) Then mOutputFolderPath = strValue
-                    If .RetrieveValueForParameter("P", strValue) Then mParameterFilePath = strValue
 
                     If .RetrieveValueForParameter("N", strValue) Then
                         If IsNumeric(strValue) Then

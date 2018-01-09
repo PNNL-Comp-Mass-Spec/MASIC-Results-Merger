@@ -170,8 +170,6 @@ Public Class clsMASICResultsMerger
 
     Public Property ScanNumberColumn As Integer
 
-    Public Property WarnMissingParameterFileSection As Boolean
-
 #End Region
 
     Private Function FindMASICFiles(strMASICResultsFolder As String, udtDatasetInfo As udtDatasetInfoType, ByRef udtMASICFileNames As udtMASICFileNamesType) As Boolean
@@ -360,55 +358,12 @@ Public Class clsMASICResultsMerger
         ScanNumberColumn = DEFAULT_SCAN_NUMBER_COLUMN
         SeparateByCollisionMode = False
 
-        WarnMissingParameterFileSection = True
-
         mLocalErrorCode = eResultsProcessorErrorCodes.NoError
 
         mProcessedDatasets = New List(Of clsProcessedFileInfo)
 
     End Sub
 
-    Private Function LoadParameterFileSettings(strParameterFilePath As String) As Boolean
-
-        Const OPTIONS_SECTION = "MASICResultsMerger"
-
-        Dim objSettingsFile As New XmlSettingsFileAccessor
-
-        Try
-
-            If strParameterFilePath Is Nothing OrElse strParameterFilePath.Length = 0 Then
-                ' No parameter file specified; nothing to load
-                Return True
-            End If
-
-            If Not File.Exists(strParameterFilePath) Then
-                ' See if strParameterFilePath points to a file in the same directory as the application
-                strParameterFilePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), Path.GetFileName(strParameterFilePath))
-                If Not File.Exists(strParameterFilePath) Then
-                    MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.ParameterFileNotFound)
-                    Return False
-                End If
-            End If
-
-            If objSettingsFile.LoadSettings(strParameterFilePath) Then
-                If Not objSettingsFile.SectionPresent(OPTIONS_SECTION) Then
-                    ShowErrorMessage("The node '<section name=""" & OPTIONS_SECTION & """> was not found in the parameter file: " & strParameterFilePath)
-                    MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.InvalidParameterFile)
-                    Return False
-                Else
-                    ScanNumberColumn = objSettingsFile.GetParam(OPTIONS_SECTION, "ScanNumberColumn", DEFAULT_SCAN_NUMBER_COLUMN)
-                    SeparateByCollisionMode = objSettingsFile.GetParam(OPTIONS_SECTION, "SeparateByCollisionMode", False)
-                End If
-            End If
-
-        Catch ex As Exception
-            HandleException("Error in LoadParameterFileSettings", ex)
-            Return False
-        End Try
-
-        Return True
-
-    End Function
 
       inputFile As FileSystemInfo,
       outputFolderPath As String,
@@ -874,15 +829,6 @@ Public Class clsMASICResultsMerger
 
         If blnResetErrorCode Then
             SetLocalErrorCode(eResultsProcessorErrorCodes.NoError)
-        End If
-
-        If Not LoadParameterFileSettings(strParameterFilePath) Then
-            ShowErrorMessage("Parameter file load error: " & strParameterFilePath)
-
-            If MyBase.ErrorCode = eProcessFilesErrorCodes.NoError Then
-                MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.InvalidParameterFile)
-            End If
-            Return False
         End If
 
         If strInputFilePath Is Nothing OrElse strInputFilePath.Length = 0 Then
