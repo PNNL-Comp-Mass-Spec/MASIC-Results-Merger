@@ -1,64 +1,79 @@
-The MASIC Results Merger reads the contents of a tab-delimited peptide hit 
-results file (e.g. from Sequest, XTandem, or MSGF+) and merges that 
-information with the corresponding MASIC results files, appending the 
-relevant MASIC stats for each peptide hit result
+# MASIC Results Merger
 
-The input file should be a tab-delimited file with scan number in the second 
-column (e.g. Sequest Synopsis or First-Hits file (_syn.txt or _fht.txt), 
-XTandem _xt.txt file, MSGF+ syn/fht file (_msgfdb_syn.txt or _msgfdb_fht.txt), 
-or Inspect syn/fht file (_inspect_syn.txt or _inspect_fht.txt).
+This program merges the contents of a tab-delimited peptide hit results file 
+(e.g. from X!Tandem or MSGF+) with the corresponding MASIC results files, 
+appending the relevant MASIC stats for each peptide hit result, writing
+the merged data to a new tab-delimited text file. 
 
-However, any tab-delimited text file can be used for the input; you can define 
-which column contains the scan number using the /N switch, e.g. /N:1 indicates 
-the first column contains scan number.
+It also supports TSV files, e.g. as created by the 
+[MzidToTsvConverter](https://github.com/PNNL-Comp-Mass-Spec/Mzid-To-Tsv-Converter)
 
-The program will use the name of the input file to find the corresponding
-MASIC result files, looking in the same folder as the input file.  To specify
-a different folder, use the /M switch.  Two MASIC files are required: the
-_ScanStats.txt file and the _SICStats.txt file.  If the _ReporterIons.txt file
-is also present, then it will also be read.  
+If the input directory includes a MASIC _ReporterIons.txt file, 
+the reporter ion intensities will also be included in the new text file.
 
-When the _ReporterIons.txt file is present, you can use the /C switch to 
-instruct the program to create separate output files for each collision mode
-type; this would be useful if the dataset had a mix of collision mode types,
-for example pqd and etd.
+## Console Switches
 
-Use /Mage to specify that the input file is a results from from Mage Extractor.  
-This file will contain results from several analysis jobs; the first column in 
-this file must be Job and the remaining columns must be the standard Synopsis 
-or First-Hits columns supported by PHRPReader.  In addition, the input folder 
-must have a column named InputFile_metadata.txt (this file was auto-created by 
-Mage Extractor).
+MASICResultsMerger is a console application, and must be run from the Windows command prompt.
+
+```
+MASICResultsMerger.exe 
+  InputFilePathSpec 
+  [/M:MASICResultsFolderPath] [/O:OutputFolderPath]
+  [/P:ParameterFilePath]
+  [/N:ScanNumberColumn] [/C] [/Mage] [/Append]
+  [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R]
+```
+
+The input file should be a tab-delimited file where one column has scan numbers.
+By default, this program assumes the second column has scan number, but the 
+/N switch can be used to change this (see below).
+
+Common input files are
+* Peptide Hit Results Processor (https://github.com/PNNL-Comp-Mass-Spec/PHRP) tab-delimited files
+  * MSGF+ syn/fht file (`_msgfplus_syn.txt` or `_msgfplus_fht.txt`)
+  * Sequest Synopsis or First-Hits file (`_syn.txt `or `_fht.txt`)
+  * XTandem `_xt.txt` file
+* MzidToTSVConverter (https://github.com/PNNL-Comp-Mass-Spec/Mzid-To-Tsv-Converter) .TSV files
+  * This is a tab-delimited text file created from a `.mzid` file (e.g. from MSGF+)
+
+If the MASIC result files are not in the same folder as the input file, use /M to define the path to the correct folder. 
+
+The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file. 
+
+Use /N to change the column number that contains scan number in the input file.
+The default is 2 (meaning /N:2).
+
+When reading data with _ReporterIons.txt files, you can use /C to specify
+that a separate output file be created for each collision mode type 
+in the input file (typically pqd, cid, and etd).
+
+Use /Mage to specify that the input file is a results file from Mage Extractor.
+This file will contain results from several analysis jobs; the first column in this file 
+must be Job and the remaining columns must be the standard Synopsis or First-Hits columns 
+supported by PHRPReader.  In addition, the input folder must have a file named 
+InputFile_metadata.txt (this file will have been auto-created by Mage Extractor).
 
 Use /Append to merge results from multiple datasets together as a single file; 
-this is only applicable when the InputFilePathSpec includes a * wildcard and 
-multiple files are matched
+this is only applicable when the InputFilePathSpec includes a * wildcard and multiple files are matched.
+The merged results file will have DatasetID values of 1, 2, 3, etc. along with 
+a second file mapping DatasetID to Dataset Name.
 
--------------------------------------------------------------------------------
-Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
-Copyright 2008, Battelle Memorial Institute.  All Rights Reserved.
+Use /S to process all valid files in the input folder and subfolders. 
+Include a number after /S (like /S:2) to limit the level of subfolders to examine.
 
-E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
-Website: http://panomics.pnnl.gov/ or http://omics.pnl.gov
--------------------------------------------------------------------------------
+When using /S, you can redirect the output of the results using /A to specify an alternate output folder.
 
-Licensed under the Apache License, Version 2.0; you may not use this file except 
-in compliance with the License.  You may obtain a copy of the License at 
-http://www.apache.org/licenses/LICENSE-2.0
+When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined).
 
-All publications that result from the use of this software should include 
-the following acknowledgment statement:
- Portions of this research were supported by the W.R. Wiley Environmental 
- Molecular Science Laboratory, a national scientific user facility sponsored 
- by the U.S. Department of Energy's Office of Biological and Environmental 
- Research and located at PNNL.  PNNL is operated by Battelle Memorial Institute 
- for the U.S. Department of Energy under contract DE-AC05-76RL0 1830.
 
-Notice: This computer software was prepared by Battelle Memorial Institute, 
-hereinafter the Contractor, under Contract No. DE-AC05-76RL0 1830 with the 
-Department of Energy (DOE).  All rights in the computer software are reserved 
-by DOE on behalf of the United States Government and the Contractor as 
-provided in the Contract.  NEITHER THE GOVERNMENT NOR THE CONTRACTOR MAKES ANY 
-WARRANTY, EXPRESS OR IMPLIED, OR ASSUMES ANY LIABILITY FOR THE USE OF THIS 
-SOFTWARE.  This notice including this sentence must appear on any copies of 
-this computer software.
+## Contacts
+
+Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) \
+E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com\
+Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/
+
+## License
+
+MASICResultsMerger is licensed under the Apache License, Version 2.0; you may not use this 
+file except in compliance with the License.  You may obtain a copy of the 
+License at https://opensource.org/licenses/Apache-2.0
