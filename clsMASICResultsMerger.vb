@@ -241,7 +241,24 @@ Public Class clsMASICResultsMerger
         Return blnSuccess
     End Function
 
-    Protected Function GetAdditionalMASICHeaders() As List(Of String)
+    Private Sub FindScanNumColumn(inputFile As FileSystemInfo, strSplitLine As IList(Of String))
+
+        ' Check for a column named "ScanNum" or "ScanNumber" or "Scan Num" or "Scan Number"
+        ' If found, override ScanNumberColumn
+        For colIndex = 0 To strSplitLine.Count - 1
+            Select Case strSplitLine(colIndex).ToLower()
+                Case "scan", "scannum", "scan num", "scannumber", "scan number", "scan#", "scan #"
+                    If ScanNumberColumn <> colIndex + 1 Then
+                        ScanNumberColumn = colIndex + 1
+                        ShowMessage(
+                            String.Format("Note: Reading scan numbers from column {0} ({1}) in file {2}",
+                                          ScanNumberColumn, strSplitLine(colIndex), inputFile.Name))
+                    End If
+            End Select
+        Next
+    End Sub
+
+    Private Function GetAdditionalMASICHeaders() As List(Of String)
 
         Dim lstAddonColumns = New List(Of String)
 
@@ -428,32 +445,22 @@ Public Class clsMASICResultsMerger
             End If
 
             If SeparateByCollisionMode Then
-                ' Construct a list of the different collision modes in dctScanStats
+                strOutputFilePaths = SummarizeCollisionModes(
+                    inputFile,
+                    baseFileName,
+                    outputFolderPath,
+                    dctScanStats,
+                    dctCollisionModeFileMap)
 
-                intOutputFileCount = 0
+                outputFileCount = strOutputFilePaths.Length
 
-                For Each udtItem In dctScanStats.Values
-                    If Not dctCollisionModeFileMap.ContainsKey(udtItem.CollisionMode) Then
-                        ' Store this collision mode in htCollisionModes; the value stored will be the index in strCollisionModes()
-                        dctCollisionModeFileMap.Add(udtItem.CollisionMode, intOutputFileCount)
-                        intOutputFileCount += 1
-                    End If
-                Next
-
-                ReDim strOutputFilePaths(intOutputFileCount - 1)
-
-                If dctCollisionModeFileMap.Count = 0 Then
-                    strOutputFilePaths(0) = New KeyValuePair(Of String, String)("na", Path.Combine(outputFolderPath, baseFileName & "_na" & RESULTS_SUFFIX))
-                Else
-                    For Each oItem In dctCollisionModeFileMap
-                        Dim strCollisionMode As String = oItem.Key
-                        If String.IsNullOrWhiteSpace(strCollisionMode) Then strCollisionMode = "na"
-                        strOutputFilePaths(oItem.Value) = New KeyValuePair(Of String, String)(
-                            strCollisionMode, Path.Combine(outputFolderPath, baseFileName & "_" & strCollisionMode & RESULTS_SUFFIX))
-                    Next
+                If outputFileCount < 1 Then
+                    Return False
                 End If
             Else
-                intOutputFileCount = 1
+                dctCollisionModeFileMap = New Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
+
+                outputFileCount = 1
                 ReDim strOutputFilePaths(0)
                 strOutputFilePaths(0) = New KeyValuePair(Of String, String)("", Path.Combine(outputFolderPath, baseFileName & RESULTS_SUFFIX))
             End If
@@ -516,19 +523,8 @@ Public Class clsMASICResultsMerger
                                 ' The input file does have a text-based header
                                 strHeaderLine = String.Copy(strLineIn)
 
-                                ' Check for a column named "ScanNum" or "ScanNumber" or "Scan Num" or "Scan Number"
-                                ' If found, override ScanNumberColumn
-                                For colIndex = 0 To strSplitLine.Length - 1
-                                    Select Case strSplitLine(colIndex).ToLower()
-                                        Case "scan", "scannum", "scan num", "scannumber", "scan number", "scan#", "scan #"
-                                            If ScanNumberColumn <> colIndex + 1 Then
-                                                ScanNumberColumn = colIndex + 1
-                                                ShowWarning(
-                                                    String.Format("Reading scan numbers from column {0} ({1}) in file {2}",
-                                                                  ScanNumberColumn, strSplitLine(colIndex), inputFile.Name))
-                                            End If
-                                    End Select
-                                Next
+                                FindScanNumColumn(inputFile, strSplitLine)
+
                                 ' Clear strSplitLine so that this line gets skipped
                                 ReDim strSplitLine(-1)
                             End If
@@ -1574,5 +1570,46 @@ Public Class clsMASICResultsMerger
         End If
 
     End Sub
+
+    Private Function SummarizeCollisionModes(
+      inputFile As FileSystemInfo,
+      baseFileName As String,
+      outputFolderPath As String,
+      dctScanStats As Dictionary(Of Integer, clsScanStatsData),
+      <Out> ByRef dctCollisionModeFileMap As Dictionary(Of String, Integer)) As KeyValuePair(Of String, String)()
+
+        ' Construct a list of the different collision modes in dctScanStats
+
+        dctCollisionModeFileMap = New Dictionary(Of String, Integer)(StringComparer.CurrentCultureIgnoreCase)
+
+        Dim collisionModeTypeCount = 0
+
+        For Each scanStatsItem In dctScanStats.Values
+            If Not dctCollisionModeFileMap.ContainsKey(scanStatsItem.CollisionMode) Then
+                ' Store this collision mode in htCollisionModes; the value stored will be the index in strCollisionModes()
+                dctCollisionModeFileMap.Add(scanStatsItem.CollisionMode, collisionModeTypeCount)
+                collisionModeTypeCount += 1
+            End If
+        Next
+
+
+        If collisionModeTypeCount = 0 Then collisionModeTypeCount = 1
+
+        Dim outputFilePaths = New KeyValuePair(Of String, String)(collisionModeTypeCount - 1) {}
+
+        If dctCollisionModeFileMap.Count = 0 Then
+            outputFilePaths(0) = New KeyValuePair(Of String, String)("na", Path.Combine(outputFolderPath, baseFileName & "_na" & RESULTS_SUFFIX))
+        Else
+            For Each oItem In dctCollisionModeFileMap
+                Dim strCollisionMode As String = oItem.Key
+                If String.IsNullOrWhiteSpace(strCollisionMode) Then strCollisionMode = "na"
+                outputFilePaths(oItem.Value) = New KeyValuePair(Of String, String)(
+                    strCollisionMode, Path.Combine(outputFolderPath, baseFileName & "_" & strCollisionMode & RESULTS_SUFFIX))
+            Next
+        End If
+
+        Return outputFilePaths
+
+    End Function
 
 End Class
