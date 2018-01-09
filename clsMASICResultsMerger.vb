@@ -1,6 +1,6 @@
 Option Strict On
 Imports System.IO
-Imports System.Reflection
+Imports System.Runtime.InteropServices
 Imports System.Text
 Imports System.Threading
 Imports PHRPReader
@@ -365,7 +365,7 @@ Public Class clsMASICResultsMerger
 
     End Sub
 
-
+    Private Function MergePeptideHitAndMASICFiles(
       inputFile As FileSystemInfo,
       outputFolderPath As String,
       dctScanStats As Dictionary(Of Integer, clsScanStatsData),
@@ -1188,9 +1188,9 @@ Public Class clsMASICResultsMerger
 
     Private Function ReadMASICData(strSourceFolder As String,
       udtMASICFileNames As udtMASICFileNamesType,
-      ByRef dctScanStats As Dictionary(Of Integer, clsScanStatsData),
-      ByRef dctSICStats As Dictionary(Of Integer, clsSICStatsData),
-      ByRef strReporterIonHeaders As String) As Boolean
+      dctScanStats As IDictionary(Of Integer, clsScanStatsData),
+      dctSICStats As IDictionary(Of Integer, clsSICStatsData),
+      <Out> ByRef strReporterIonHeaders As String) As Boolean
 
         Dim blnSuccess As Boolean
 
@@ -1204,20 +1204,23 @@ Public Class clsMASICResultsMerger
 
             If blnSuccess AndAlso udtMASICFileNames.ReporterIonsFileName.Length > 0 Then
                 blnSuccess = ReadReporterIonStatsFile(strSourceFolder, udtMASICFileNames.ReporterIonsFileName, dctScanStats, strReporterIonHeaders)
+            Else
+                strReporterIonHeaders = String.Empty
             End If
 
             Return blnSuccess
 
         Catch ex As Exception
             HandleException("Error in ReadMASICData", ex)
+            strReporterIonHeaders = String.Empty
             Return False
         End Try
 
     End Function
 
-     strScanStatsFileName As String,
-     ByRef dctScanStats As Dictionary(Of Integer, clsScanStatsData)) As Boolean
     Private Function ReadScanStatsFile(strSourceFolder As String,
+      strScanStatsFileName As String,
+      dctScanStats As IDictionary(Of Integer, clsScanStatsData)) As Boolean
 
         Dim strLineIn As String
         Dim strSplitLine() As String
@@ -1227,11 +1230,7 @@ Public Class clsMASICResultsMerger
 
         Try
             ' Initialize dctScanStats
-            If dctScanStats Is Nothing Then
-                dctScanStats = New Dictionary(Of Integer, clsScanStatsData)
-            Else
-                dctScanStats.Clear()
-            End If
+            dctScanStats.Clear()
 
             ShowMessage("  Reading: " & strScanStatsFileName)
 
@@ -1239,7 +1238,7 @@ Public Class clsMASICResultsMerger
 
                 intLinesRead = 0
                 While Not srInFile.EndOfStream
-                    strLineIn = srInFile.ReadLine
+                    strLineIn = srInFile.ReadLine()
 
                     If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
                         intLinesRead += 1
@@ -1408,7 +1407,7 @@ Public Class clsMASICResultsMerger
     Private Function ReadReporterIonStatsFile(strSourceFolder As String,
       strReporterIonStatsFileName As String,
       dctScanStats As IDictionary(Of Integer, clsScanStatsData),
-      ByRef strReporterIonHeaders As String) As Boolean
+      <Out> ByRef strReporterIonHeaders As String) As Boolean
 
         Dim strLineIn As String
         Dim strSplitLine() As String
@@ -1428,7 +1427,7 @@ Public Class clsMASICResultsMerger
 
                 intLinesRead = 0
                 While Not srInFile.EndOfStream
-                    strLineIn = srInFile.ReadLine
+                    strLineIn = srInFile.ReadLine()
 
                     If Not strLineIn Is Nothing AndAlso strLineIn.Length > 0 Then
                         intLinesRead += 1
