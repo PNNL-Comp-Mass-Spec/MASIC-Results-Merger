@@ -19,7 +19,7 @@ Imports PRISM
 '
 
 Module modMain
-    Public Const PROGRAM_DATE As String = "January 8, 2018"
+    Public Const PROGRAM_DATE As String = "September 21, 2018"
 
     Private mInputFilePath As String
     Private mMageResults As Boolean
@@ -60,7 +60,7 @@ Module modMain
         ' Returns 0 if no error, error code if an error
 
         Dim returnCode As Integer
-        Dim objParseCommandLine As New clsParseCommandLine
+        Dim commandLineParser As New clsParseCommandLine
         Dim proceed As Boolean
 
         mInputFilePath = String.Empty
@@ -80,13 +80,13 @@ Module modMain
 
         Try
             proceed = False
-            If objParseCommandLine.ParseCommandLine Then
-                If SetOptionsUsingCommandLineParameters(objParseCommandLine) Then proceed = True
+            If commandLineParser.ParseCommandLine Then
+                If SetOptionsUsingCommandLineParameters(commandLineParser) Then proceed = True
             End If
 
             If Not proceed OrElse
-               objParseCommandLine.NeedToShowHelp OrElse
-               objParseCommandLine.ParameterCount + objParseCommandLine.NonSwitchParameterCount = 0 OrElse
+               commandLineParser.NeedToShowHelp OrElse
+               commandLineParser.ParameterCount + commandLineParser.NonSwitchParameterCount = 0 OrElse
                mInputFilePath.Length = 0 Then
                 ShowProgramHelp()
                 returnCode = -1
@@ -150,7 +150,7 @@ Module modMain
         Return Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString() & " (" & PROGRAM_DATE & ")"
     End Function
 
-    Private Function SetOptionsUsingCommandLineParameters(objParseCommandLine As clsParseCommandLine) As Boolean
+    Private Function SetOptionsUsingCommandLineParameters(commandLineParser As clsParseCommandLine) As Boolean
         ' Returns True if no problems; otherwise, returns false
 
         Dim strValue As String = String.Empty
@@ -159,13 +159,13 @@ Module modMain
 
         Try
             ' Make sure no invalid parameters are present
-            If objParseCommandLine.InvalidParametersPresent(lstValidParameters) Then
-                ShowErrorMessage("Invalid commmand line parameters",
-                  (From item In objParseCommandLine.InvalidParameters(lstValidParameters) Select "/" + item).ToList())
+            If commandLineParser.InvalidParametersPresent(lstValidParameters) Then
+                ShowErrorMessage("Invalid command line parameters",
+                  (From item In commandLineParser.InvalidParameters(lstValidParameters) Select "/" + item).ToList())
                 Return False
             Else
-                With objParseCommandLine
-                    ' Query objParseCommandLine to see if various parameters are present
+                With commandLineParser
+                    ' Query commandLineParser to see if various parameters are present
                     If .RetrieveValueForParameter("I", strValue) Then
                         mInputFilePath = strValue
                     ElseIf .NonSwitchParameterCount > 0 Then
