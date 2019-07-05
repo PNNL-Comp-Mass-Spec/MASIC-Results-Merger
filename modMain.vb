@@ -99,16 +99,14 @@ Module modMain
                 AddHandler mMASICResultsMerger.ProgressUpdate, AddressOf mMASICResultsMerger_ProgressUpdate
                 AddHandler mMASICResultsMerger.ProgressReset, AddressOf mMASICResultsMerger_ProgressReset
 
-                With mMASICResultsMerger
-                    .LogMessagesToFile = mLogMessagesToFile
+                mMASICResultsMerger.LogMessagesToFile = mLogMessagesToFile
 
-                    ' Note: Define other options here; they will get overridden if defined in the parameter file
-                    .MASICResultsDirectoryPath = mMASICResultsDirectoryPath
-                    .ScanNumberColumn = mScanNumberColumn
-                    .SeparateByCollisionMode = mSeparateByCollisionMode
+                ' Note: Define other options here; they will get overridden if defined in the parameter file
+                mMASICResultsMerger.MASICResultsDirectoryPath = mMASICResultsDirectoryPath
+                mMASICResultsMerger.ScanNumberColumn = mScanNumberColumn
+                mMASICResultsMerger.SeparateByCollisionMode = mSeparateByCollisionMode
 
-                    .MageResults = mMageResults
-                End With
+                mMASICResultsMerger.MageResults = mMageResults
 
                 If mRecurseDirectories Then
                     If mMASICResultsMerger.ProcessFilesAndRecurseDirectories(mInputFilePath, mOutputDirectoryPath, mOutputDirectoryAlternatePath, mRecreateDirectoryHierarchyInAlternatePath, "", mRecurseDirectoriesMaxLevels) Then
@@ -164,37 +162,36 @@ Module modMain
                   (From item In commandLineParser.InvalidParameters(lstValidParameters) Select "/" + item).ToList())
                 Return False
             Else
-                With commandLineParser
-                    ' Query commandLineParser to see if various parameters are present
-                    If .RetrieveValueForParameter("I", strValue) Then
-                        mInputFilePath = strValue
-                    ElseIf .NonSwitchParameterCount > 0 Then
-                        mInputFilePath = .RetrieveNonSwitchParameter(0)
+                ' Query commandLineParser to see if various parameters are present
+                If commandLineParser.RetrieveValueForParameter("I", strValue) Then
+                    mInputFilePath = strValue
+                ElseIf commandLineParser.NonSwitchParameterCount > 0 Then
+                    mInputFilePath = commandLineParser.RetrieveNonSwitchParameter(0)
+                End If
+
+                If commandLineParser.RetrieveValueForParameter("M", strValue) Then mMASICResultsDirectoryPath = strValue
+                If commandLineParser.RetrieveValueForParameter("O", strValue) Then mOutputDirectoryPath = strValue
+
+                If commandLineParser.RetrieveValueForParameter("N", strValue) Then
+                    If IsNumeric(strValue) Then
+                        mScanNumberColumn = CInt(strValue)
                     End If
+                End If
 
-                    If .RetrieveValueForParameter("M", strValue) Then mMASICResultsDirectoryPath = strValue
-                    If .RetrieveValueForParameter("O", strValue) Then mOutputDirectoryPath = strValue
+                If commandLineParser.IsParameterPresent("C") Then mSeparateByCollisionMode = True
+                If commandLineParser.IsParameterPresent("Mage") Then mMageResults = True
 
-                    If .RetrieveValueForParameter("N", strValue) Then
-                        If IsNumeric(strValue) Then
-                            mScanNumberColumn = CInt(strValue)
-                        End If
+                If commandLineParser.IsParameterPresent("Append") Then mMergeWildcardResults = True
+
+                If commandLineParser.RetrieveValueForParameter("S", strValue) Then
+                    mRecurseDirectories = True
+                    If Integer.TryParse(strValue, intValue) Then
+                        mRecurseDirectoriesMaxLevels = intValue
                     End If
+                End If
 
-                    If .IsParameterPresent("C") Then mSeparateByCollisionMode = True
-                    If .IsParameterPresent("Mage") Then mMageResults = True
-
-                    If .IsParameterPresent("Append") Then mMergeWildcardResults = True
-
-                    If .RetrieveValueForParameter("S", strValue) Then
-                        mRecurseDirectories = True
-                        If Integer.TryParse(strValue, intValue) Then
-                            mRecurseDirectoriesMaxLevels = intValue
-                        End If
-                    End If
-                    If .RetrieveValueForParameter("A", strValue) Then mOutputDirectoryAlternatePath = strValue
-                    If .RetrieveValueForParameter("R", strValue) Then mRecreateDirectoryHierarchyInAlternatePath = True
-                End With
+                If commandLineParser.RetrieveValueForParameter("A", strValue) Then mOutputDirectoryAlternatePath = strValue
+                If commandLineParser.RetrieveValueForParameter("R", strValue) Then mRecreateDirectoryHierarchyInAlternatePath = True
 
                 Return True
             End If

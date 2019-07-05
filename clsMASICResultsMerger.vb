@@ -246,20 +246,26 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Private Sub FindScanNumColumn(inputFile As FileSystemInfo, splitLine As IList(Of String))
+    Private Sub FindScanNumColumn(inputFile As FileSystemInfo, lineParts As IList(Of String))
 
         ' Check for a column named "ScanNum" or "ScanNumber" or "Scan Num" or "Scan Number"
         ' If found, override ScanNumberColumn
-        For colIndex = 0 To splitLine.Count - 1
-            Select Case splitLine(colIndex).ToLower()
-                Case "scan", "scannum", "scan num", "scannumber", "scan number", "scan#", "scan #"
-                    If ScanNumberColumn <> colIndex + 1 Then
-                        ScanNumberColumn = colIndex + 1
-                        ShowMessage(
-                            String.Format("Note: Reading scan numbers from column {0} ({1}) in file {2}",
-                                          ScanNumberColumn, splitLine(colIndex), inputFile.Name))
-                    End If
-            End Select
+        For colIndex = 0 To lineParts.Count - 1
+            If lineParts(colIndex).Equals("Scan", StringComparison.OrdinalIgnoreCase) OrElse
+               lineParts(colIndex).Equals("ScanNum", StringComparison.OrdinalIgnoreCase) OrElse
+               lineParts(colIndex).Equals("Scan Num", StringComparison.OrdinalIgnoreCase) OrElse
+               lineParts(colIndex).Equals("ScanNumber", StringComparison.OrdinalIgnoreCase) OrElse
+               lineParts(colIndex).Equals("Scan Number", StringComparison.OrdinalIgnoreCase) OrElse
+               lineParts(colIndex).Equals("Scan#", StringComparison.OrdinalIgnoreCase) OrElse
+               lineParts(colIndex).Equals("Scan #", StringComparison.OrdinalIgnoreCase) Then
+
+                If ScanNumberColumn <> colIndex + 1 Then
+                    ScanNumberColumn = colIndex + 1
+                    ShowMessage(
+                        String.Format("Note: Reading scan numbers from column {0} ({1}) in file {2}",
+                                      ScanNumberColumn, lineParts(colIndex), inputFile.Name))
+                End If
+            End If
         Next
     End Sub
 
@@ -288,42 +294,33 @@ Public Class clsMASICResultsMerger
     End Function
 
     Private Function FlattenList(lstData As IReadOnlyList(Of String)) As String
-
-        Dim sbFlattened = New StringBuilder
-
-        For index = 0 To lstData.Count - 1
-            If index > 0 Then
-                sbFlattened.Append(ControlChars.Tab)
-            End If
-            sbFlattened.Append(lstData(index))
-        Next
-
-        Return sbFlattened.ToString()
-
+        Return String.Join(ControlChars.Tab, lstData)
     End Function
 
-    Private Function FlattenArray(splitLine As IList(Of String), indexStart As Integer) As String
+    Private Function FlattenArray(lineParts As IList(Of String), indexStart As Integer) As String
+
         Dim text As String = String.Empty
         Dim column As String
 
         Dim index As Integer
 
-        If Not splitLine Is Nothing AndAlso splitLine.Count > 0 Then
-            For index = indexStart To splitLine.Count - 1
+        If (lineParts Is Nothing) OrElse lineParts.Count <= 0 Then Return text
 
-                If splitLine(index) Is Nothing Then
-                    column = String.Empty
-                Else
-                    column = String.Copy(splitLine(index))
-                End If
+        For index = indexStart To lineParts.Count - 1
 
-                If index > indexStart Then
-                    text &= ControlChars.Tab & column
-                Else
-                    text = String.Copy(column)
-                End If
-            Next
-        End If
+            If lineParts(index) Is Nothing Then
+                column = String.Empty
+            Else
+                column = String.Copy(lineParts(index))
+            End If
+
+            If index > indexStart Then
+                text &= ControlChars.Tab & column
+            Else
+                text = String.Copy(column)
+            End If
+        Next
+
 
         Return text
 
@@ -378,7 +375,7 @@ Public Class clsMASICResultsMerger
       dctSICStats As IReadOnlyDictionary(Of Integer, clsSICStatsData),
       reporterIonHeaders As String) As Boolean
 
-        Dim swOutfile() As StreamWriter
+        Dim writers() As StreamWriter
         Dim linesWritten() As Integer
 
         Dim outputFileCount As Integer
@@ -430,12 +427,12 @@ Public Class clsMASICResultsMerger
                 outputFilePaths(0) = New KeyValuePair(Of String, String)("", Path.Combine(outputDirectoryPath, baseFileName & RESULTS_SUFFIX))
             End If
 
-            ReDim swOutfile(outputFileCount - 1)
+            ReDim writers(outputFileCount - 1)
             ReDim linesWritten(outputFileCount - 1)
 
             ' Open the output file(s)
             For index = 0 To outputFileCount - 1
-                swOutfile(index) = New StreamWriter(New FileStream(outputFilePaths(index).Value, FileMode.Create, FileAccess.Write, FileShare.Read))
+                writers(index) = New StreamWriter(New FileStream(outputFilePaths(index).Value, FileMode.Create, FileAccess.Write, FileShare.Read))
             Next
 
         Catch ex As Exception
@@ -452,166 +449,154 @@ Public Class clsMASICResultsMerger
                 ScanNumberColumn = DEFAULT_SCAN_NUMBER_COLUMN
             End If
 
-            ' Read from srInFile and write out to the file(s) in swOutFile
-            Using srInFile = New StreamReader(New FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            ' Read from reader and write out to the file(s) in swOutFile
+            Using reader = New StreamReader(New FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 Dim linesRead = 0
                 Dim writeReporterIonStats = False
 
-                While Not srInFile.EndOfStream
-                    Dim lineIn = srInFile.ReadLine()
+                While Not reader.EndOfStream
+                    Dim dataLine = reader.ReadLine()
                     Dim collisionModeCurrentScan = String.Empty
 
-                    If Not lineIn Is Nothing AndAlso lineIn.Length > 0 Then
-                        linesRead += 1
-                        Dim splitLine = lineIn.Split(ControlChars.Tab)
+                    If String.IsNullOrWhiteSpace(dataLine) Then Continue While
 
-                        If linesRead = 1 Then
+                    linesRead += 1
+                    Dim lineParts = dataLine.Split(ControlChars.Tab).ToList()
 
-                            Dim headerLine As String
+                    If linesRead = 1 Then
 
-                            Dim integerValue As Integer
+                        Dim headerLine As String
 
-                            ' Write out an updated header line
-                            If splitLine.Length >= ScanNumberColumn AndAlso Integer.TryParse(splitLine(ScanNumberColumn - 1), integerValue) Then
-                                ' The input file doesn't have a header line; we will add one, using generic column names for the data in the input file
+                        Dim integerValue As Integer
 
-                                headerLine = String.Empty
-                                For index = 0 To splitLine.Length - 1
-                                    If index = 0 Then
-                                        headerLine = "Column" & index.ToString("00")
-                                    Else
-                                        headerLine &= ControlChars.Tab & "Column" & index.ToString("00")
-                                    End If
-                                Next
-                            Else
-                                ' The input file does have a text-based header
-                                headerLine = String.Copy(lineIn)
+                        ' Write out an updated header line
+                        If lineParts.Count >= ScanNumberColumn AndAlso Integer.TryParse(lineParts(ScanNumberColumn - 1), integerValue) Then
+                            ' The input file doesn't have a header line; we will add one, using generic column names for the data in the input file
 
-                                FindScanNumColumn(inputFile, splitLine)
-
-                                ' Clear splitLine so that this line gets skipped
-                                ReDim splitLine(-1)
-                            End If
-
-                            Dim lstAdditionalHeaders = GetAdditionalMASICHeaders()
-
-                            ' Populate blankAdditionalColumns with tab characters based on the number of items in lstAdditionalHeaders
-                            blankAdditionalColumns = New String(ControlChars.Tab, lstAdditionalHeaders.Count - 1)
-
-                            blankAdditionalSICColumns = New String(ControlChars.Tab, SIC_STAT_COLUMN_COUNT_TO_ADD)
-
-                            ' Initialize blankAdditionalReporterIonColumns
-                            If reporterIonHeaders.Length > 0 Then
-                                blankAdditionalReporterIonColumns = New String(ControlChars.Tab, reporterIonHeaders.Split(ControlChars.Tab).ToList().Count - 1)
-                            End If
-
-                            ' Initialize the AddOn header columns
-                            Dim addonHeaders = FlattenList(lstAdditionalHeaders)
-
-                            If reporterIonHeaders.Length > 0 Then
-                                ' Append the reporter ion stats columns
-                                addonHeaders &= ControlChars.Tab & reporterIonHeaders
-                                writeReporterIonStats = True
-                            End If
-
-                            ' Write out the headers
-                            For index = 0 To outputFileCount - 1
-                                swOutfile(index).WriteLine(headerLine & ControlChars.Tab & addonHeaders)
+                            Dim genericHeaders = New List(Of String)
+                            For index = 0 To lineParts.Count - 1
+                                genericHeaders.Add("Column" & index.ToString("00"))
                             Next
-
-                        End If
-
-                        Dim scanNumber As Integer
-                        If splitLine.Length < ScanNumberColumn OrElse Not Integer.TryParse(splitLine(ScanNumberColumn - 1), scanNumber) Then
-                            Continue While
-                        End If
-
-                        ' Look for scanNumber in dctScanStats
-                        Dim scanStatsEntry As clsScanStatsData = Nothing
-                        Dim addonColumns As String
-
-                        If Not dctScanStats.TryGetValue(scanNumber, scanStatsEntry) Then
-                            ' Match not found; use the blank columns in blankAdditionalColumns
-                            addonColumns = String.Copy(blankAdditionalColumns)
+                            headerLine = FlattenList(genericHeaders)
                         Else
-                            With scanStatsEntry
-                                addonColumns = .ElutionTime & ControlChars.Tab &
-                                                  .ScanType & ControlChars.Tab &
-                                                  .TotalIonIntensity & ControlChars.Tab &
-                                                  .BasePeakIntensity & ControlChars.Tab &
-                                                  .BasePeakMZ
-                            End With
+                            ' The input file does have a text-based header
+                            headerLine = String.Copy(dataLine)
 
-                            Dim sicStatsEntry As clsSICStatsData = Nothing
-                            If Not dctSICStats.TryGetValue(scanNumber, sicStatsEntry) Then
-                                ' Match not found; use the blank columns in blankAdditionalSICColumns
-                                addonColumns &= ControlChars.Tab & blankAdditionalSICColumns
+                            FindScanNumColumn(inputFile, lineParts)
 
-                                If writeReporterIonStats Then
-                                    addonColumns &= ControlChars.Tab &
-                                                       String.Empty & ControlChars.Tab &
-                                                       blankAdditionalReporterIonColumns
-                                End If
-                            Else
-                                With sicStatsEntry
-                                    addonColumns &= ControlChars.Tab &
-                                                       .OptimalScanNumber & ControlChars.Tab &
-                                                       .PeakMaxIntensity & ControlChars.Tab &
-                                                       .PeakSignalToNoiseRatio & ControlChars.Tab &
-                                                       .FWHMInScans & ControlChars.Tab &
-                                                       .PeakArea & ControlChars.Tab &
-                                                       .ParentIonIntensity & ControlChars.Tab &
-                                                       .ParentIonMZ & ControlChars.Tab &
-                                                       .StatMomentsArea
-                                End With
-                            End If
-
-                            If writeReporterIonStats Then
-                                With scanStatsEntry
-                                    If String.IsNullOrWhiteSpace(.CollisionMode) Then
-                                        ' Collision mode is not defined; append blank columns
-                                        addonColumns &= ControlChars.Tab &
-                                                           String.Empty & ControlChars.Tab &
-                                                           blankAdditionalReporterIonColumns
-                                    Else
-                                        ' Collision mode is defined
-                                        addonColumns &= ControlChars.Tab &
-                                                           .CollisionMode & ControlChars.Tab &
-                                                           .ReporterIonData
-
-                                        collisionModeCurrentScan = String.Copy(.CollisionMode)
-                                    End If
-                                End With
-
-                            ElseIf SeparateByCollisionMode Then
-                                collisionModeCurrentScan = String.Copy(scanStatsEntry.CollisionMode)
-                            End If
+                            ' Clear splitLine so that this line gets skipped
+                            lineParts.Clear()
                         End If
 
-                        Dim outFileIndex = 0
-                        If SeparateByCollisionMode AndAlso outputFileCount > 1 Then
-                            If Not collisionModeCurrentScan Is Nothing Then
-                                ' Determine the correct output file
-                                If Not dctCollisionModeFileMap.TryGetValue(collisionModeCurrentScan, outFileIndex) Then
-                                    outFileIndex = 0
-                                End If
-                            End If
+                        Dim lstAdditionalHeaders = GetAdditionalMASICHeaders()
+
+                        ' Populate blankAdditionalColumns with tab characters based on the number of items in lstAdditionalHeaders
+                        blankAdditionalColumns = New String(ControlChars.Tab, lstAdditionalHeaders.Count - 1)
+
+                        blankAdditionalSICColumns = New String(ControlChars.Tab, SIC_STAT_COLUMN_COUNT_TO_ADD)
+
+                        ' Initialize blankAdditionalReporterIonColumns
+                        If reporterIonHeaders.Length > 0 Then
+                            blankAdditionalReporterIonColumns = New String(ControlChars.Tab, reporterIonHeaders.Split(ControlChars.Tab).ToList().Count - 1)
                         End If
 
-                        swOutfile(outFileIndex).WriteLine(lineIn & ControlChars.Tab & addonColumns)
-                        linesWritten(outFileIndex) += 1
+                        ' Initialize the AddOn header columns
+                        Dim addonHeaders = FlattenList(lstAdditionalHeaders)
+
+                        If reporterIonHeaders.Length > 0 Then
+                            ' Append the reporter ion stats columns
+                            addonHeaders &= ControlChars.Tab & reporterIonHeaders
+                            writeReporterIonStats = True
+                        End If
+
+                        ' Write out the headers
+                        For index = 0 To outputFileCount - 1
+                            writers(index).WriteLine(headerLine & ControlChars.Tab & addonHeaders)
+                        Next
 
                     End If
+
+                    Dim scanNumber As Integer
+                    If lineParts.Count < ScanNumberColumn OrElse Not Integer.TryParse(lineParts(ScanNumberColumn - 1), scanNumber) Then
+                        Continue While
+                    End If
+
+                    ' Look for scanNumber in dctScanStats
+                    Dim scanStatsEntry As clsScanStatsData = Nothing
+                    Dim addonColumns = New List(Of String)
+
+                    If Not dctScanStats.TryGetValue(scanNumber, scanStatsEntry) Then
+                        ' Match not found; use the blank columns in blankAdditionalColumns
+                        addonColumns.Add(blankAdditionalColumns)
+                    Else
+                        addonColumns.Add(scanStatsEntry.ElutionTime)
+                        addonColumns.Add(scanStatsEntry.ScanType)
+                        addonColumns.Add(scanStatsEntry.TotalIonIntensity)
+                        addonColumns.Add(scanStatsEntry.BasePeakIntensity)
+                        addonColumns.Add(scanStatsEntry.BasePeakMZ)
+
+                        Dim sicStatsEntry As clsSICStatsData = Nothing
+                        If Not dctSICStats.TryGetValue(scanNumber, sicStatsEntry) Then
+                            ' Match not found; use the blank columns in blankAdditionalSICColumns
+                            addonColumns.Add(blankAdditionalSICColumns)
+
+                            If writeReporterIonStats Then
+                                addonColumns.Add(String.Empty)
+                                addonColumns.Add(blankAdditionalReporterIonColumns)
+                            End If
+                        Else
+                            addonColumns.Add(sicStatsEntry.OptimalScanNumber)
+                            addonColumns.Add(sicStatsEntry.PeakMaxIntensity)
+                            addonColumns.Add(sicStatsEntry.PeakSignalToNoiseRatio)
+                            addonColumns.Add(sicStatsEntry.FWHMInScans)
+                            addonColumns.Add(sicStatsEntry.PeakArea)
+                            addonColumns.Add(sicStatsEntry.ParentIonIntensity)
+                            addonColumns.Add(sicStatsEntry.ParentIonMZ)
+                            addonColumns.Add(sicStatsEntry.StatMomentsArea)
+                        End If
+
+                        If writeReporterIonStats Then
+                            If String.IsNullOrWhiteSpace(scanStatsEntry.CollisionMode) Then
+                                ' Collision mode is not defined; append blank columns
+                                addonColumns.Add(String.Empty)
+                                addonColumns.Add(blankAdditionalReporterIonColumns)
+                            Else
+                                ' Collision mode is defined
+                                addonColumns.Add(scanStatsEntry.CollisionMode)
+                                addonColumns.Add(scanStatsEntry.ReporterIonData)
+
+                                collisionModeCurrentScan = String.Copy(scanStatsEntry.CollisionMode)
+                            End If
+
+                        ElseIf SeparateByCollisionMode Then
+                            collisionModeCurrentScan = String.Copy(scanStatsEntry.CollisionMode)
+                        End If
+                    End If
+
+                    Dim outFileIndex = 0
+                    If SeparateByCollisionMode AndAlso outputFileCount > 1 Then
+                        If Not collisionModeCurrentScan Is Nothing Then
+                            ' Determine the correct output file
+                            If Not dctCollisionModeFileMap.TryGetValue(collisionModeCurrentScan, outFileIndex) Then
+                                outFileIndex = 0
+                            End If
+                        End If
+                    End If
+
+                    writers(outFileIndex).WriteLine(dataLine & ControlChars.Tab & FlattenList(addonColumns))
+                    linesWritten(outFileIndex) += 1
+
+
                 End While
 
             End Using
 
             ' Close the output files
-            If Not swOutfile Is Nothing Then
+            If Not writers Is Nothing Then
                 For index = 0 To outputFileCount - 1
-                    If Not swOutfile(index) Is Nothing Then
-                        swOutfile(index).Close()
+                    If Not writers(index) Is Nothing Then
+                        writers(index).Close()
                     End If
                 Next
             End If
@@ -753,12 +738,12 @@ Public Class clsMASICResultsMerger
             Next
 
             ' Create the DatasetMap file
-            Using swOutFile = New StreamWriter(New FileStream(Path.Combine(mOutputDirectoryPath, baseFileName & "_DatasetMap.txt"), FileMode.Create, FileAccess.Write))
+            Using writer = New StreamWriter(New FileStream(Path.Combine(mOutputDirectoryPath, baseFileName & "_DatasetMap.txt"), FileMode.Create, FileAccess.Write))
 
-                swOutFile.WriteLine("DatasetID" & ControlChars.Tab & "DatasetName")
+                writer.WriteLine("DatasetID" & ControlChars.Tab & "DatasetName")
 
                 For Each datasetMapping In datasetNameIdMap
-                    swOutFile.WriteLine(datasetMapping.Value & ControlChars.Tab & datasetMapping.Key)
+                    writer.WriteLine(datasetMapping.Value & ControlChars.Tab & datasetMapping.Key)
                 Next
 
             End Using
@@ -771,9 +756,9 @@ Public Class clsMASICResultsMerger
 
                     Dim collisionMode = sourcefile.Key
 
-                    Dim swOutFile As StreamWriter = Nothing
-                    If Not outputFileHandles.TryGetValue(collisionMode, swOutFile) Then
-                        Console.WriteLine("Warning: unrecognized collison mode; skipping " & sourcefile.Value)
+                    Dim writer As StreamWriter = Nothing
+                    If Not outputFileHandles.TryGetValue(collisionMode, writer) Then
+                        Console.WriteLine("Warning: unrecognized collision mode; skipping " & sourcefile.Value)
                         Continue For
                     End If
 
@@ -782,11 +767,11 @@ Public Class clsMASICResultsMerger
                         Continue For
                     End If
 
-                    Using srSourceFile = New StreamReader(New FileStream(sourcefile.Value, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    Using reader = New StreamReader(New FileStream(sourcefile.Value, FileMode.Open, FileAccess.Read, FileShare.Read))
                         Dim linesRead = 0
-                        While Not srSourceFile.EndOfStream
+                        While Not reader.EndOfStream
 
-                            Dim lineIn = srSourceFile.ReadLine()
+                            Dim dataLine = reader.ReadLine()
                             linesRead += 1
 
                             If linesRead = 1 Then
@@ -795,11 +780,11 @@ Public Class clsMASICResultsMerger
                                     Continue While
                                 End If
 
-                                swOutFile.WriteLine("DatasetID" & ControlChars.Tab & lineIn)
+                                writer.WriteLine("DatasetID" & ControlChars.Tab & dataLine)
                                 outputFileHeaderWritten(collisionMode) = True
 
                             Else
-                                swOutFile.WriteLine(datasetId & ControlChars.Tab & lineIn)
+                                writer.WriteLine(datasetId & ControlChars.Tab & dataLine)
                             End If
 
                         End While
@@ -899,8 +884,8 @@ Public Class clsMASICResultsMerger
             Dim jobColumnIndex As Integer
 
             ' Open the Mage Extractor data file so that we can validate and cache the header row
-            Using srInFile = New StreamReader(New FileStream(fiInputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
-                headerLine = srInFile.ReadLine()
+            Using reader = New StreamReader(New FileStream(fiInputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                headerLine = reader.ReadLine()
                 Dim lstColumns = headerLine.Split(ControlChars.Tab).ToList()
                 jobColumnIndex = lstColumns.IndexOf("Job")
                 If jobColumnIndex < 0 Then
@@ -924,7 +909,7 @@ Public Class clsMASICResultsMerger
 
 
             ' Initialize the output file
-            Using swOutFile = New StreamWriter(New FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+            Using writer = New StreamWriter(New FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 ' Open the Mage Extractor data file and read the data for each job
                 mPHRPReader = New clsPHRPReader(fiInputFile.FullName, clsPHRPReader.ePeptideHitResultType.Unknown, False, False, False) With {
@@ -940,7 +925,6 @@ Public Class clsMASICResultsMerger
                 End If
 
                 Dim lastJob As Integer = -1
-                Dim job As Integer = -1
 
                 Dim masicDataLoaded = False
                 Dim headerLineWritten = False
@@ -950,13 +934,14 @@ Public Class clsMASICResultsMerger
 
                 Do While mPHRPReader.MoveNext()
 
-                    Dim oPSM As clsPSM = mPHRPReader.CurrentPSM
+                    Dim psm As clsPSM = mPHRPReader.CurrentPSM
 
                     ' Parse out the job from the current line
-                    Dim lstColumns = oPSM.DataLineText.Split(ControlChars.Tab).ToList()
+                    Dim lstColumns = psm.DataLineText.Split(ControlChars.Tab).ToList()
 
+                    Dim job As Integer = -1
                     If Not Integer.TryParse(lstColumns(jobColumnIndex), job) Then
-                        ShowMessage("Warning: Job column does not contain a job number; skipping this entry: " & oPSM.DataLineText)
+                        ShowMessage("Warning: Job column does not contain a job number; skipping this entry: " & psm.DataLineText)
                         Continue Do
                     End If
 
@@ -1029,7 +1014,7 @@ Public Class clsMASICResultsMerger
                                 writeReporterIonStats = True
                             End If
 
-                            swOutFile.WriteLine(headerLine & ControlChars.Tab & addonHeaderColumns)
+                            writer.WriteLine(headerLine & ControlChars.Tab & addonHeaderColumns)
 
                             headerLineWritten = True
                         End If
@@ -1037,68 +1022,57 @@ Public Class clsMASICResultsMerger
 
                         ' Look for scanNumber in dctScanStats
                         Dim scanStatsEntry As clsScanStatsData = Nothing
-                        Dim addonColumns As String
+                        Dim addonColumns = New List(Of String)
 
-                        If Not dctScanStats.TryGetValue(oPSM.ScanNumber, scanStatsEntry) Then
+                        If Not dctScanStats.TryGetValue(psm.ScanNumber, scanStatsEntry) Then
                             ' Match not found; use the blank columns in blankAdditionalColumns
-                            addonColumns = String.Copy(blankAdditionalColumns)
+                            addonColumns.Add(blankAdditionalColumns)
                         Else
-                            With scanStatsEntry
-                                addonColumns = .ElutionTime & ControlChars.Tab &
-                                   .ScanType & ControlChars.Tab &
-                                   .TotalIonIntensity & ControlChars.Tab &
-                                   .BasePeakIntensity & ControlChars.Tab &
-                                   .BasePeakMZ
-                            End With
+                            addonColumns.Add(scanStatsEntry.ElutionTime)
+                            addonColumns.Add(scanStatsEntry.ScanType)
+                            addonColumns.Add(scanStatsEntry.TotalIonIntensity)
+                            addonColumns.Add(scanStatsEntry.BasePeakIntensity)
+                            addonColumns.Add(scanStatsEntry.BasePeakMZ)
 
                             Dim sicStatsEntry As clsSICStatsData = Nothing
-                            If Not dctSICStats.TryGetValue(oPSM.ScanNumber, sicStatsEntry) Then
+                            If Not dctSICStats.TryGetValue(psm.ScanNumber, sicStatsEntry) Then
                                 ' Match not found; use the blank columns in blankAdditionalSICColumns
-                                addonColumns &= ControlChars.Tab & blankAdditionalSICColumns
+                                addonColumns.Add(blankAdditionalSICColumns)
 
                                 If writeReporterIonStats Then
-                                    addonColumns &= ControlChars.Tab &
-                                      String.Empty & ControlChars.Tab &
-                                      blankAdditionalReporterIonColumns
+                                    addonColumns.Add(String.Empty)
+                                    addonColumns.Add(blankAdditionalReporterIonColumns)
                                 End If
                             Else
-                                With sicStatsEntry
-                                    addonColumns &= ControlChars.Tab &
-                                     .OptimalScanNumber & ControlChars.Tab &
-                                     .PeakMaxIntensity & ControlChars.Tab &
-                                     .PeakSignalToNoiseRatio & ControlChars.Tab &
-                                     .FWHMInScans & ControlChars.Tab &
-                                     .PeakArea & ControlChars.Tab &
-                                     .ParentIonIntensity & ControlChars.Tab &
-                                     .ParentIonMZ & ControlChars.Tab &
-                                     .StatMomentsArea
-                                End With
+                                addonColumns.Add(sicStatsEntry.OptimalScanNumber)
+                                addonColumns.Add(sicStatsEntry.PeakMaxIntensity)
+                                addonColumns.Add(sicStatsEntry.PeakSignalToNoiseRatio)
+                                addonColumns.Add(sicStatsEntry.FWHMInScans)
+                                addonColumns.Add(sicStatsEntry.PeakArea)
+                                addonColumns.Add(sicStatsEntry.ParentIonIntensity)
+                                addonColumns.Add(sicStatsEntry.ParentIonMZ)
+                                addonColumns.Add(sicStatsEntry.StatMomentsArea)
                             End If
 
                             If writeReporterIonStats Then
 
-                                With scanStatsEntry
-                                    If String.IsNullOrWhiteSpace(.CollisionMode) Then
-                                        ' Collision mode is not defined; append blank columns
-                                        addonColumns &= ControlChars.Tab &
-                                         String.Empty & ControlChars.Tab &
-                                         blankAdditionalReporterIonColumns
-                                    Else
-                                        ' Collision mode is defined
-                                        addonColumns &= ControlChars.Tab &
-                                         .CollisionMode & ControlChars.Tab &
-                                         .ReporterIonData
+                                If String.IsNullOrWhiteSpace(scanStatsEntry.CollisionMode) Then
+                                    ' Collision mode is not defined; append blank columns
+                                    addonColumns.Add(String.Empty)
+                                    addonColumns.Add(blankAdditionalReporterIonColumns)
+                                Else
+                                    ' Collision mode is defined
+                                    addonColumns.Add(scanStatsEntry.CollisionMode)
+                                    addonColumns.Add(scanStatsEntry.ReporterIonData)
 
-                                    End If
-                                End With
-
+                                End If
 
                             End If
                         End If
 
-                        swOutFile.WriteLine(oPSM.DataLineText & ControlChars.Tab & addonColumns)
+                        writer.WriteLine(psm.DataLineText & ControlChars.Tab & FlattenList(addonColumns))
                     Else
-                        swOutFile.WriteLine(oPSM.DataLineText & ControlChars.Tab & blankAdditionalColumns)
+                        writer.WriteLine(psm.DataLineText & ControlChars.Tab & blankAdditionalColumns)
                     End If
 
                     UpdateProgress("Loading data from " & fiInputFile.Name, mPHRPReader.PercentComplete)
@@ -1228,46 +1202,39 @@ Public Class clsMASICResultsMerger
       scanStatsFileName As String,
       dctScanStats As IDictionary(Of Integer, clsScanStatsData)) As Boolean
 
-        Dim lineIn As String
-        Dim splitLine() As String
-
-        Dim linesRead As Integer
-        Dim scanNumber As Integer
-
         Try
             ' Initialize dctScanStats
             dctScanStats.Clear()
 
             ShowMessage("  Reading: " & scanStatsFileName)
 
-            Using srInFile = New StreamReader(New FileStream(Path.Combine(sourceDirectory, scanStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using reader = New StreamReader(New FileStream(Path.Combine(sourceDirectory, scanStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
-                linesRead = 0
-                While Not srInFile.EndOfStream
-                    lineIn = srInFile.ReadLine()
+                While Not reader.EndOfStream
+                    Dim dataLine = reader.ReadLine()
 
-                    If Not lineIn Is Nothing AndAlso lineIn.Length > 0 Then
-                        linesRead += 1
-                        splitLine = lineIn.Split(ControlChars.Tab)
+                    If String.IsNullOrWhiteSpace(dataLine) Then Continue While
 
-                        If splitLine.Length >= eScanStatsColumns.BasePeakMZ + 1 AndAlso Integer.TryParse(splitLine(eScanStatsColumns.ScanNumber), scanNumber) Then
+                    Dim lineParts = dataLine.Split(ControlChars.Tab)
 
-                            Dim scanStatsEntry = New clsScanStatsData(scanNumber)
-                            With scanStatsEntry
-                                ' Note: the remaining values are stored as strings to prevent the number format from changing
-                                .ElutionTime = String.Copy(splitLine(eScanStatsColumns.ScanTime))
-                                .ScanType = String.Copy(splitLine(eScanStatsColumns.ScanType))
-                                .TotalIonIntensity = String.Copy(splitLine(eScanStatsColumns.TotalIonIntensity))
-                                .BasePeakIntensity = String.Copy(splitLine(eScanStatsColumns.BasePeakIntensity))
-                                .BasePeakMZ = String.Copy(splitLine(eScanStatsColumns.BasePeakMZ))
+                    If lineParts.Length < eScanStatsColumns.BasePeakMZ + 1 Then Continue While
 
-                                .CollisionMode = String.Empty
-                                .ReporterIonData = String.Empty
-                            End With
+                    Dim scanNumber As Integer
+                    If Not Integer.TryParse(lineParts(eScanStatsColumns.ScanNumber), scanNumber) Then Continue While
 
-                            dctScanStats.Add(scanNumber, scanStatsEntry)
-                        End If
-                    End If
+                    ' Note: the remaining values are stored as strings to prevent the number format from changing
+                    Dim scanStatsEntry = New clsScanStatsData(scanNumber) With {
+                        .ElutionTime = String.Copy(lineParts(eScanStatsColumns.ScanTime)),
+                        .ScanType = String.Copy(lineParts(eScanStatsColumns.ScanType)),
+                        .TotalIonIntensity = String.Copy(lineParts(eScanStatsColumns.TotalIonIntensity)),
+                        .BasePeakIntensity = String.Copy(lineParts(eScanStatsColumns.BasePeakIntensity)),
+                        .BasePeakMZ = String.Copy(lineParts(eScanStatsColumns.BasePeakMZ)),
+                        .CollisionMode = String.Empty,
+                        .ReporterIonData = String.Empty
+                    }
+
+                    dctScanStats.Add(scanNumber, scanStatsEntry)
+
                 End While
 
             End Using
@@ -1284,8 +1251,6 @@ Public Class clsMASICResultsMerger
     Private Function ReadMageMetadataFile(metadataFilePath As String) As Dictionary(Of Integer, udtDatasetInfoType)
 
         Dim dctJobToDatasetMap = New Dictionary(Of Integer, udtDatasetInfoType)
-        Dim lineIn As String
-        Dim lstData As List(Of String)
         Dim headersParsed As Boolean
 
         Dim jobIndex As Integer = -1
@@ -1293,54 +1258,55 @@ Public Class clsMASICResultsMerger
         Dim datasetIDIndex As Integer = -1
 
         Try
-            Using srInFile = New StreamReader(New FileStream(metadataFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using reader = New StreamReader(New FileStream(metadataFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
 
-                While Not srInFile.EndOfStream
-                    lineIn = srInFile.ReadLine()
+                While Not reader.EndOfStream
+                    Dim dataLine = reader.ReadLine()
 
-                    If Not String.IsNullOrWhiteSpace(lineIn) Then
-                        lstData = lineIn.Split(ControlChars.Tab).ToList()
+                    If String.IsNullOrWhiteSpace(dataLine) Then Continue While
 
-                        If Not headersParsed Then
-                            ' Look for the Job and Dataset columns
-                            jobIndex = lstData.IndexOf("Job")
-                            datasetIndex = lstData.IndexOf("Dataset")
-                            datasetIDIndex = lstData.IndexOf("Dataset_ID")
+                    Dim lineParts = dataLine.Split(ControlChars.Tab).ToList()
 
-                            If jobIndex < 0 Then
-                                ShowErrorMessage("Job column not found in the metadata file: " & metadataFilePath)
-                                Return Nothing
-                            ElseIf datasetIndex < 0 Then
-                                ShowErrorMessage("Dataset column not found in the metadata file: " & metadataFilePath)
-                                Return Nothing
-                            ElseIf datasetIDIndex < 0 Then
-                                ShowErrorMessage("Dataset_ID column not found in the metadata file: " & metadataFilePath)
-                                Return Nothing
-                            End If
+                    If Not headersParsed Then
+                        ' Look for the Job and Dataset columns
+                        jobIndex = lineParts.IndexOf("Job")
+                        datasetIndex = lineParts.IndexOf("Dataset")
+                        datasetIDIndex = lineParts.IndexOf("Dataset_ID")
 
-                            headersParsed = True
-                            Continue While
+                        If jobIndex < 0 Then
+                            ShowErrorMessage("Job column not found in the metadata file: " & metadataFilePath)
+                            Return Nothing
+                        ElseIf datasetIndex < 0 Then
+                            ShowErrorMessage("Dataset column not found in the metadata file: " & metadataFilePath)
+                            Return Nothing
+                        ElseIf datasetIDIndex < 0 Then
+                            ShowErrorMessage("Dataset_ID column not found in the metadata file: " & metadataFilePath)
+                            Return Nothing
                         End If
 
-                        If lstData.Count > datasetIndex Then
-                            Dim jobNumber As Integer
-                            Dim datasetID As Integer
+                        headersParsed = True
+                        Continue While
+                    End If
 
-                            If Integer.TryParse(lstData(jobIndex), jobNumber) Then
-                                If Integer.TryParse(lstData(datasetIDIndex), datasetID) Then
-                                    Dim udtDatasetInfo = New udtDatasetInfoType
-                                    udtDatasetInfo.DatasetID = datasetID
-                                    udtDatasetInfo.DatasetName = lstData(datasetIndex)
+                    If lineParts.Count > datasetIndex Then
+                        Dim jobNumber As Integer
+                        Dim datasetID As Integer
 
-                                    dctJobToDatasetMap.Add(jobNumber, udtDatasetInfo)
-                                Else
-                                    ShowMessage("Warning: Dataest_ID number not numeric in metadata file, line " & lineIn)
-                                End If
+                        If Integer.TryParse(lineParts(jobIndex), jobNumber) Then
+                            If Integer.TryParse(lineParts(datasetIDIndex), datasetID) Then
+                                Dim udtDatasetInfo = New udtDatasetInfoType
+                                udtDatasetInfo.DatasetID = datasetID
+                                udtDatasetInfo.DatasetName = lineParts(datasetIndex)
+
+                                dctJobToDatasetMap.Add(jobNumber, udtDatasetInfo)
                             Else
-                                ShowMessage("Warning: Job number not numeric in metadata file, line " & lineIn)
+                                ShowMessage("Warning: Dataset_ID number not numeric in metadata file, line " & dataLine)
                             End If
+                        Else
+                            ShowMessage("Warning: Job number not numeric in metadata file, line " & dataLine)
                         End If
                     End If
+
                 End While
             End Using
 
@@ -1357,10 +1323,6 @@ Public Class clsMASICResultsMerger
       sicStatsFileName As String,
       dctSICStats As IDictionary(Of Integer, clsSICStatsData)) As Boolean
 
-        Dim lineIn As String
-        Dim splitLine() As String
-
-        Dim linesRead As Integer
         Dim fragScanNumber As Integer
 
         Try
@@ -1369,34 +1331,32 @@ Public Class clsMASICResultsMerger
 
             ShowMessage("  Reading: " & sicStatsFileName)
 
-            Using srInFile = New StreamReader(New FileStream(Path.Combine(sourceDirectory, sicStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using reader = New StreamReader(New FileStream(Path.Combine(sourceDirectory, sicStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
-                linesRead = 0
-                While Not srInFile.EndOfStream
-                    lineIn = srInFile.ReadLine()
+                While Not reader.EndOfStream
+                    Dim dataLine = reader.ReadLine()
 
-                    If Not lineIn Is Nothing AndAlso lineIn.Length > 0 Then
-                        linesRead += 1
-                        splitLine = lineIn.Split(ControlChars.Tab)
+                    If String.IsNullOrWhiteSpace(dataLine) Then Continue While
 
-                        If splitLine.Length >= eSICStatsColumns.StatMomentsArea + 1 AndAlso Integer.TryParse(splitLine(eSICStatsColumns.FragScanNumber), fragScanNumber) Then
+                    Dim lineParts = dataLine.Split(ControlChars.Tab)
 
-                            Dim sicStatsEntry = New clsSICStatsData(fragScanNumber)
-                            With sicStatsEntry
-                                ' Note: the remaining values are stored as strings to prevent the number format from changing
-                                .OptimalScanNumber = String.Copy(splitLine(eSICStatsColumns.OptimalPeakApexScanNumber))
-                                .PeakMaxIntensity = String.Copy(splitLine(eSICStatsColumns.PeakMaxIntensity))
-                                .PeakSignalToNoiseRatio = String.Copy(splitLine(eSICStatsColumns.PeakSignalToNoiseRatio))
-                                .FWHMInScans = String.Copy(splitLine(eSICStatsColumns.FWHMInScans))
-                                .PeakArea = String.Copy(splitLine(eSICStatsColumns.PeakArea))
-                                .ParentIonIntensity = String.Copy(splitLine(eSICStatsColumns.ParentIonIntensity))
-                                .ParentIonMZ = String.Copy(splitLine(eSICStatsColumns.MZ))
-                                .StatMomentsArea = String.Copy(splitLine(eSICStatsColumns.StatMomentsArea))
-                            End With
+                    If lineParts.Length >= eSICStatsColumns.StatMomentsArea + 1 AndAlso Integer.TryParse(lineParts(eSICStatsColumns.FragScanNumber), fragScanNumber) Then
 
-                            dctSICStats.Add(fragScanNumber, sicStatsEntry)
-                        End If
+                        ' Note: the remaining values are stored as strings to prevent the number format from changing
+                        Dim sicStatsEntry = New clsSICStatsData(fragScanNumber) With {
+                                .OptimalScanNumber = String.Copy(lineParts(eSICStatsColumns.OptimalPeakApexScanNumber)),
+                                .PeakMaxIntensity = String.Copy(lineParts(eSICStatsColumns.PeakMaxIntensity)),
+                                .PeakSignalToNoiseRatio = String.Copy(lineParts(eSICStatsColumns.PeakSignalToNoiseRatio)),
+                                .FWHMInScans = String.Copy(lineParts(eSICStatsColumns.FWHMInScans)),
+                                .PeakArea = String.Copy(lineParts(eSICStatsColumns.PeakArea)),
+                                .ParentIonIntensity = String.Copy(lineParts(eSICStatsColumns.ParentIonIntensity)),
+                                .ParentIonMZ = String.Copy(lineParts(eSICStatsColumns.MZ)),
+                                .StatMomentsArea = String.Copy(lineParts(eSICStatsColumns.StatMomentsArea))
+                                }
+
+                        dctSICStats.Add(fragScanNumber, sicStatsEntry)
                     End If
+
                 End While
 
             End Using
@@ -1415,11 +1375,7 @@ Public Class clsMASICResultsMerger
       dctScanStats As IDictionary(Of Integer, clsScanStatsData),
       <Out> ByRef reporterIonHeaders As String) As Boolean
 
-        Dim lineIn As String
-        Dim splitLine() As String
-
         Dim linesRead As Integer
-        Dim scanNumber As Integer
 
         Dim warningCount = 0
 
@@ -1429,55 +1385,58 @@ Public Class clsMASICResultsMerger
 
             ShowMessage("  Reading: " & reporterIonStatsFileName)
 
-            Using srInFile = New StreamReader(New FileStream(Path.Combine(sourceDirectory, reporterIonStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using reader = New StreamReader(New FileStream(Path.Combine(sourceDirectory, reporterIonStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 linesRead = 0
-                While Not srInFile.EndOfStream
-                    lineIn = srInFile.ReadLine()
+                While Not reader.EndOfStream
+                    Dim dataLine = reader.ReadLine()
 
-                    If Not lineIn Is Nothing AndAlso lineIn.Length > 0 Then
-                        linesRead += 1
-                        splitLine = lineIn.Split(ControlChars.Tab)
+                    If String.IsNullOrWhiteSpace(dataLine) Then Continue While
 
-                        If linesRead = 1 Then
-                            ' This is the header line; we need to cache it
+                    linesRead += 1
+                    Dim lineParts = dataLine.Split(ControlChars.Tab)
 
-                            If splitLine.Length >= eReporterIonStatsColumns.ReporterIonIntensityMax + 1 Then
-                                reporterIonHeaders = splitLine(eReporterIonStatsColumns.CollisionMode)
-                                reporterIonHeaders &= ControlChars.Tab & FlattenArray(splitLine, eReporterIonStatsColumns.ReporterIonIntensityMax)
-                            Else
-                                ' There aren't enough columns in the header line; this is unexpected
-                                reporterIonHeaders = "Collision Mode" & ControlChars.Tab & "AdditionalReporterIonColumns"
-                            End If
+                    If linesRead = 1 Then
+                        ' This is the header line; we need to cache it
 
+                        If lineParts.Length >= eReporterIonStatsColumns.ReporterIonIntensityMax + 1 Then
+                            reporterIonHeaders = lineParts(eReporterIonStatsColumns.CollisionMode)
+                            reporterIonHeaders &= ControlChars.Tab & FlattenArray(lineParts, eReporterIonStatsColumns.ReporterIonIntensityMax)
+                        Else
+                            ' There aren't enough columns in the header line; this is unexpected
+                            reporterIonHeaders = "Collision Mode" & ControlChars.Tab & "AdditionalReporterIonColumns"
                         End If
 
-                        If splitLine.Length >= eReporterIonStatsColumns.ReporterIonIntensityMax + 1 AndAlso Integer.TryParse(splitLine(eReporterIonStatsColumns.ScanNumber), scanNumber) Then
-
-                            ' Look for scanNumber in scanNumbers
-                            Dim scanStatsEntry As clsScanStatsData = Nothing
-
-                            If Not dctScanStats.TryGetValue(scanNumber, scanStatsEntry) Then
-                                If warningCount < 10 Then
-                                    ShowMessage("Warning: " & REPORTER_IONS_FILE_EXTENSION & " file refers to scan " & scanNumber.ToString & ", but that scan was not in the _ScanStats.txt file")
-                                ElseIf warningCount = 10 Then
-                                    ShowMessage("Warning: " & REPORTER_IONS_FILE_EXTENSION & " file has 10 or more scan numbers that are not defined in the _ScanStats.txt file")
-                                End If
-                                warningCount += 1
-                            Else
-
-                                If scanStatsEntry.ScanNumber <> scanNumber Then
-                                    ' Scan number mismatch; this shouldn't happen
-                                    ShowMessage("Error: Scan number mismatch in ReadReporterIonStatsFile: " & scanStatsEntry.ScanNumber.ToString & " vs. " & scanNumber.ToString)
-                                Else
-                                    scanStatsEntry.CollisionMode = String.Copy(splitLine(eReporterIonStatsColumns.CollisionMode))
-                                    scanStatsEntry.ReporterIonData = FlattenArray(splitLine, eReporterIonStatsColumns.ReporterIonIntensityMax)
-                                End If
-
-                            End If
-
-                        End If
                     End If
+
+                    If lineParts.Length < eReporterIonStatsColumns.ReporterIonIntensityMax + 1 Then Continue While
+
+                    Dim scanNumber As Integer
+                    If Not Integer.TryParse(lineParts(eReporterIonStatsColumns.ScanNumber), scanNumber) Then Continue While
+
+                    ' Look for scanNumber in scanNumbers
+                    Dim scanStatsEntry As clsScanStatsData = Nothing
+
+                    If Not dctScanStats.TryGetValue(scanNumber, scanStatsEntry) Then
+                        If warningCount < 10 Then
+                            ShowMessage("Warning: " & REPORTER_IONS_FILE_EXTENSION & " file refers to scan " & scanNumber.ToString & ", but that scan was not in the _ScanStats.txt file")
+                        ElseIf warningCount = 10 Then
+                            ShowMessage("Warning: " & REPORTER_IONS_FILE_EXTENSION & " file has 10 or more scan numbers that are not defined in the _ScanStats.txt file")
+                        End If
+                        warningCount += 1
+                    Else
+
+                        If scanStatsEntry.ScanNumber <> scanNumber Then
+                            ' Scan number mismatch; this shouldn't happen
+                            ShowMessage("Error: Scan number mismatch in ReadReporterIonStatsFile: " & scanStatsEntry.ScanNumber.ToString & " vs. " & scanNumber.ToString)
+                        Else
+                            scanStatsEntry.CollisionMode = String.Copy(lineParts(eReporterIonStatsColumns.CollisionMode))
+                            scanStatsEntry.ReporterIonData = FlattenArray(lineParts, eReporterIonStatsColumns.ReporterIonIntensityMax)
+                        End If
+
+                    End If
+
+
                 End While
 
             End Using
@@ -1545,66 +1504,68 @@ Public Class clsMASICResultsMerger
 
             Try
 
-                Using srInFile = New StreamReader(New FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                Using reader = New StreamReader(New FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
 
                     Dim linesRead = 0
                     Dim fragMethodColNumber = 0
 
-                    While Not srInFile.EndOfStream
-                        Dim lineIn = srInFile.ReadLine()
+                    While Not reader.EndOfStream
+                        Dim dataLine = reader.ReadLine()
 
-                        If Not lineIn Is Nothing AndAlso lineIn.Length > 0 Then
-                            linesRead += 1
-                            Dim splitLine = lineIn.Split(ControlChars.Tab)
-                            If linesRead = 1 Then
-                                ' Header line; look for the FragMethod column
-                                For colIndex = 0 To splitLine.Length - 1
-                                    If String.Equals(splitLine(colIndex), "FragMethod", StringComparison.OrdinalIgnoreCase) Then
-                                        fragMethodColNumber = colIndex + 1
-                                        Exit For
-                                    End If
-                                Next
+                        If String.IsNullOrWhiteSpace(dataLine) Then Continue While
 
-                                If fragMethodColNumber = 0 Then
-                                    ' Fragmentation method column not found
-                                    ShowWarning("Unable to determine the collision mode for results being merged. " &
-                                                "This is typically obtained from a MASIC _ReporterIons.txt file " &
-                                                "or from the FragMethod column in the MS-GF+ results file")
-                                    Exit While
+                        linesRead += 1
+
+                        Dim lineParts = dataLine.Split(ControlChars.Tab)
+                        If linesRead = 1 Then
+                            ' Header line; look for the FragMethod column
+                            For colIndex = 0 To lineParts.Length - 1
+                                If String.Equals(lineParts(colIndex), "FragMethod", StringComparison.OrdinalIgnoreCase) Then
+                                    fragMethodColNumber = colIndex + 1
+                                    Exit For
                                 End If
+                            Next
 
-                                ' Also look for the scan number column, auto-updating ScanNumberColumn if necessary
-                                FindScanNumColumn(inputFile, splitLine)
-
-                                Continue While
+                            If fragMethodColNumber = 0 Then
+                                ' Fragmentation method column not found
+                                ShowWarning("Unable to determine the collision mode for results being merged. " &
+                                            "This is typically obtained from a MASIC _ReporterIons.txt file " &
+                                            "or from the FragMethod column in the MS-GF+ results file")
+                                Exit While
                             End If
 
-                            Dim scanNumber As Integer
-                            If splitLine.Length < ScanNumberColumn OrElse Not Integer.TryParse(splitLine(ScanNumberColumn - 1), scanNumber) Then
-                                Continue While
-                            End If
+                            ' Also look for the scan number column, auto-updating ScanNumberColumn if necessary
+                            FindScanNumColumn(inputFile, lineParts)
 
-                            If splitLine.Length < fragMethodColNumber Then
-                                Continue While
-                            End If
-
-                            Dim collisionMode = splitLine(fragMethodColNumber - 1)
-
-                            If Not dctCollisionModeFileMap.ContainsKey(collisionMode) Then
-                                ' Store this collision mode in htCollisionModes; the value stored will be the index in collisionModes()
-                                dctCollisionModeFileMap.Add(collisionMode, collisionModeTypeCount)
-                                collisionModeTypeCount += 1
-                            End If
-
-                            Dim scanStatsEntry As clsScanStatsData = Nothing
-                            If Not dctScanStats.TryGetValue(scanNumber, scanStatsEntry) Then
-                                scanStatsEntry = New clsScanStatsData(scanNumber)
-                                scanStatsEntry.CollisionMode = collisionMode
-                                dctScanStats.Add(scanNumber, scanStatsEntry)
-                            Else
-                                scanStatsEntry.CollisionMode = collisionMode
-                            End If
+                            Continue While
                         End If
+
+                        Dim scanNumber As Integer
+                        If lineParts.Length < ScanNumberColumn OrElse Not Integer.TryParse(lineParts(ScanNumberColumn - 1), scanNumber) Then
+                            Continue While
+                        End If
+
+                        If lineParts.Length < fragMethodColNumber Then
+                            Continue While
+                        End If
+
+                        Dim collisionMode = lineParts(fragMethodColNumber - 1)
+
+                        If Not dctCollisionModeFileMap.ContainsKey(collisionMode) Then
+                            ' Store this collision mode in htCollisionModes; the value stored will be the index in collisionModes()
+                            dctCollisionModeFileMap.Add(collisionMode, collisionModeTypeCount)
+                            collisionModeTypeCount += 1
+                        End If
+
+                        Dim scanStatsEntry As clsScanStatsData = Nothing
+                        If Not dctScanStats.TryGetValue(scanNumber, scanStatsEntry) Then
+                            scanStatsEntry = New clsScanStatsData(scanNumber)
+                            scanStatsEntry.CollisionMode = collisionMode
+                            dctScanStats.Add(scanNumber, scanStatsEntry)
+                        Else
+                            scanStatsEntry.CollisionMode = collisionMode
+                        End If
+
                     End While
                 End Using
 
