@@ -7,7 +7,7 @@ Imports PHRPReader
 Imports PRISM
 
 ' This class merges the contents of a tab-delimited peptide hit results file
-' (e.g. from Sequest, XTandem, or MSGF+) with the corresponding MASIC results files,
+' (e.g. from SEQUEST, X!Tandem, or MS-GF+) with the corresponding MASIC results files,
 ' appending the relevant MASIC stats for each peptide hit result
 '
 ' -------------------------------------------------------------------------------
@@ -1537,8 +1537,8 @@ Public Class clsMASICResultsMerger
         If (dctCollisionModeFileMap.Count = 0) OrElse
            (dctCollisionModeFileMap.Count = 1 AndAlso String.IsNullOrWhiteSpace(dctCollisionModeFileMap.First.Key)) Then
 
-            ' Try to load the collision mode info from the intput file
-            ' MSGF+ results report this in the FragMethod column
+            ' Try to load the collision mode info from the input file
+            ' MS-GF+ results report this in the FragMethod column
 
             dctCollisionModeFileMap.Clear()
             collisionModeTypeCount = 0
@@ -1569,7 +1569,7 @@ Public Class clsMASICResultsMerger
                                     ' Fragmentation method column not found
                                     ShowWarning("Unable to determine the collision mode for results being merged. " &
                                                 "This is typically obtained from a MASIC _ReporterIons.txt file " &
-                                                "or from the FragMethod column in the MSGF+ results file")
+                                                "or from the FragMethod column in the MS-GF+ results file")
                                     Exit While
                                 End If
 

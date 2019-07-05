@@ -2,7 +2,7 @@ Option Strict On
 
 Imports PRISM
 ' This program merges the contents of a tab-delimited peptide hit results file
-' (e.g. from Sequest, XTandem, or MSGF+) with the corresponding MASIC results files,
+' (e.g. from SEQUEST, X!Tandem, or MS-GF+) with the corresponding MASIC results files,
 ' appending the relevant MASIC stats for each peptide hit result
 '
 ' -------------------------------------------------------------------------------
@@ -220,7 +220,7 @@ Module modMain
         Try
 
             Console.WriteLine("This program merges the contents of a tab-delimited peptide hit results file " &
-                              "(e.g. from X!Tandem or MSGF+) with the corresponding MASIC results files, " &
+                              "(e.g. from X!Tandem or MS-GF+) with the corresponding MASIC results files, " &
                               "appending the relevant MASIC stats for each peptide hit result, " &
                               "writing the merged data to a new tab-delimited text file.")
             Console.WriteLine()
@@ -240,11 +240,11 @@ Module modMain
             Console.WriteLine()
             Console.WriteLine("Common input files are:")
             Console.WriteLine("- Peptide Hit Results Processor (https://github.com/PNNL-Comp-Mass-Spec/PHRP) tab-delimited files")
-            Console.WriteLine("  - MSGF+ syn/fht file (_msgfplus_syn.txt or _msgfplus_fht.txt)")
-            Console.WriteLine("  - Sequest Synopsis or First-Hits file (_syn.txt or _fht.txt)")
+            Console.WriteLine("  - MS-GF+ syn/fht file (_msgfplus_syn.txt or _msgfplus_fht.txt)")
+            Console.WriteLine("  - SEQUEST Synopsis or First-Hits file (_syn.txt or _fht.txt)")
             Console.WriteLine("  - XTandem _xt.txt file")
             Console.WriteLine("- MzidToTSVConverter (https://github.com/PNNL-Comp-Mass-Spec/Mzid-To-Tsv-Converter) .TSV files")
-            Console.WriteLine("  - This is a tab-delimited text file created from a .mzid file (e.g. from MSGF+)")
+            Console.WriteLine("  - This is a tab-delimited text file created from a .mzid file (e.g. from MS-GF+)")
             Console.WriteLine()
             Console.WriteLine("If the MASIC result files are not in the same directory as the input file, use /M to define the path to the correct directory.")
             Console.WriteLine("The output directory switch is optional.  If omitted, the output file will be created in the same directory as the input file. ")
