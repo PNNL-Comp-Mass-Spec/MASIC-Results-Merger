@@ -130,7 +130,7 @@ Public Class clsMASICResultsMerger
 
     Private mLocalErrorCode As eResultsProcessorErrorCodes
 
-    Private mMASICResultsFolderPath As String = String.Empty
+    Private mMASICResultsDirectoryPath As String = String.Empty
 
     Private mPHRPReader As clsPHRPReader
 
@@ -147,14 +147,14 @@ Public Class clsMASICResultsMerger
 
     Public Property MageResults As Boolean
 
-    Public Property MASICResultsFolderPath As String
+    Public Property MASICResultsDirectoryPath As String
         Get
-            If mMASICResultsFolderPath Is Nothing Then mMASICResultsFolderPath = String.Empty
-            Return mMASICResultsFolderPath
+            If mMASICResultsDirectoryPath Is Nothing Then mMASICResultsDirectoryPath = String.Empty
+            Return mMASICResultsDirectoryPath
         End Get
         Set
             If Value Is Nothing Then Value = String.Empty
-            mMASICResultsFolderPath = Value
+            mMASICResultsDirectoryPath = Value
         End Set
     End Property
 
@@ -178,7 +178,7 @@ Public Class clsMASICResultsMerger
 
 #End Region
 
-    Private Function FindMASICFiles(masicResultsFolder As String, udtDatasetInfo As udtDatasetInfoType, ByRef udtMASICFileNames As udtMASICFileNamesType) As Boolean
+    Private Function FindMASICFiles(masicResultsDirectory As String, udtDatasetInfo As udtDatasetInfoType, ByRef udtMASICFileNames As udtMASICFileNamesType) As Boolean
 
         Dim success = False
         Dim datasetName As String
@@ -196,7 +196,7 @@ Public Class clsMASICResultsMerger
 
             ' Use a Do loop to try various possible dataset names
             Do
-                candidateFilePath = Path.Combine(masicResultsFolder, datasetName & SIC_STATS_FILE_EXTENSION)
+                candidateFilePath = Path.Combine(masicResultsDirectory, datasetName & SIC_STATS_FILE_EXTENSION)
 
                 If File.Exists(candidateFilePath) Then
                     ' SICStats file was found
@@ -205,12 +205,12 @@ Public Class clsMASICResultsMerger
                     udtMASICFileNames.DatasetName = datasetName
                     udtMASICFileNames.SICStatsFileName = Path.GetFileName(candidateFilePath)
 
-                    candidateFilePath = Path.Combine(masicResultsFolder, datasetName & SCAN_STATS_FILE_EXTENSION)
+                    candidateFilePath = Path.Combine(masicResultsDirectory, datasetName & SCAN_STATS_FILE_EXTENSION)
                     If File.Exists(candidateFilePath) Then
                         udtMASICFileNames.ScanStatsFileName = Path.GetFileName(candidateFilePath)
                     End If
 
-                    candidateFilePath = Path.Combine(masicResultsFolder, datasetName & REPORTER_IONS_FILE_EXTENSION)
+                    candidateFilePath = Path.Combine(masicResultsDirectory, datasetName & REPORTER_IONS_FILE_EXTENSION)
                     If File.Exists(candidateFilePath) Then
                         udtMASICFileNames.ReporterIonsFileName = Path.GetFileName(candidateFilePath)
                     End If
@@ -361,7 +361,7 @@ Public Class clsMASICResultsMerger
 
     Private Sub InitializeLocalVariables()
 
-        mMASICResultsFolderPath = String.Empty
+        mMASICResultsDirectoryPath = String.Empty
         ScanNumberColumn = DEFAULT_SCAN_NUMBER_COLUMN
         SeparateByCollisionMode = False
 
@@ -373,7 +373,7 @@ Public Class clsMASICResultsMerger
 
     Private Function MergePeptideHitAndMASICFiles(
       inputFile As FileSystemInfo,
-      outputFolderPath As String,
+      outputDirectoryPath As String,
       dctScanStats As Dictionary(Of Integer, clsScanStatsData),
       dctSICStats As IReadOnlyDictionary(Of Integer, clsSICStatsData),
       reporterIonHeaders As String) As Boolean
@@ -405,15 +405,15 @@ Public Class clsMASICResultsMerger
             If String.IsNullOrWhiteSpace(reporterIonHeaders) Then reporterIonHeaders = String.Empty
 
             ' Define the output file path
-            If outputFolderPath Is Nothing Then
-                outputFolderPath = String.Empty
+            If outputDirectoryPath Is Nothing Then
+                outputDirectoryPath = String.Empty
             End If
 
             If SeparateByCollisionMode Then
                 outputFilePaths = SummarizeCollisionModes(
                     inputFile,
                     baseFileName,
-                    outputFolderPath,
+                    outputDirectoryPath,
                     dctScanStats,
                     dctCollisionModeFileMap)
 
@@ -427,7 +427,7 @@ Public Class clsMASICResultsMerger
 
                 outputFileCount = 1
                 ReDim outputFilePaths(0)
-                outputFilePaths(0) = New KeyValuePair(Of String, String)("", Path.Combine(outputFolderPath, baseFileName & RESULTS_SUFFIX))
+                outputFilePaths(0) = New KeyValuePair(Of String, String)("", Path.Combine(outputDirectoryPath, baseFileName & RESULTS_SUFFIX))
             End If
 
             ReDim swOutfile(outputFileCount - 1)
@@ -748,12 +748,12 @@ Public Class clsMASICResultsMerger
                     outputFileName = baseFileName & "_" & collisionMode & RESULTS_SUFFIX
                 End If
 
-                outputFileHandles.Add(collisionMode, New StreamWriter(New FileStream(Path.Combine(mOutputFolderPath, outputFileName), FileMode.Create, FileAccess.Write)))
+                outputFileHandles.Add(collisionMode, New StreamWriter(New FileStream(Path.Combine(mOutputDirectoryPath, outputFileName), FileMode.Create, FileAccess.Write)))
                 outputFileHeaderWritten.Add(collisionMode, False)
             Next
 
             ' Create the DatasetMap file
-            Using swOutFile = New StreamWriter(New FileStream(Path.Combine(mOutputFolderPath, baseFileName & "_DatasetMap.txt"), FileMode.Create, FileAccess.Write))
+            Using swOutFile = New StreamWriter(New FileStream(Path.Combine(mOutputDirectoryPath, baseFileName & "_DatasetMap.txt"), FileMode.Create, FileAccess.Write))
 
                 swOutFile.WriteLine("DatasetID" & ControlChars.Tab & "DatasetName")
 
@@ -825,14 +825,14 @@ Public Class clsMASICResultsMerger
     ''' Main processing function
     ''' </summary>
     ''' <param name="inputFilePath">Input file path</param>
-    ''' <param name="outputFolderPath">Output folder path</param>
+    ''' <param name="outputDirectoryPath">Output directory path</param>
     ''' <param name="parameterFilePath">Parameter file path (Ignored)</param>
     ''' <param name="resetErrorCode">If true, reset the error code</param>
     ''' <returns>True if success, False if failure</returns>
-    Public Overloads Overrides Function ProcessFile(inputFilePath As String, outputFolderPath As String, parameterFilePath As String, resetErrorCode As Boolean) As Boolean
+    Public Overloads Overrides Function ProcessFile(inputFilePath As String, outputDirectoryPath As String, parameterFilePath As String, resetErrorCode As Boolean) As Boolean
 
         Dim success As Boolean
-        Dim masicResultsFolder As String
+        Dim masicResultsDirectory As String
 
         If resetErrorCode Then
             SetLocalErrorCode(eResultsProcessorErrorCodes.NoError)
@@ -844,31 +844,31 @@ Public Class clsMASICResultsMerger
             Return False
         End If
 
-        ' Note that CleanupFilePaths() will update mOutputFolderPath, which is used by LogMessage()
-        If Not CleanupFilePaths(inputFilePath, outputFolderPath) Then
             MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.FilePathError)
+        ' Note that CleanupFilePaths() will update mOutputDirectoryPath, which is used by LogMessage()
+        If Not CleanupFilePaths(inputFilePath, outputDirectoryPath) Then
             Return False
         End If
 
         Dim fiInputFile As FileInfo
         fiInputFile = New FileInfo(inputFilePath)
 
-        If String.IsNullOrWhiteSpace(mMASICResultsFolderPath) Then
-            masicResultsFolder = fiInputFile.DirectoryName
+        If String.IsNullOrWhiteSpace(mMASICResultsDirectoryPath) Then
+            masicResultsDirectory = fiInputFile.DirectoryName
         Else
-            masicResultsFolder = String.Copy(mMASICResultsFolderPath)
+            masicResultsDirectory = String.Copy(mMASICResultsDirectoryPath)
         End If
 
         If MageResults Then
-            success = ProcessMageExtractorFile(fiInputFile, masicResultsFolder)
+            success = ProcessMageExtractorFile(fiInputFile, masicResultsDirectory)
         Else
-            success = ProcessSingleJobFile(fiInputFile, masicResultsFolder)
+            success = ProcessSingleJobFile(fiInputFile, masicResultsDirectory)
         End If
         Return success
 
     End Function
 
-    Private Function ProcessMageExtractorFile(fiInputFile As FileInfo, masicResultsFolder As String) As Boolean
+    Private Function ProcessMageExtractorFile(fiInputFile As FileInfo, masicResultsDirectory As String) As Boolean
 
         Dim udtMASICFileNames = New udtMASICFileNamesType
 
@@ -918,7 +918,7 @@ Public Class clsMASICResultsMerger
             Dim blankAdditionalSICColumns = New String(ControlChars.Tab, SIC_STAT_COLUMN_COUNT_TO_ADD)
 
             Dim outputFileName = Path.GetFileNameWithoutExtension(fiInputFile.Name) & RESULTS_SUFFIX
-            Dim outputFilePath = Path.Combine(mOutputFolderPath, outputFileName)
+            Dim outputFilePath = Path.Combine(mOutputDirectoryPath, outputFileName)
 
             Dim jobsSuccessfullyMerged = 0
 
@@ -971,22 +971,22 @@ Public Class clsMASICResultsMerger
                             ShowErrorMessage("Error: Job " & job & " was not defined in the Metadata file; unable to determine the dataset")
                         Else
 
-                            ' Look for the corresponding MASIC files in the input folder
+                            ' Look for the corresponding MASIC files in the input directory
                             Dim success As Boolean
 
                             udtMASICFileNames.Initialize()
-                            success = FindMASICFiles(masicResultsFolder, udtDatasetInfo, udtMASICFileNames)
+                            success = FindMASICFiles(masicResultsDirectory, udtDatasetInfo, udtMASICFileNames)
 
                             If Not success Then
-                                ShowMessage("  Error: Unable to find the MASIC data files for dataset " & udtDatasetInfo.DatasetName & " in " & masicResultsFolder)
+                                ShowMessage("  Error: Unable to find the MASIC data files for dataset " & udtDatasetInfo.DatasetName & " in " & masicResultsDirectory)
                                 ShowMessage("         Job " & job & " will not have MASIC results")
                             Else
                                 If udtMASICFileNames.SICStatsFileName.Length = 0 Then
-                                    ShowMessage("  Error: the SIC stats file was not found for dataset " & udtDatasetInfo.DatasetName & " in " & masicResultsFolder)
+                                    ShowMessage("  Error: the SIC stats file was not found for dataset " & udtDatasetInfo.DatasetName & " in " & masicResultsDirectory)
                                     ShowMessage("         Job " & job & " will not have MASIC results")
                                     success = False
                                 ElseIf udtMASICFileNames.ScanStatsFileName.Length = 0 Then
-                                    ShowMessage("  Error: the Scan stats file was not found for dataset " & udtDatasetInfo.DatasetName & " in " & masicResultsFolder)
+                                    ShowMessage("  Error: the Scan stats file was not found for dataset " & udtDatasetInfo.DatasetName & " in " & masicResultsDirectory)
                                     ShowMessage("         Job " & job & " will not have MASIC results")
                                     success = False
                                 End If
@@ -999,7 +999,7 @@ Public Class clsMASICResultsMerger
                                 dctSICStats = New Dictionary(Of Integer, clsSICStatsData)
                                 reporterIonHeaders = String.Empty
 
-                                masicDataLoaded = ReadMASICData(masicResultsFolder, udtMASICFileNames, dctScanStats, dctSICStats, reporterIonHeaders)
+                                masicDataLoaded = ReadMASICData(masicResultsDirectory, udtMASICFileNames, dctScanStats, dctSICStats, reporterIonHeaders)
 
                                 If masicDataLoaded Then
                                     jobsSuccessfullyMerged += 1
@@ -1125,7 +1125,7 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Private Function ProcessSingleJobFile(fiInputFile As FileSystemInfo, masicResultsFolder As String) As Boolean
+    Private Function ProcessSingleJobFile(fiInputFile As FileSystemInfo, masicResultsDirectory As String) As Boolean
         Dim udtMASICFileNames = New udtMASICFileNamesType
 
         Dim dctScanStats As Dictionary(Of Integer, clsScanStatsData)
@@ -1143,21 +1143,21 @@ Public Class clsMASICResultsMerger
             udtDatasetInfo.DatasetName = Path.GetFileNameWithoutExtension(fiInputFile.FullName)
             udtDatasetInfo.DatasetID = 0
 
-            ' Look for the corresponding MASIC files in the input folder
+            ' Look for the corresponding MASIC files in the input directory
             udtMASICFileNames.Initialize()
-            success = FindMASICFiles(masicResultsFolder, udtDatasetInfo, udtMASICFileNames)
+            success = FindMASICFiles(masicResultsDirectory, udtDatasetInfo, udtMASICFileNames)
 
             If Not success Then
-                ShowErrorMessage("Error: Unable to find the MASIC data files in " & masicResultsFolder)
+                ShowErrorMessage("Error: Unable to find the MASIC data files in " & masicResultsDirectory)
                 SetLocalErrorCode(eResultsProcessorErrorCodes.MissingMASICFiles)
                 Return False
             Else
                 If udtMASICFileNames.SICStatsFileName.Length = 0 Then
-                    ShowErrorMessage("Error: the SIC stats file was not found in " & masicResultsFolder & "; unable to continue")
+                    ShowErrorMessage("Error: the SIC stats file was not found in " & masicResultsDirectory & "; unable to continue")
                     SetLocalErrorCode(eResultsProcessorErrorCodes.MissingMASICFiles)
                     Return False
                 ElseIf udtMASICFileNames.ScanStatsFileName.Length = 0 Then
-                    ShowErrorMessage("Error: the Scan stats file was not found in " & masicResultsFolder & "; unable to continue")
+                    ShowErrorMessage("Error: the Scan stats file was not found in " & masicResultsDirectory & "; unable to continue")
                     SetLocalErrorCode(eResultsProcessorErrorCodes.MissingMASICFiles)
                     Return False
                 End If
@@ -1167,11 +1167,11 @@ Public Class clsMASICResultsMerger
             dctScanStats = New Dictionary(Of Integer, clsScanStatsData)
             dctSICStats = New Dictionary(Of Integer, clsSICStatsData)
 
-            success = ReadMASICData(masicResultsFolder, udtMASICFileNames, dctScanStats, dctSICStats, reporterIonHeaders)
+            success = ReadMASICData(masicResultsDirectory, udtMASICFileNames, dctScanStats, dctSICStats, reporterIonHeaders)
 
             If success Then
                 ' Merge the MASIC data with the input file
-                success = MergePeptideHitAndMASICFiles(fiInputFile, mOutputFolderPath,
+                success = MergePeptideHitAndMASICFiles(fiInputFile, mOutputDirectoryPath,
                  dctScanStats,
                  dctSICStats,
                  reporterIonHeaders)
@@ -1192,7 +1192,7 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Private Function ReadMASICData(sourceFolder As String,
+    Private Function ReadMASICData(sourceDirectory As String,
       udtMASICFileNames As udtMASICFileNamesType,
       dctScanStats As IDictionary(Of Integer, clsScanStatsData),
       dctSICStats As IDictionary(Of Integer, clsSICStatsData),
@@ -1202,14 +1202,14 @@ Public Class clsMASICResultsMerger
 
         Try
 
-            success = ReadScanStatsFile(sourceFolder, udtMASICFileNames.ScanStatsFileName, dctScanStats)
+            success = ReadScanStatsFile(sourceDirectory, udtMASICFileNames.ScanStatsFileName, dctScanStats)
 
             If success Then
-                success = ReadSICStatsFile(sourceFolder, udtMASICFileNames.SICStatsFileName, dctSICStats)
+                success = ReadSICStatsFile(sourceDirectory, udtMASICFileNames.SICStatsFileName, dctSICStats)
             End If
 
             If success AndAlso udtMASICFileNames.ReporterIonsFileName.Length > 0 Then
-                success = ReadReporterIonStatsFile(sourceFolder, udtMASICFileNames.ReporterIonsFileName, dctScanStats, reporterIonHeaders)
+                success = ReadReporterIonStatsFile(sourceDirectory, udtMASICFileNames.ReporterIonsFileName, dctScanStats, reporterIonHeaders)
             Else
                 reporterIonHeaders = String.Empty
             End If
@@ -1224,7 +1224,7 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Private Function ReadScanStatsFile(sourceFolder As String,
+    Private Function ReadScanStatsFile(sourceDirectory As String,
       scanStatsFileName As String,
       dctScanStats As IDictionary(Of Integer, clsScanStatsData)) As Boolean
 
@@ -1240,7 +1240,7 @@ Public Class clsMASICResultsMerger
 
             ShowMessage("  Reading: " & scanStatsFileName)
 
-            Using srInFile = New StreamReader(New FileStream(Path.Combine(sourceFolder, scanStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(Path.Combine(sourceDirectory, scanStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 linesRead = 0
                 While Not srInFile.EndOfStream
@@ -1353,7 +1353,7 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Private Function ReadSICStatsFile(sourceFolder As String,
+    Private Function ReadSICStatsFile(sourceDirectory As String,
       sicStatsFileName As String,
       dctSICStats As IDictionary(Of Integer, clsSICStatsData)) As Boolean
 
@@ -1369,7 +1369,7 @@ Public Class clsMASICResultsMerger
 
             ShowMessage("  Reading: " & sicStatsFileName)
 
-            Using srInFile = New StreamReader(New FileStream(Path.Combine(sourceFolder, sicStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(Path.Combine(sourceDirectory, sicStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 linesRead = 0
                 While Not srInFile.EndOfStream
@@ -1410,7 +1410,7 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Private Function ReadReporterIonStatsFile(sourceFolder As String,
+    Private Function ReadReporterIonStatsFile(sourceDirectory As String,
       reporterIonStatsFileName As String,
       dctScanStats As IDictionary(Of Integer, clsScanStatsData),
       <Out> ByRef reporterIonHeaders As String) As Boolean
@@ -1429,7 +1429,7 @@ Public Class clsMASICResultsMerger
 
             ShowMessage("  Reading: " & reporterIonStatsFileName)
 
-            Using srInFile = New StreamReader(New FileStream(Path.Combine(sourceFolder, reporterIonStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using srInFile = New StreamReader(New FileStream(Path.Combine(sourceDirectory, reporterIonStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
 
                 linesRead = 0
                 While Not srInFile.EndOfStream
@@ -1516,7 +1516,7 @@ Public Class clsMASICResultsMerger
     Private Function SummarizeCollisionModes(
       inputFile As FileSystemInfo,
       baseFileName As String,
-      outputFolderPath As String,
+      outputDirectoryPath As String,
       dctScanStats As Dictionary(Of Integer, clsScanStatsData),
       <Out> ByRef dctCollisionModeFileMap As Dictionary(Of String, Integer)) As KeyValuePair(Of String, String)()
 
@@ -1620,13 +1620,13 @@ Public Class clsMASICResultsMerger
         Dim outputFilePaths = New KeyValuePair(Of String, String)(collisionModeTypeCount - 1) {}
 
         If dctCollisionModeFileMap.Count = 0 Then
-            outputFilePaths(0) = New KeyValuePair(Of String, String)("na", Path.Combine(outputFolderPath, baseFileName & "_na" & RESULTS_SUFFIX))
+            outputFilePaths(0) = New KeyValuePair(Of String, String)("na", Path.Combine(outputDirectoryPath, baseFileName & "_na" & RESULTS_SUFFIX))
         Else
             For Each oItem In dctCollisionModeFileMap
                 Dim collisionMode As String = oItem.Key
                 If String.IsNullOrWhiteSpace(collisionMode) Then collisionMode = "na"
                 outputFilePaths(oItem.Value) = New KeyValuePair(Of String, String)(
-                    collisionMode, Path.Combine(outputFolderPath, baseFileName & "_" & collisionMode & RESULTS_SUFFIX))
+                    collisionMode, Path.Combine(outputDirectoryPath, baseFileName & "_" & collisionMode & RESULTS_SUFFIX))
             Next
         End If
 

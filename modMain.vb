@@ -25,14 +25,14 @@ Module modMain
     Private mMageResults As Boolean
     Private mMergeWildcardResults As Boolean
 
-    Private mMASICResultsFolderPath As String                   ' Optional
-    Private mOutputFolderPath As String                         ' Optional
+    Private mMASICResultsDirectoryPath As String                   ' Optional
+    Private mOutputDirectoryPath As String                         ' Optional
 
-    Private mOutputFolderAlternatePath As String                ' Optional
-    Private mRecreateFolderHierarchyInAlternatePath As Boolean  ' Optional
+    Private mOutputDirectoryAlternatePath As String                ' Optional
+    Private mRecreateDirectoryHierarchyInAlternatePath As Boolean  ' Optional
 
-    Private mRecurseFolders As Boolean
-    Private mRecurseFoldersMaxLevels As Integer
+    Private mRecurseDirectories As Boolean
+    Private mRecurseDirectoriesMaxLevels As Integer
 
     Private mLogMessagesToFile As Boolean
 
@@ -67,11 +67,11 @@ Module modMain
         mMageResults = False
         mMergeWildcardResults = False
 
-        mMASICResultsFolderPath = String.Empty
-        mOutputFolderPath = String.Empty
+        mMASICResultsDirectoryPath = String.Empty
+        mOutputDirectoryPath = String.Empty
 
-        mRecurseFolders = False
-        mRecurseFoldersMaxLevels = 0
+        mRecurseDirectories = False
+        mRecurseDirectoriesMaxLevels = 0
 
         mLogMessagesToFile = False
 
@@ -103,21 +103,21 @@ Module modMain
                     .LogMessagesToFile = mLogMessagesToFile
 
                     ' Note: Define other options here; they will get overridden if defined in the parameter file
-                    .MASICResultsFolderPath = mMASICResultsFolderPath
+                    .MASICResultsDirectoryPath = mMASICResultsDirectoryPath
                     .ScanNumberColumn = mScanNumberColumn
                     .SeparateByCollisionMode = mSeparateByCollisionMode
 
                     .MageResults = mMageResults
                 End With
 
-                If mRecurseFolders Then
-                    If mMASICResultsMerger.ProcessFilesAndRecurseFolders(mInputFilePath, mOutputFolderPath, mOutputFolderAlternatePath, mRecreateFolderHierarchyInAlternatePath, "", mRecurseFoldersMaxLevels) Then
+                If mRecurseDirectories Then
+                    If mMASICResultsMerger.ProcessFilesAndRecurseDirectories(mInputFilePath, mOutputDirectoryPath, mOutputDirectoryAlternatePath, mRecreateDirectoryHierarchyInAlternatePath, "", mRecurseDirectoriesMaxLevels) Then
                         returnCode = 0
                     Else
                         returnCode = mMASICResultsMerger.ErrorCode
                     End If
                 Else
-                    If mMASICResultsMerger.ProcessFilesWildcard(mInputFilePath, mOutputFolderPath) Then
+                    If mMASICResultsMerger.ProcessFilesWildcard(mInputFilePath, mOutputDirectoryPath) Then
                         returnCode = 0
                     Else
                         returnCode = mMASICResultsMerger.ErrorCode
@@ -172,8 +172,8 @@ Module modMain
                         mInputFilePath = .RetrieveNonSwitchParameter(0)
                     End If
 
-                    If .RetrieveValueForParameter("M", strValue) Then mMASICResultsFolderPath = strValue
-                    If .RetrieveValueForParameter("O", strValue) Then mOutputFolderPath = strValue
+                    If .RetrieveValueForParameter("M", strValue) Then mMASICResultsDirectoryPath = strValue
+                    If .RetrieveValueForParameter("O", strValue) Then mOutputDirectoryPath = strValue
 
                     If .RetrieveValueForParameter("N", strValue) Then
                         If IsNumeric(strValue) Then
@@ -187,13 +187,13 @@ Module modMain
                     If .IsParameterPresent("Append") Then mMergeWildcardResults = True
 
                     If .RetrieveValueForParameter("S", strValue) Then
-                        mRecurseFolders = True
+                        mRecurseDirectories = True
                         If Integer.TryParse(strValue, intValue) Then
-                            mRecurseFoldersMaxLevels = intValue
+                            mRecurseDirectoriesMaxLevels = intValue
                         End If
                     End If
-                    If .RetrieveValueForParameter("A", strValue) Then mOutputFolderAlternatePath = strValue
-                    If .RetrieveValueForParameter("R", strValue) Then mRecreateFolderHierarchyInAlternatePath = True
+                    If .RetrieveValueForParameter("A", strValue) Then mOutputDirectoryAlternatePath = strValue
+                    If .RetrieveValueForParameter("R", strValue) Then mRecreateDirectoryHierarchyInAlternatePath = True
                 End With
 
                 Return True
@@ -230,9 +230,9 @@ Module modMain
                               "the reporter ion intensities will also be included in the new text file.")
             Console.WriteLine()
             Console.WriteLine("Program syntax:" & ControlChars.NewLine & IO.Path.GetFileName(Reflection.Assembly.GetExecutingAssembly().Location) &
-              " InputFilePathSpec [/M:MASICResultsFolderPath] [/O:OutputFolderPath]")
+              " InputFilePathSpec [/M:MASICResultsDirectoryPath] [/O:OutputDirectoryPath]")
             Console.WriteLine(" [/N:ScanNumberColumn] [/C] [/Mage] [/Append]")
-            Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputFolderPath] [/R]")
+            Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputDirectoryPath] [/R]")
             Console.WriteLine()
             Console.WriteLine("The input file should be a tab-delimited file where one column has scan numbers. " &
                               "By default, this program assumes the second column has scan number, but the " &
@@ -246,8 +246,8 @@ Module modMain
             Console.WriteLine("- MzidToTSVConverter (https://github.com/PNNL-Comp-Mass-Spec/Mzid-To-Tsv-Converter) .TSV files")
             Console.WriteLine("  - This is a tab-delimited text file created from a .mzid file (e.g. from MSGF+)")
             Console.WriteLine()
-            Console.WriteLine("If the MASIC result files are not in the same folder as the input file, use /M to define the path to the correct folder.")
-            Console.WriteLine("The output folder switch is optional.  If omitted, the output file will be created in the same folder as the input file. ")
+            Console.WriteLine("If the MASIC result files are not in the same directory as the input file, use /M to define the path to the correct directory.")
+            Console.WriteLine("The output directory switch is optional.  If omitted, the output file will be created in the same directory as the input file. ")
             Console.WriteLine("")
 
             Console.WriteLine("Use /N to change the column number that contains scan number in the input file. " &
@@ -261,7 +261,7 @@ Module modMain
                               "This file will contain results from several analysis jobs; the first column " &
                               "in this file must be Job and the remaining columns must be the standard " &
                               "Synopsis or First-Hits columns supported by PHRPReader. " &
-                              "In addition, the input folder must have a file named InputFile_metadata.txt " &
+                              "In addition, the input directory must have a file named InputFile_metadata.txt " &
                               "(this file will have been auto-created by Mage Extractor).")
             Console.WriteLine()
             Console.WriteLine("Use /Append to merge results from multiple datasets together as a single file; " &
@@ -269,10 +269,10 @@ Module modMain
             Console.WriteLine("The merged results file will have DatasetID values of 1, 2, 3, etc. " &
                               "along with a second file mapping DatasetID to Dataset Name")
             Console.WriteLine()
-            Console.WriteLine("Use /S to process all valid files in the input folder and subfolders. " &
-                              "Include a number after /S (like /S:2) to limit the level of subfolders to examine." &
-                              "When using /S, you can redirect the output of the results using /A to specify an alternate output folder." &
-                              "When using /S, you can use /R to re-create the input folder hierarchy in the alternate output folder (if defined).")
+            Console.WriteLine("Use /S to process all valid files in the input directory and subdirectories. " &
+                              "Include a number after /S (like /S:2) to limit the level of subdirectories to examine." &
+                              "When using /S, you can redirect the output of the results using /A to specify an alternate output directory." &
+                              "When using /S, you can use /R to re-create the input directory hierarchy in the alternate output directory (if defined).")
             Console.WriteLine()
 
             Console.WriteLine("Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2008; updated in 2017")

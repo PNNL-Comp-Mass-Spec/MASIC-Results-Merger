@@ -34,7 +34,7 @@ MASICResultsMerger
  Main processing function
  </summary>
  <param name="inputFilePath">Input file path</param>
- <param name="outputFolderPath">Output folder path</param>
+ <param name="outputDirectoryPath">Output directory path</param>
  <param name="parameterFilePath">Parameter file path (Ignored)</param>
  <param name="resetErrorCode">If true, reset the error code</param>
  <returns>True if success, False if failure</returns>
