@@ -337,8 +337,8 @@ Public Class clsMASICResultsMerger
 
         Dim errorMessage As String
 
-        If MyBase.ErrorCode = eProcessFilesErrorCodes.LocalizedError Or
-           MyBase.ErrorCode = eProcessFilesErrorCodes.NoError Then
+        If MyBase.ErrorCode = ProcessFilesErrorCodes.LocalizedError Or
+           MyBase.ErrorCode = ProcessFilesErrorCodes.NoError Then
             Select Case mLocalErrorCode
                 Case eResultsProcessorErrorCodes.NoError
                     errorMessage = ""
@@ -840,13 +840,13 @@ Public Class clsMASICResultsMerger
 
         If inputFilePath Is Nothing OrElse inputFilePath.Length = 0 Then
             ShowMessage("Input file name is empty")
-            MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.InvalidInputFilePath)
+            MyBase.SetBaseClassErrorCode(ProcessFilesErrorCodes.InvalidInputFilePath)
             Return False
         End If
 
-            MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.FilePathError)
         ' Note that CleanupFilePaths() will update mOutputDirectoryPath, which is used by LogMessage()
         If Not CleanupFilePaths(inputFilePath, outputDirectoryPath) Then
+            MyBase.SetBaseClassErrorCode(ProcessFilesErrorCodes.FilePathError)
             Return False
         End If
 
@@ -1503,11 +1503,11 @@ Public Class clsMASICResultsMerger
             mLocalErrorCode = eNewErrorCode
 
             If eNewErrorCode = eResultsProcessorErrorCodes.NoError Then
-                If MyBase.ErrorCode = eProcessFilesErrorCodes.LocalizedError Then
-                    MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.NoError)
+                If MyBase.ErrorCode = ProcessFilesErrorCodes.LocalizedError Then
+                    MyBase.SetBaseClassErrorCode(ProcessFilesErrorCodes.NoError)
                 End If
             Else
-                MyBase.SetBaseClassErrorCode(eProcessFilesErrorCodes.LocalizedError)
+                MyBase.SetBaseClassErrorCode(ProcessFilesErrorCodes.LocalizedError)
             End If
         End If
 
