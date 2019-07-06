@@ -1569,7 +1569,7 @@ Public Class clsMASICResultsMerger
                 End Using
 
             Catch ex As Exception
-                HandleException("Error extraction collision mode information from the intput file", ex)
+                HandleException("Error extraction collision mode information from the input file", ex)
                 Return New KeyValuePair(Of String, String)(collisionModeTypeCount - 1) {}
             End Try
 
