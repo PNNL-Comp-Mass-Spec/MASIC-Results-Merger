@@ -1,7 +1,6 @@
 Option Strict On
 Imports System.IO
 Imports System.Runtime.InteropServices
-Imports System.Text
 Imports System.Threading
 Imports PHRPReader
 Imports PRISM
@@ -27,7 +26,7 @@ Public Class clsMASICResultsMerger
     Inherits FileProcessor.ProcessFilesBase
 
     Public Sub New()
-        MyBase.mFileDate = "January 8, 2018"
+        MyBase.mFileDate = "July 5, 2019"
         InitializeLocalVariables()
     End Sub
 
@@ -39,8 +38,6 @@ Public Class clsMASICResultsMerger
 
     Public Const RESULTS_SUFFIX As String = "_PlusSICStats.txt"
     Public Const DEFAULT_SCAN_NUMBER_COLUMN As Integer = 2
-
-    Private Const SIC_STAT_COLUMN_COUNT_TO_ADD As Integer = 7
 
     ''' <summary>
     ''' Error codes specialized for this class
@@ -167,70 +164,84 @@ Public Class clsMASICResultsMerger
       masicFileSearchInfo As String,
       job As Integer) As Boolean
 
-        Dim success = False
-        Dim datasetName As String
         Dim triedDatasetID = False
-
-        Dim candidateFilePath As String
-
-        Dim charIndex As Integer
+        Dim success = False
 
         Try
             Console.WriteLine()
-            ShowMessage("Looking for MASIC data files that correspond to " & udtDatasetInfo.DatasetName)
+            ShowMessage("Looking for MASIC data files that correspond to " & datasetInfo.DatasetName)
 
-            datasetName = String.Copy(udtDatasetInfo.DatasetName)
+            Dim datasetName = String.Copy(datasetInfo.DatasetName)
 
-            ' Use a Do loop to try various possible dataset names
-            Do
-                candidateFilePath = Path.Combine(masicResultsDirectory, datasetName & SIC_STATS_FILE_EXTENSION)
+            ' Use a loop to try various possible dataset names
+            While True
+                Dim scanStatsFile = New FileInfo(Path.Combine(masicResultsDirectory, datasetName & SCAN_STATS_FILE_EXTENSION))
+                Dim sicStatsFile = New FileInfo(Path.Combine(masicResultsDirectory, datasetName & SIC_STATS_FILE_EXTENSION))
+                Dim reportIonsFile = New FileInfo(Path.Combine(masicResultsDirectory, datasetName & REPORTER_IONS_FILE_EXTENSION))
 
-                If File.Exists(candidateFilePath) Then
-                    ' SICStats file was found
-                    ' Update udtMASICFileNames, then look for the other files
+                If scanStatsFile.Exists OrElse sicStatsFile.Exists Then
 
-                    udtMASICFileNames.DatasetName = datasetName
-                    udtMASICFileNames.SICStatsFileName = Path.GetFileName(candidateFilePath)
-
-                    candidateFilePath = Path.Combine(masicResultsDirectory, datasetName & SCAN_STATS_FILE_EXTENSION)
-                    If File.Exists(candidateFilePath) Then
-                        udtMASICFileNames.ScanStatsFileName = Path.GetFileName(candidateFilePath)
+                    If scanStatsFile.Exists Then
+                        masicFiles.ScanStatsFileName = scanStatsFile.Name
                     End If
 
-                    candidateFilePath = Path.Combine(masicResultsDirectory, datasetName & REPORTER_IONS_FILE_EXTENSION)
-                    If File.Exists(candidateFilePath) Then
-                        udtMASICFileNames.ReporterIonsFileName = Path.GetFileName(candidateFilePath)
+                    If sicStatsFile.Exists Then
+                        masicFiles.SICStatsFileName = sicStatsFile.Name
+                    End If
+
+                    If reportIonsFile.Exists Then
+                        masicFiles.ReporterIonsFileName = reportIonsFile.Name
                     End If
 
                     success = True
+                    Exit While
+                End If
 
+                ' Find the last underscore in datasetName, then remove it and any text after it
+                Dim charIndex = datasetName.LastIndexOf("_"c)
+
+                If charIndex > 0 Then
+                    datasetName = datasetName.Substring(0, charIndex)
                 Else
-                    ' Find the last underscore in datasetName, then remove it and any text after it
-                    charIndex = datasetName.LastIndexOf("_"c)
-
-                    If charIndex > 0 Then
-                        datasetName = datasetName.Substring(0, charIndex)
+                    If Not triedDatasetID AndAlso datasetInfo.DatasetID > 0 Then
+                        datasetName = datasetInfo.DatasetID & "_" & datasetInfo.DatasetName
+                        triedDatasetID = True
                     Else
-                        If Not triedDatasetID AndAlso udtDatasetInfo.DatasetID > 0 Then
-                            datasetName = udtDatasetInfo.DatasetID & "_" & udtDatasetInfo.DatasetName
-                            triedDatasetID = True
-                        Else
-                            ' No more underscores; we're unable to determine the dataset name
-                            Exit Do
-                        End If
-
+                        ' No more underscores; we're unable to determine the dataset name
+                        Exit While
                     End If
                 End If
 
-            Loop While Not success
-
-            Return success
+            End While
 
         Catch ex As Exception
             HandleException("Error in FindMASICFiles", ex)
-            Return False
         End Try
 
+        If Not success Then
+            ShowMessage("  Error: Unable to find the MASIC data files " & masicFileSearchInfo)
+            If job <> 0 Then
+                ShowMessage("         Job " & job & " will not have MASIC results")
+            End If
+            Return False
+        End If
+
+        If String.IsNullOrWhiteSpace(masicFiles.ScanStatsFileName) AndAlso
+           String.IsNullOrWhiteSpace(masicFiles.SICStatsFileName) Then
+            ShowMessage("  Error: the SIC stats and/or scan stats files were not found " & masicFileSearchInfo)
+            If job <> 0 Then
+                ShowMessage("         Job " & job & " will not have MASIC results")
+            End If
+            Return False
+        End If
+
+        If String.IsNullOrWhiteSpace(masicFiles.ScanStatsFileName) Then
+            ShowMessage("  Note: The MASIC SIC stats file was found, but the ScanStats file dose not exist " & masicFileSearchInfo)
+        ElseIf String.IsNullOrWhiteSpace(masicFiles.SICStatsFileName) Then
+            ShowMessage("  Note: The MASIC ScanStats file was found, but the SIC stats file dose not exist " & masicFileSearchInfo)
+        End If
+
+        Return True
     End Function
 
     Private Sub FindScanNumColumn(inputFile As FileSystemInfo, lineParts As IList(Of String))
@@ -256,28 +267,35 @@ Public Class clsMASICResultsMerger
         Next
     End Sub
 
-    Private Function GetAdditionalMASICHeaders() As List(Of String)
+    Private Function GetScanStatsHeaders() As List(Of String)
 
-        Dim lstAddonColumns = New List(Of String)
+        Dim scanStatsColumns = New List(Of String) From {
+            "ElutionTime",
+            "ScanType",
+            "TotalIonIntensity",
+            "BasePeakIntensity",
+            "BasePeakMZ"
+        }
 
-        ' Append the ScanStats columns
-        lstAddonColumns.Add("ElutionTime")
-        lstAddonColumns.Add("ScanType")
-        lstAddonColumns.Add("TotalIonIntensity")
-        lstAddonColumns.Add("BasePeakIntensity")
-        lstAddonColumns.Add("BasePeakMZ")
+        Return scanStatsColumns
 
-        ' Append the SICStats columns
-        lstAddonColumns.Add("Optimal_Scan_Number")
-        lstAddonColumns.Add("PeakMaxIntensity")
-        lstAddonColumns.Add("PeakSignalToNoiseRatio")
-        lstAddonColumns.Add("FWHMInScans")
-        lstAddonColumns.Add("PeakArea")
-        lstAddonColumns.Add("ParentIonIntensity")
-        lstAddonColumns.Add("ParentIonMZ")
-        lstAddonColumns.Add("StatMomentsArea")
+    End Function
 
-        Return lstAddonColumns
+    Private Function GetSICStatsHeaders() As List(Of String)
+
+        Dim sicStatsColumns = New List(Of String) From {
+            "Optimal_Scan_Number",
+            "PeakMaxIntensity",
+            "PeakSignalToNoiseRatio",
+            "FWHMInScans",
+            "PeakArea",
+            "ParentIonIntensity",
+            "ParentIonMZ",
+            "StatMomentsArea"
+        }
+
+        Return sicStatsColumns
+
     End Function
 
     Private Function FlattenList(lstData As IReadOnlyList(Of String)) As String
@@ -372,7 +390,7 @@ Public Class clsMASICResultsMerger
 
         Dim baseFileName As String
 
-        Dim blankAdditionalColumns As String = String.Empty
+        Dim blankAdditionalScanStatsColumns As String = String.Empty
         Dim blankAdditionalSICColumns As String = String.Empty
         Dim blankAdditionalReporterIonColumns As String = String.Empty
 
@@ -441,6 +459,7 @@ Public Class clsMASICResultsMerger
 
                 Dim linesRead = 0
                 Dim writeReporterIonStats = False
+                Dim writeSICStats = dctSICStats.Count > 0
 
                 While Not reader.EndOfStream
                     Dim dataLine = reader.ReadLine()
@@ -476,12 +495,19 @@ Public Class clsMASICResultsMerger
                             lineParts.Clear()
                         End If
 
-                        Dim lstAdditionalHeaders = GetAdditionalMASICHeaders()
+                        Dim scanStatsHeaders = GetScanStatsHeaders()
+                        Dim sicStatsHeaders = GetSICStatsHeaders()
 
-                        ' Populate blankAdditionalColumns with tab characters based on the number of items in lstAdditionalHeaders
-                        blankAdditionalColumns = New String(ControlChars.Tab, lstAdditionalHeaders.Count - 1)
+                        If Not writeSICStats Then
+                            sicStatsHeaders.Clear()
+                        End If
 
-                        blankAdditionalSICColumns = New String(ControlChars.Tab, SIC_STAT_COLUMN_COUNT_TO_ADD)
+                        ' Populate blankAdditionalScanStatsColumns with tab characters based on the number of items in scanStatsHeaders
+                        blankAdditionalScanStatsColumns = New String(ControlChars.Tab, scanStatsHeaders.Count - 1)
+
+                        If writeSICStats Then
+                            blankAdditionalSICColumns = New String(ControlChars.Tab, sicStatsHeaders.Count)
+                        End If
 
                         ' Initialize blankAdditionalReporterIonColumns
                         If reporterIonHeaders.Length > 0 Then
@@ -489,7 +515,10 @@ Public Class clsMASICResultsMerger
                         End If
 
                         ' Initialize the AddOn header columns
-                        Dim addonHeaders = FlattenList(lstAdditionalHeaders)
+                        Dim addonHeaders = FlattenList(scanStatsHeaders)
+                        If writeSICStats Then
+                            addonHeaders &= ControlChars.Tab & FlattenList(sicStatsHeaders)
+                        End If
 
                         If reporterIonHeaders.Length > 0 Then
                             ' Append the reporter ion stats columns
@@ -514,24 +543,21 @@ Public Class clsMASICResultsMerger
                     Dim addonColumns = New List(Of String)
 
                     If Not dctScanStats.TryGetValue(scanNumber, scanStatsEntry) Then
-                        ' Match not found; use the blank columns in blankAdditionalColumns
-                        addonColumns.Add(blankAdditionalColumns)
+                        ' Match not found; use the blank columns in blankAdditionalScanStatsColumns
+                        addonColumns.Add(blankAdditionalScanStatsColumns)
                     Else
                         addonColumns.Add(scanStatsEntry.ElutionTime)
                         addonColumns.Add(scanStatsEntry.ScanType)
                         addonColumns.Add(scanStatsEntry.TotalIonIntensity)
                         addonColumns.Add(scanStatsEntry.BasePeakIntensity)
                         addonColumns.Add(scanStatsEntry.BasePeakMZ)
+                    End If
 
+                    If writeSICStats Then
                         Dim sicStatsEntry As clsSICStatsData = Nothing
                         If Not dctSICStats.TryGetValue(scanNumber, sicStatsEntry) Then
                             ' Match not found; use the blank columns in blankAdditionalSICColumns
                             addonColumns.Add(blankAdditionalSICColumns)
-
-                            If writeReporterIonStats Then
-                                addonColumns.Add(String.Empty)
-                                addonColumns.Add(blankAdditionalReporterIonColumns)
-                            End If
                         Else
                             addonColumns.Add(sicStatsEntry.OptimalScanNumber)
                             addonColumns.Add(sicStatsEntry.PeakMaxIntensity)
@@ -542,21 +568,26 @@ Public Class clsMASICResultsMerger
                             addonColumns.Add(sicStatsEntry.ParentIonMZ)
                             addonColumns.Add(sicStatsEntry.StatMomentsArea)
                         End If
+                    End If
 
-                        If writeReporterIonStats Then
-                            If String.IsNullOrWhiteSpace(scanStatsEntry.CollisionMode) Then
-                                ' Collision mode is not defined; append blank columns
-                                addonColumns.Add(String.Empty)
-                                addonColumns.Add(blankAdditionalReporterIonColumns)
-                            Else
-                                ' Collision mode is defined
-                                addonColumns.Add(scanStatsEntry.CollisionMode)
-                                addonColumns.Add(scanStatsEntry.ReporterIonData)
+                    If writeReporterIonStats Then
 
-                                collisionModeCurrentScan = String.Copy(scanStatsEntry.CollisionMode)
-                            End If
+                        If scanStatsEntry Is Nothing OrElse String.IsNullOrWhiteSpace(scanStatsEntry.CollisionMode) Then
+                            ' Collision mode is not defined; append blank columns
+                            addonColumns.Add(String.Empty)
+                            addonColumns.Add(blankAdditionalReporterIonColumns)
+                        Else
+                            ' Collision mode is defined
+                            addonColumns.Add(scanStatsEntry.CollisionMode)
+                            addonColumns.Add(scanStatsEntry.ReporterIonData)
 
-                        ElseIf SeparateByCollisionMode Then
+                            collisionModeCurrentScan = String.Copy(scanStatsEntry.CollisionMode)
+                        End If
+
+                    ElseIf SeparateByCollisionMode Then
+                        If scanStatsEntry Is Nothing Then
+                            collisionModeCurrentScan = String.Empty
+                        Else
                             collisionModeCurrentScan = String.Copy(scanStatsEntry.CollisionMode)
                         End If
                     End If
@@ -573,7 +604,6 @@ Public Class clsMASICResultsMerger
 
                     writers(outFileIndex).WriteLine(dataLine & ControlChars.Tab & FlattenList(addonColumns))
                     linesWritten(outFileIndex) += 1
-
 
                 End While
 
@@ -879,13 +909,13 @@ Public Class clsMASICResultsMerger
                 End If
             End Using
 
+            Dim scanStatsHeaders = GetScanStatsHeaders()
+            Dim sicStatsHeaders = GetSICStatsHeaders()
 
-            Dim lstAdditionalHeaders = GetAdditionalMASICHeaders()
+            ' Populate blankAdditionalScanStatsColumns with tab characters based on the number of items in scanStatsHeaders
+            Dim blankAdditionalScanStatsColumns = New String(ControlChars.Tab, scanStatsHeaders.Count - 1)
 
-            ' Populate blankAdditionalColumns with tab characters based on the number of items in lstAdditionalHeaders
-            Dim blankAdditionalColumns = New String(ControlChars.Tab, lstAdditionalHeaders.Count - 1)
-
-            Dim blankAdditionalSICColumns = New String(ControlChars.Tab, SIC_STAT_COLUMN_COUNT_TO_ADD)
+            Dim blankAdditionalSICColumns = New String(ControlChars.Tab, sicStatsHeaders.Count)
 
             Dim outputFileName = Path.GetFileNameWithoutExtension(fiInputFile.Name) & RESULTS_SUFFIX
             Dim outputFilePath = Path.Combine(mOutputDirectoryPath, outputFileName)
@@ -942,25 +972,11 @@ Public Class clsMASICResultsMerger
                         Else
 
                             ' Look for the corresponding MASIC files in the input directory
-                            Dim success As Boolean
 
-                            success = FindMASICFiles(masicResultsDirectory, udtDatasetInfo, udtMASICFileNames)
                             Dim masicFiles = New clsMASICFileInfo()
 
-                            If Not success Then
-                                ShowMessage("  Error: Unable to find the MASIC data files for dataset " & udtDatasetInfo.DatasetName & " in " & masicResultsDirectory)
-                                ShowMessage("         Job " & job & " will not have MASIC results")
-                            Else
-                                If udtMASICFileNames.SICStatsFileName.Length = 0 Then
-                                    ShowMessage("  Error: the SIC stats file was not found for dataset " & udtDatasetInfo.DatasetName & " in " & masicResultsDirectory)
-                                    ShowMessage("         Job " & job & " will not have MASIC results")
-                                    success = False
-                                ElseIf udtMASICFileNames.ScanStatsFileName.Length = 0 Then
-                                    ShowMessage("  Error: the Scan stats file was not found for dataset " & udtDatasetInfo.DatasetName & " in " & masicResultsDirectory)
-                                    ShowMessage("         Job " & job & " will not have MASIC results")
-                                    success = False
-                                End If
-                            End If
+                            Dim datasetNameAndDirectory = "for dataset " & datasetInfo.DatasetName & " in " & masicResultsDirectory
+                            Dim success = FindMASICFiles(masicResultsDirectory, datasetInfo, masicFiles, datasetNameAndDirectory, job)
 
                             If success Then
 
@@ -992,7 +1008,7 @@ Public Class clsMASICResultsMerger
 
                         If Not headerLineWritten Then
 
-                            Dim addonHeaderColumns = FlattenList(lstAdditionalHeaders)
+                            Dim addonHeaderColumns = FlattenList(scanStatsHeaders) & ControlChars.Tab & FlattenList(sicStatsHeaders)
                             If reporterIonHeaders.Length > 0 Then
                                 ' Append the reporter ion stats columns
                                 addonHeaderColumns &= ControlChars.Tab & reporterIonHeaders
@@ -1004,60 +1020,59 @@ Public Class clsMASICResultsMerger
                             headerLineWritten = True
                         End If
 
-
                         ' Look for scanNumber in dctScanStats
                         Dim scanStatsEntry As clsScanStatsData = Nothing
                         Dim addonColumns = New List(Of String)
 
                         If Not dctScanStats.TryGetValue(psm.ScanNumber, scanStatsEntry) Then
                             ' Match not found; use the blank columns in blankAdditionalColumns
-                            addonColumns.Add(blankAdditionalColumns)
+                            addonColumns.Add(blankAdditionalScanStatsColumns)
                         Else
                             addonColumns.Add(scanStatsEntry.ElutionTime)
                             addonColumns.Add(scanStatsEntry.ScanType)
                             addonColumns.Add(scanStatsEntry.TotalIonIntensity)
                             addonColumns.Add(scanStatsEntry.BasePeakIntensity)
                             addonColumns.Add(scanStatsEntry.BasePeakMZ)
+                        End If
 
-                            Dim sicStatsEntry As clsSICStatsData = Nothing
-                            If Not dctSICStats.TryGetValue(psm.ScanNumber, sicStatsEntry) Then
-                                ' Match not found; use the blank columns in blankAdditionalSICColumns
-                                addonColumns.Add(blankAdditionalSICColumns)
+                        Dim sicStatsEntry As clsSICStatsData = Nothing
+                        If Not dctSICStats.TryGetValue(psm.ScanNumber, sicStatsEntry) Then
+                            ' Match not found; use the blank columns in blankAdditionalSICColumns
+                            addonColumns.Add(blankAdditionalSICColumns)
+                        Else
+                            addonColumns.Add(sicStatsEntry.OptimalScanNumber)
+                            addonColumns.Add(sicStatsEntry.PeakMaxIntensity)
+                            addonColumns.Add(sicStatsEntry.PeakSignalToNoiseRatio)
+                            addonColumns.Add(sicStatsEntry.FWHMInScans)
+                            addonColumns.Add(sicStatsEntry.PeakArea)
+                            addonColumns.Add(sicStatsEntry.ParentIonIntensity)
+                            addonColumns.Add(sicStatsEntry.ParentIonMZ)
+                            addonColumns.Add(sicStatsEntry.StatMomentsArea)
+                        End If
 
-                                If writeReporterIonStats Then
-                                    addonColumns.Add(String.Empty)
-                                    addonColumns.Add(blankAdditionalReporterIonColumns)
-                                End If
+                        If writeReporterIonStats Then
+                            If scanStatsEntry Is Nothing OrElse String.IsNullOrWhiteSpace(scanStatsEntry.CollisionMode) Then
+                                ' Collision mode is not defined; append blank columns
+                                addonColumns.Add(String.Empty)
+                                addonColumns.Add(blankAdditionalReporterIonColumns)
                             Else
-                                addonColumns.Add(sicStatsEntry.OptimalScanNumber)
-                                addonColumns.Add(sicStatsEntry.PeakMaxIntensity)
-                                addonColumns.Add(sicStatsEntry.PeakSignalToNoiseRatio)
-                                addonColumns.Add(sicStatsEntry.FWHMInScans)
-                                addonColumns.Add(sicStatsEntry.PeakArea)
-                                addonColumns.Add(sicStatsEntry.ParentIonIntensity)
-                                addonColumns.Add(sicStatsEntry.ParentIonMZ)
-                                addonColumns.Add(sicStatsEntry.StatMomentsArea)
-                            End If
-
-                            If writeReporterIonStats Then
-
-                                If String.IsNullOrWhiteSpace(scanStatsEntry.CollisionMode) Then
-                                    ' Collision mode is not defined; append blank columns
-                                    addonColumns.Add(String.Empty)
-                                    addonColumns.Add(blankAdditionalReporterIonColumns)
-                                Else
-                                    ' Collision mode is defined
-                                    addonColumns.Add(scanStatsEntry.CollisionMode)
-                                    addonColumns.Add(scanStatsEntry.ReporterIonData)
-
-                                End If
-
+                                ' Collision mode is defined
+                                addonColumns.Add(scanStatsEntry.CollisionMode)
+                                addonColumns.Add(scanStatsEntry.ReporterIonData)
                             End If
                         End If
 
                         writer.WriteLine(psm.DataLineText & ControlChars.Tab & FlattenList(addonColumns))
+
                     Else
-                        writer.WriteLine(psm.DataLineText & ControlChars.Tab & blankAdditionalColumns)
+                        Dim blankAddonColumns = ControlChars.Tab & blankAdditionalScanStatsColumns & ControlChars.Tab & blankAdditionalSICColumns
+
+                        If writeReporterIonStats Then
+                            writer.WriteLine(psm.DataLineText & blankAddonColumns & ControlChars.Tab & ControlChars.Tab & blankAdditionalReporterIonColumns)
+                        Else
+                            writer.WriteLine(psm.DataLineText & blankAddonColumns)
+                        End If
+
                     End If
 
                     UpdateProgress("Loading data from " & fiInputFile.Name, mPHRPReader.PercentComplete)
@@ -1085,14 +1100,11 @@ Public Class clsMASICResultsMerger
     End Function
 
     Private Function ProcessSingleJobFile(fiInputFile As FileSystemInfo, masicResultsDirectory As String) As Boolean
-        Dim udtMASICFileNames = New udtMASICFileNamesType
 
         Dim dctScanStats As Dictionary(Of Integer, clsScanStatsData)
         Dim dctSICStats As Dictionary(Of Integer, clsSICStatsData)
 
         Dim reporterIonHeaders As String = String.Empty
-
-        Dim success As Boolean
 
         Try
             Dim datasetName = Path.GetFileNameWithoutExtension(fiInputFile.FullName)
@@ -1101,27 +1113,16 @@ Public Class clsMASICResultsMerger
 
             ' Note that FindMASICFiles will first try the full filename, and if it doesn't find a match,
             ' it will start removing text from the end of the filename by looking for underscores
-            udtDatasetInfo.DatasetName = Path.GetFileNameWithoutExtension(fiInputFile.FullName)
-            udtDatasetInfo.DatasetID = 0
 
             ' Look for the corresponding MASIC files in the input directory
-            success = FindMASICFiles(masicResultsDirectory, udtDatasetInfo, udtMASICFileNames)
             Dim masicFiles = New clsMASICFileInfo()
 
+            Dim masicFileSearchInfo = " in " & masicResultsDirectory
+            Dim success = FindMASICFiles(masicResultsDirectory, datasetInfo, masicFiles, masicFileSearchInfo, 0)
+
             If Not success Then
-                ShowErrorMessage("Error: Unable to find the MASIC data files in " & masicResultsDirectory)
                 SetLocalErrorCode(eResultsProcessorErrorCodes.MissingMASICFiles)
                 Return False
-            Else
-                If udtMASICFileNames.SICStatsFileName.Length = 0 Then
-                    ShowErrorMessage("Error: the SIC stats file was not found in " & masicResultsDirectory & "; unable to continue")
-                    SetLocalErrorCode(eResultsProcessorErrorCodes.MissingMASICFiles)
-                    Return False
-                ElseIf udtMASICFileNames.ScanStatsFileName.Length = 0 Then
-                    ShowErrorMessage("Error: the Scan stats file was not found in " & masicResultsDirectory & "; unable to continue")
-                    SetLocalErrorCode(eResultsProcessorErrorCodes.MissingMASICFiles)
-                    Return False
-                End If
             End If
 
             ' Read and cache the MASIC data
@@ -1145,11 +1146,13 @@ Public Class clsMASICResultsMerger
                 ShowErrorMessage("Error")
             End If
 
+            Return success
+
         Catch ex As Exception
             HandleException("Error in ProcessSingleJobFile", ex)
+            Return False
         End Try
 
-        Return success
 
     End Function
 
@@ -1160,23 +1163,30 @@ Public Class clsMASICResultsMerger
       dctSICStats As IDictionary(Of Integer, clsSICStatsData),
       <Out> ByRef reporterIonHeaders As String) As Boolean
 
-        Dim success As Boolean
 
         Try
+            Dim scanStatsRead As Boolean
+            Dim sicStatsRead As Boolean
 
-            success = ReadScanStatsFile(sourceDirectory, udtMASICFileNames.ScanStatsFileName, dctScanStats)
-
-            If success Then
-                success = ReadSICStatsFile(sourceDirectory, udtMASICFileNames.SICStatsFileName, dctSICStats)
-            End If
-
-            If success AndAlso udtMASICFileNames.ReporterIonsFileName.Length > 0 Then
-                success = ReadReporterIonStatsFile(sourceDirectory, udtMASICFileNames.ReporterIonsFileName, dctScanStats, reporterIonHeaders)
+            If String.IsNullOrWhiteSpace(masicFiles.ScanStatsFileName) Then
+                scanStatsRead = False
             Else
-                reporterIonHeaders = String.Empty
+                scanStatsRead = ReadScanStatsFile(sourceDirectory, masicFiles.ScanStatsFileName, dctScanStats)
             End If
 
-            Return success
+            If String.IsNullOrWhiteSpace(masicFiles.SICStatsFileName) Then
+                sicStatsRead = False
+            Else
+                sicStatsRead = ReadSICStatsFile(sourceDirectory, masicFiles.SICStatsFileName, dctSICStats)
+            End If
+
+            If String.IsNullOrWhiteSpace(masicFiles.ReporterIonsFileName) Then
+                reporterIonHeaders = String.Empty
+            Else
+                ReadReporterIonStatsFile(sourceDirectory, masicFiles.ReporterIonsFileName, dctScanStats, reporterIonHeaders)
+            End If
+
+            Return scanStatsRead OrElse sicStatsRead
 
         Catch ex As Exception
             HandleException("Error in ReadMASICData", ex)
@@ -1186,7 +1196,8 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Private Function ReadScanStatsFile(sourceDirectory As String,
+    Private Function ReadScanStatsFile(
+      sourceDirectory As String,
       scanStatsFileName As String,
       dctScanStats As IDictionary(Of Integer, clsScanStatsData)) As Boolean
 
