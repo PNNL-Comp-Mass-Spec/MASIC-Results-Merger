@@ -49,6 +49,8 @@ Public Class clsMASICResultsMerger
         UnspecifiedError = -1
     End Enum
 
+    ' ReSharper disable UnusedMember.Local
+    ' ReSharper disable UnusedMember.Global
     Private Enum eScanStatsColumns
         Dataset = 0
         ScanNumber = 1
@@ -118,11 +120,6 @@ Public Class clsMASICResultsMerger
 #End Region
 
 #Region "Properties"
-    Public ReadOnly Property LocalErrorCode As eResultsProcessorErrorCodes
-        Get
-            Return mLocalErrorCode
-        End Get
-    End Property
 
     Public Property MageResults As Boolean
 
