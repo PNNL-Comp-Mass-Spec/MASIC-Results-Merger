@@ -437,7 +437,7 @@ Public Class clsMASICResultsMerger
             End If
 
             ' Read from reader and write out to the file(s) in swOutFile
-            Using reader = New StreamReader(New FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using reader = New StreamReader(New FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 Dim linesRead = 0
                 Dim writeReporterIonStats = False
@@ -754,7 +754,7 @@ Public Class clsMASICResultsMerger
                         Continue For
                     End If
 
-                    Using reader = New StreamReader(New FileStream(sourcefile.Value, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    Using reader = New StreamReader(New FileStream(sourcefile.Value, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                         Dim linesRead = 0
                         While Not reader.EndOfStream
 
@@ -869,7 +869,7 @@ Public Class clsMASICResultsMerger
             Dim jobColumnIndex As Integer
 
             ' Open the Mage Extractor data file so that we can validate and cache the header row
-            Using reader = New StreamReader(New FileStream(fiInputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using reader = New StreamReader(New FileStream(fiInputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 headerLine = reader.ReadLine()
                 Dim lstColumns = headerLine.Split(ControlChars.Tab).ToList()
                 jobColumnIndex = lstColumns.IndexOf("Job")
@@ -1196,7 +1196,7 @@ Public Class clsMASICResultsMerger
 
             ShowMessage("  Reading: " & scanStatsFileName)
 
-            Using reader = New StreamReader(New FileStream(Path.Combine(sourceDirectory, scanStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using reader = New StreamReader(New FileStream(Path.Combine(sourceDirectory, scanStatsFileName), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 While Not reader.EndOfStream
                     Dim dataLine = reader.ReadLine()
@@ -1246,7 +1246,7 @@ Public Class clsMASICResultsMerger
         Dim datasetIDIndex As Integer = -1
 
         Try
-            Using reader = New StreamReader(New FileStream(metadataFilePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using reader = New StreamReader(New FileStream(metadataFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 While Not reader.EndOfStream
                     Dim dataLine = reader.ReadLine()
@@ -1319,7 +1319,7 @@ Public Class clsMASICResultsMerger
 
             ShowMessage("  Reading: " & sicStatsFileName)
 
-            Using reader = New StreamReader(New FileStream(Path.Combine(sourceDirectory, sicStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using reader = New StreamReader(New FileStream(Path.Combine(sourceDirectory, sicStatsFileName), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 While Not reader.EndOfStream
                     Dim dataLine = reader.ReadLine()
@@ -1373,7 +1373,7 @@ Public Class clsMASICResultsMerger
 
             ShowMessage("  Reading: " & reporterIonStatsFileName)
 
-            Using reader = New StreamReader(New FileStream(Path.Combine(sourceDirectory, reporterIonStatsFileName), FileMode.Open, FileAccess.Read, FileShare.Read))
+            Using reader = New StreamReader(New FileStream(Path.Combine(sourceDirectory, reporterIonStatsFileName), FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                 linesRead = 0
                 While Not reader.EndOfStream
@@ -1492,7 +1492,7 @@ Public Class clsMASICResultsMerger
 
             Try
 
-                Using reader = New StreamReader(New FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                Using reader = New StreamReader(New FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 
                     Dim linesRead = 0
                     Dim fragMethodColNumber = 0
