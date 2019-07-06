@@ -102,27 +102,9 @@ Public Class clsMASICResultsMerger
         BasePeakMZ = 5
         ReporterIonIntensityMax = 6
     End Enum
-#End Region
 
-#Region "Structures"
-
-    Private Structure udtDatasetInfoType
-        Public DatasetName As String
-        Public DatasetID As Integer
-    End Structure
-
-    Private Structure udtMASICFileNamesType
-        Public DatasetName As String
-        Public ScanStatsFileName As String
-        Public SICStatsFileName As String
-        Public ReporterIonsFileName As String
-        Public Sub Initialize()
-            DatasetName = String.Empty
-            ScanStatsFileName = String.Empty
-            SICStatsFileName = String.Empty
-            ReporterIonsFileName = String.Empty
-        End Sub
-    End Structure
+    ' ReSharper restore UnusedMember.Local
+    ' ReSharper restore UnusedMember.Global
 
 #End Region
 
@@ -178,7 +160,12 @@ Public Class clsMASICResultsMerger
 
 #End Region
 
-    Private Function FindMASICFiles(masicResultsDirectory As String, udtDatasetInfo As udtDatasetInfoType, ByRef udtMASICFileNames As udtMASICFileNamesType) As Boolean
+    Private Function FindMASICFiles(
+      masicResultsDirectory As String,
+      datasetInfo As clsDatasetInfo,
+      masicFiles As clsMASICFileInfo,
+      masicFileSearchInfo As String,
+      job As Integer) As Boolean
 
         Dim success = False
         Dim datasetName As String
@@ -855,8 +842,6 @@ Public Class clsMASICResultsMerger
 
     Private Function ProcessMageExtractorFile(fiInputFile As FileInfo, masicResultsDirectory As String) As Boolean
 
-        Dim udtMASICFileNames = New udtMASICFileNamesType
-
         Dim dctScanStats = New Dictionary(Of Integer, clsScanStatsData)
         Dim dctSICStats = New Dictionary(Of Integer, clsSICStatsData)
 
@@ -872,7 +857,7 @@ Public Class clsMASICResultsMerger
             End If
 
             ' Keys in this dictionary are the job, values are the DatasetID and DatasetName
-            Dim dctJobToDatasetMap As Dictionary(Of Integer, udtDatasetInfoType)
+            Dim dctJobToDatasetMap As Dictionary(Of Integer, clsDatasetInfo)
 
             dctJobToDatasetMap = ReadMageMetadataFile(fiMetadataFile.FullName)
             If dctJobToDatasetMap Is Nothing OrElse dctJobToDatasetMap.Count = 0 Then
@@ -950,17 +935,17 @@ Public Class clsMASICResultsMerger
                         ' New job; read and cache the MASIC data
                         masicDataLoaded = False
 
-                        Dim udtDatasetInfo = New udtDatasetInfoType
+                        Dim datasetInfo As clsDatasetInfo = Nothing
 
-                        If Not dctJobToDatasetMap.TryGetValue(job, udtDatasetInfo) Then
+                        If Not dctJobToDatasetMap.TryGetValue(job, datasetInfo) Then
                             ShowErrorMessage("Error: Job " & job & " was not defined in the Metadata file; unable to determine the dataset")
                         Else
 
                             ' Look for the corresponding MASIC files in the input directory
                             Dim success As Boolean
 
-                            udtMASICFileNames.Initialize()
                             success = FindMASICFiles(masicResultsDirectory, udtDatasetInfo, udtMASICFileNames)
+                            Dim masicFiles = New clsMASICFileInfo()
 
                             If Not success Then
                                 ShowMessage("  Error: Unable to find the MASIC data files for dataset " & udtDatasetInfo.DatasetName & " in " & masicResultsDirectory)
@@ -984,7 +969,7 @@ Public Class clsMASICResultsMerger
                                 dctSICStats = New Dictionary(Of Integer, clsSICStatsData)
                                 reporterIonHeaders = String.Empty
 
-                                masicDataLoaded = ReadMASICData(masicResultsDirectory, udtMASICFileNames, dctScanStats, dctSICStats, reporterIonHeaders)
+                                masicDataLoaded = ReadMASICData(masicResultsDirectory, masicFiles, dctScanStats, dctSICStats, reporterIonHeaders)
 
                                 If masicDataLoaded Then
                                     jobsSuccessfullyMerged += 1
@@ -1110,7 +1095,9 @@ Public Class clsMASICResultsMerger
         Dim success As Boolean
 
         Try
-            Dim udtDatasetInfo = New udtDatasetInfoType
+            Dim datasetName = Path.GetFileNameWithoutExtension(fiInputFile.FullName)
+
+            Dim datasetInfo = New clsDatasetInfo(datasetName, 0)
 
             ' Note that FindMASICFiles will first try the full filename, and if it doesn't find a match,
             ' it will start removing text from the end of the filename by looking for underscores
@@ -1118,8 +1105,8 @@ Public Class clsMASICResultsMerger
             udtDatasetInfo.DatasetID = 0
 
             ' Look for the corresponding MASIC files in the input directory
-            udtMASICFileNames.Initialize()
             success = FindMASICFiles(masicResultsDirectory, udtDatasetInfo, udtMASICFileNames)
+            Dim masicFiles = New clsMASICFileInfo()
 
             If Not success Then
                 ShowErrorMessage("Error: Unable to find the MASIC data files in " & masicResultsDirectory)
@@ -1141,7 +1128,7 @@ Public Class clsMASICResultsMerger
             dctScanStats = New Dictionary(Of Integer, clsScanStatsData)
             dctSICStats = New Dictionary(Of Integer, clsSICStatsData)
 
-            success = ReadMASICData(masicResultsDirectory, udtMASICFileNames, dctScanStats, dctSICStats, reporterIonHeaders)
+            success = ReadMASICData(masicResultsDirectory, masicFiles, dctScanStats, dctSICStats, reporterIonHeaders)
 
             If success Then
                 ' Merge the MASIC data with the input file
@@ -1166,8 +1153,9 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Private Function ReadMASICData(sourceDirectory As String,
-      udtMASICFileNames As udtMASICFileNamesType,
+    Private Function ReadMASICData(
+      sourceDirectory As String,
+      masicFiles As clsMASICFileInfo,
       dctScanStats As IDictionary(Of Integer, clsScanStatsData),
       dctSICStats As IDictionary(Of Integer, clsSICStatsData),
       <Out> ByRef reporterIonHeaders As String) As Boolean
@@ -1248,9 +1236,9 @@ Public Class clsMASICResultsMerger
 
     End Function
 
-    Private Function ReadMageMetadataFile(metadataFilePath As String) As Dictionary(Of Integer, udtDatasetInfoType)
+    Private Function ReadMageMetadataFile(metadataFilePath As String) As Dictionary(Of Integer, clsDatasetInfo)
 
-        Dim dctJobToDatasetMap = New Dictionary(Of Integer, udtDatasetInfoType)
+        Dim dctJobToDatasetMap = New Dictionary(Of Integer, clsDatasetInfo)
         Dim headersParsed As Boolean
 
         Dim jobIndex As Integer = -1
@@ -1294,11 +1282,11 @@ Public Class clsMASICResultsMerger
 
                         If Integer.TryParse(lineParts(jobIndex), jobNumber) Then
                             If Integer.TryParse(lineParts(datasetIDIndex), datasetID) Then
-                                Dim udtDatasetInfo = New udtDatasetInfoType
-                                udtDatasetInfo.DatasetID = datasetID
-                                udtDatasetInfo.DatasetName = lineParts(datasetIndex)
+                                Dim datasetName = lineParts(datasetIndex)
 
-                                dctJobToDatasetMap.Add(jobNumber, udtDatasetInfo)
+                                Dim datasetInfo = New clsDatasetInfo(datasetName, datasetID)
+
+                                dctJobToDatasetMap.Add(jobNumber, datasetInfo)
                             Else
                                 ShowMessage("Warning: Dataset_ID number not numeric in metadata file, line " & dataLine)
                             End If
