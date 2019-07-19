@@ -238,6 +238,9 @@ namespace MASICResultsMerger
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
+                            continue;
+
                         if (scanTimeColIndex < 0)
                         {
                             var success = ParseMergedFileHeaderLine(dataLine, ref scanTimeColIndex, msgfPlusColumns);
