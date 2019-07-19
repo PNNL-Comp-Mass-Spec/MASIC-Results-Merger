@@ -113,8 +113,6 @@ Public Class clsMASICResultsMerger
 
     Private mMASICResultsDirectoryPath As String = String.Empty
 
-    Private mPHRPReader As clsPHRPReader
-
     Private mProcessedDatasets As List(Of clsProcessedFileInfo)
 
 #End Region
@@ -924,15 +922,15 @@ Public Class clsMASICResultsMerger
             Using writer = New StreamWriter(New FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read))
 
                 ' Open the Mage Extractor data file and read the data for each job
-                mPHRPReader = New clsPHRPReader(fiInputFile.FullName, clsPHRPReader.ePeptideHitResultType.Unknown, False, False, False) With {
+                Dim phrpReader = New clsPHRPReader(fiInputFile.FullName, clsPHRPReader.ePeptideHitResultType.Unknown, False, False, False) With {
                     .EchoMessagesToConsole = False,
                     .SkipDuplicatePSMs = False
                 }
 
-                RegisterEvents(mPHRPReader)
+                RegisterEvents(phrpReader)
 
-                If Not mPHRPReader.CanRead Then
-                    ShowErrorMessage("Aborting since PHRPReader is not ready: " & mPHRPReader.ErrorMessage)
+                If Not phrpReader.CanRead Then
+                    ShowErrorMessage("Aborting since PHRPReader is not ready: " & phrpReader.ErrorMessage)
                     Return False
                 End If
 
@@ -940,13 +938,13 @@ Public Class clsMASICResultsMerger
 
                 Dim masicDataLoaded = False
                 Dim headerLineWritten = False
-                Dim writeReporterIonStats As Boolean
+                Dim writeReporterIonStats = False
                 Dim reporterIonHeaders = String.Empty
                 Dim blankAdditionalReporterIonColumns = String.Empty
 
-                Do While mPHRPReader.MoveNext()
+                Do While phrpReader.MoveNext()
 
-                    Dim psm As clsPSM = mPHRPReader.CurrentPSM
+                    Dim psm As clsPSM = phrpReader.CurrentPSM
 
                     ' Parse out the job from the current line
                     Dim lstColumns = psm.DataLineText.Split(ControlChars.Tab).ToList()
@@ -1072,7 +1070,7 @@ Public Class clsMASICResultsMerger
 
                     End If
 
-                    UpdateProgress("Loading data from " & fiInputFile.Name, mPHRPReader.PercentComplete)
+                    UpdateProgress("Loading data from " & fiInputFile.Name, phrpReader.PercentComplete)
                     lastJob = job
                 Loop
 
