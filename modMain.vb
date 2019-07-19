@@ -1,6 +1,8 @@
 Option Strict On
 
+Imports System.IO
 Imports PRISM
+Imports PRISM.FileProcessor
 ' This program merges the contents of a tab-delimited peptide hit results file
 ' (e.g. from SEQUEST, X!Tandem, or MS-GF+) with the corresponding MASIC results files,
 ' appending the relevant MASIC stats for each peptide hit result
@@ -22,6 +24,7 @@ Module modMain
     Public Const PROGRAM_DATE As String = "July 5, 2019"
 
     Private mInputFilePath As String
+    Private mGroupProteins As Boolean
     Private mMageResults As Boolean
     Private mMergeWildcardResults As Boolean
 
@@ -64,6 +67,7 @@ Module modMain
         Dim proceed As Boolean
 
         mInputFilePath = String.Empty
+        mGroupProteins = False
         mMageResults = False
         mMergeWildcardResults = False
 
@@ -91,22 +95,23 @@ Module modMain
                 ShowProgramHelp()
                 returnCode = -1
             Else
-                mMASICResultsMerger = New clsMASICResultsMerger()
+                ' Note: If a parameter file is defined, settings in that file will override the options defined here
+
+                mMASICResultsMerger = New clsMASICResultsMerger With {
+                    .LogMessagesToFile = mLogMessagesToFile,
+                    .MASICResultsDirectoryPath = mMASICResultsDirectoryPath,
+                    .ScanNumberColumn = mScanNumberColumn,
+                    .SeparateByCollisionMode = mSeparateByCollisionMode,
+                    .GroupProteins = mGroupProteins,
+                    .MageResults = mMageResults
+                }
+
                 AddHandler mMASICResultsMerger.ErrorEvent, AddressOf mMASICResultsMerger_ErrorEvent
                 AddHandler mMASICResultsMerger.WarningEvent, AddressOf mMASICResultsMerger_WarningEvent
                 AddHandler mMASICResultsMerger.StatusEvent, AddressOf mMASICResultsMerger_StatusEvent
                 AddHandler mMASICResultsMerger.DebugEvent, AddressOf mMASICResultsMerger_DebugEvent
                 AddHandler mMASICResultsMerger.ProgressUpdate, AddressOf mMASICResultsMerger_ProgressUpdate
                 AddHandler mMASICResultsMerger.ProgressReset, AddressOf mMASICResultsMerger_ProgressReset
-
-                mMASICResultsMerger.LogMessagesToFile = mLogMessagesToFile
-
-                ' Note: Define other options here; they will get overridden if defined in the parameter file
-                mMASICResultsMerger.MASICResultsDirectoryPath = mMASICResultsDirectoryPath
-                mMASICResultsMerger.ScanNumberColumn = mScanNumberColumn
-                mMASICResultsMerger.SeparateByCollisionMode = mSeparateByCollisionMode
-
-                mMASICResultsMerger.MageResults = mMageResults
 
                 If mRecurseDirectories Then
                     If mMASICResultsMerger.ProcessFilesAndRecurseDirectories(mInputFilePath, mOutputDirectoryPath, mOutputDirectoryAlternatePath, mRecreateDirectoryHierarchyInAlternatePath, "", mRecurseDirectoriesMaxLevels) Then
@@ -183,6 +188,8 @@ Module modMain
 
                 If commandLineParser.IsParameterPresent("Append") Then mMergeWildcardResults = True
 
+                If commandLineParser.IsParameterPresent("GroupProteins") Then mGroupProteins = True
+
                 If commandLineParser.RetrieveValueForParameter("S", strValue) Then
                     mRecurseDirectories = True
                     If Integer.TryParse(strValue, intValue) Then
@@ -229,6 +236,7 @@ Module modMain
             Console.WriteLine("Program syntax:" & ControlChars.NewLine & IO.Path.GetFileName(Reflection.Assembly.GetExecutingAssembly().Location) &
               " InputFilePathSpec [/M:MASICResultsDirectoryPath] [/O:OutputDirectoryPath]")
             Console.WriteLine(" [/N:ScanNumberColumn] [/C] [/Mage] [/Append]")
+            Console.WriteLine(" [/GroupProteins]")
             Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputDirectoryPath] [/R]")
             Console.WriteLine()
             Console.WriteLine("The input file should be a tab-delimited file where one column has scan numbers. " &
@@ -265,6 +273,11 @@ Module modMain
                               "this is only applicable when the InputFilePathSpec includes a * wildcard and multiple files are matched.")
             Console.WriteLine("The merged results file will have DatasetID values of 1, 2, 3, etc. " &
                               "along with a second file mapping DatasetID to Dataset Name")
+            Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
+                "Use /GroupProteins to only list each peptide once per scan. " &
+                "The Protein column will list the first protein, while the " &
+                "Proteins column will be a comma separated list of all of the proteins. " &
+                "This format is compatible with DART-ID"))
             Console.WriteLine()
             Console.WriteLine("Use /S to process all valid files in the input directory and subdirectories. " &
                               "Include a number after /S (like /S:2) to limit the level of subdirectories to examine." &
