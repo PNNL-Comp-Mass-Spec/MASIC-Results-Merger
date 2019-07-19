@@ -1,67 +1,124 @@
-﻿<?xml version="1.0"?>
+<?xml version="1.0"?>
 <doc>
-<assembly>
-<name>
-MASICResultsMerger
-</name>
-</assembly>
-<members>
-<member name="T:MASICResultsMerger.clsMASICResultsMerger.eResultsProcessorErrorCodes">
- <summary>
- Error codes specialized for this class
- </summary>
-</member>
-<member name="P:MASICResultsMerger.clsMASICResultsMerger.SeparateByCollisionMode">
- <summary>
- When true, a separate output file will be created for each collision mode type; this is only possible if a _ReporterIons.txt file exists
- </summary>
- <returns></returns>
-</member>
-<member name="P:MASICResultsMerger.clsMASICResultsMerger.ScanNumberColumn">
- <summary>
- For the input file, defines which column tracks scan number; the first column is column 1 (not zero)
- </summary>
- <returns></returns>
-</member>
-<member name="M:MASICResultsMerger.clsMASICResultsMerger.GetErrorMessage">
- <summary>
- Get the current error state, if any
- </summary>
- <returns>Returns an empty string if no error</returns>
-</member>
-<member name="M:MASICResultsMerger.clsMASICResultsMerger.ProcessFile(System.String,System.String,System.String,System.Boolean)">
- <summary>
- Main processing function
- </summary>
- <param name="inputFilePath">Input file path</param>
- <param name="outputDirectoryPath">Output directory path</param>
- <param name="parameterFilePath">Parameter file path (Ignored)</param>
- <param name="resetErrorCode">If true, reset the error code</param>
- <returns>True if success, False if failure</returns>
-</member>
-<member name="P:MASICResultsMerger.clsProcessedFileInfo.OutputFiles">
- <summary>
- The Key is the collision mode and the value is the output file path
- </summary>
- <returns></returns>
-</member>
-<member name="M:MASICResultsMerger.clsProcessedFileInfo.#ctor(System.String)">
- <summary>
- Constructor
- </summary>
- <param name="baseDatasetName"></param>
-</member>
-<member name="M:MASICResultsMerger.clsScanStatsData.#ctor(System.Int32)">
- <summary>
- Constructor
- </summary>
- <param name="scanNum"></param>
-</member>
-<member name="M:MASICResultsMerger.clsSICStatsData.#ctor(System.Int32)">
- <summary>
- Constructor
- </summary>
- <param name="fragScanNum"></param>
-</member>
-</members>
+    <assembly>
+        <name>MASICResultsMerger</name>
+    </assembly>
+    <members>
+        <member name="M:MASICResultsMerger.MASICFileInfo.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="T:MASICResultsMerger.MASICResultsMerger">
+             This class merges the contents of a tab-delimited peptide hit results file
+             (e.g. from SEQUEST, X!Tandem, or MS-GF+) with the corresponding MASIC results files,
+             appending the relevant MASIC stats for each peptide hit result
+            
+             -------------------------------------------------------------------------------
+             Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
+             Program started November 26, 2008
+            
+             E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
+             Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/
+             -------------------------------------------------------------------------------
+            
+             Licensed under the Apache License, Version 2.0; you may not use this file except
+             in compliance with the License.  You may obtain a copy of the License at
+             http://www.apache.org/licenses/LICENSE-2.0
+            
+        </member>
+        <member name="T:MASICResultsMerger.MASICResultsMerger.eResultsProcessorErrorCodes">
+            <summary>
+            Error codes specialized for this class
+            </summary>
+        </member>
+        <member name="P:MASICResultsMerger.MASICResultsMerger.ProcessedDatasets">
+            <summary>
+            Information about the datasets processed
+            </summary>
+        </member>
+        <member name="P:MASICResultsMerger.MASICResultsMerger.SeparateByCollisionMode">
+            <summary>
+            When true, a separate output file will be created for each collision mode type; this is only possible if a _ReporterIons.txt file exists
+            </summary>
+        </member>
+        <member name="P:MASICResultsMerger.MASICResultsMerger.ScanNumberColumn">
+            <summary>
+             For the input file, defines which column tracks scan number; the first column is column 1 (not zero)
+            </summary>
+        </member>
+        <member name="M:MASICResultsMerger.MASICResultsMerger.GetErrorMessage">
+            <summary>
+            Get the current error state, if any
+            </summary>
+            <returns>Returns an empty string if no error</returns>
+        </member>
+        <member name="M:MASICResultsMerger.MASICResultsMerger.ProcessFile(System.String,System.String,System.String,System.Boolean)">
+            <summary>
+            Main processing function
+            </summary>
+            <param name="inputFilePath">Input file path</param>
+            <param name="outputDirectoryPath">Output directory path</param>
+            <param name="parameterFilePath">Parameter file path (Ignored)</param>
+            <param name="resetErrorCode">If true, reset the error code</param>
+            <returns>True if success, False if failure</returns>
+        </member>
+        <member name="P:MASICResultsMerger.ProcessedFileInfo.OutputFiles">
+            <summary>
+            The Key is the collision mode and the value is the output file path
+            </summary>
+        </member>
+        <member name="M:MASICResultsMerger.ProcessedFileInfo.#ctor(System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="baseDatasetName"></param>
+        </member>
+        <member name="M:MASICResultsMerger.ProcessedFileInfo.AddOutputFile(System.String,System.String)">
+            <summary>
+            Add an output file
+            </summary>
+            <param name="collisionMode"></param>
+            <param name="outputFilePath"></param>
+        </member>
+        <member name="T:MASICResultsMerger.Program">
+             This program merges the contents of a tab-delimited peptide hit results file
+             (e.g. from SEQUEST, X!Tandem, or MS-GF+) with the corresponding MASIC results files,
+             appending the relevant MASIC stats for each peptide hit result
+            
+             -------------------------------------------------------------------------------
+             Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
+             Program started November 26, 2008
+            
+             E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
+             Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/
+             -------------------------------------------------------------------------------
+            
+             Licensed under the Apache License, Version 2.0; you may not use this file except
+             in compliance with the License.  You may obtain a copy of the License at
+             http://www.apache.org/licenses/LICENSE-2.0
+        </member>
+        <member name="M:MASICResultsMerger.SICStatsData.#ctor(System.Int32)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="fragScanNumber"></param>
+        </member>
+        <member name="P:MASICResultsMerger.ScanStatsData.ReporterIonData">
+            <summary>
+            Comes from _ReporterIons.txt file (Nothing if the file doesn't exist)
+            </summary>
+        </member>
+        <member name="P:MASICResultsMerger.ScanStatsData.ScanStatsFileName">
+            <summary>
+            Comes from _ReporterIons.txt file (Nothing if the file doesn't exist)
+            </summary>
+        </member>
+        <member name="M:MASICResultsMerger.ScanStatsData.#ctor(System.Int32)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="scanNumber"></param>
+        </member>
+    </members>
 </doc>
