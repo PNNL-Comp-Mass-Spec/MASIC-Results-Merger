@@ -52,9 +52,7 @@ namespace MASICResultsMerger
         static int Main(string[] args)
         {
             //  Returns 0 if no error, error code if an error
-            int returnCode;
             var commandLineParser = new clsParseCommandLine();
-            bool proceed;
             mInputFilePath = string.Empty;
             mGroupProteins = false;
             mMageResults = false;
@@ -69,7 +67,7 @@ namespace MASICResultsMerger
 
             try
             {
-                proceed = false;
+                var proceed = false;
                 if (commandLineParser.ParseCommandLine())
                 {
                     if (SetOptionsUsingCommandLineParameters(commandLineParser))
@@ -98,7 +96,6 @@ namespace MASICResultsMerger
                     MageResults = mMageResults
                 };
 
-
                 mMASICResultsMerger.ErrorEvent += MASICResultsMerger_ErrorEvent;
                 mMASICResultsMerger.WarningEvent += MASICResultsMerger_WarningEvent;
                 mMASICResultsMerger.StatusEvent += MASICResultsMerger_StatusEvent;
@@ -106,6 +103,7 @@ namespace MASICResultsMerger
                 mMASICResultsMerger.ProgressUpdate += MASICResultsMerger_ProgressUpdate;
                 mMASICResultsMerger.ProgressReset += MASICResultsMerger_ProgressReset;
 
+                int returnCode;
                 if (mRecurseDirectories)
                 {
                     if (mMASICResultsMerger.ProcessFilesAndRecurseDirectories(mInputFilePath, mOutputDirectoryPath,

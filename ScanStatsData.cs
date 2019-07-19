@@ -44,7 +44,6 @@ namespace MASICResultsMerger
             }
 
             return 0;
-
         }
     }
 
