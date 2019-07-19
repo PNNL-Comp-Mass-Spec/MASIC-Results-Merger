@@ -1005,12 +1005,12 @@ Public Class clsMASICResultsMerger
 
                             Dim addonHeaderColumns = FlattenList(scanStatsHeaders) & ControlChars.Tab & FlattenList(sicStatsHeaders)
                             If reporterIonHeaders.Length > 0 Then
-                                ' Append the reporter ion stats columns
-                                addonHeaderColumns &= ControlChars.Tab & reporterIonHeaders
+                                ' The merged data file will have reporter ion columns
                                 writeReporterIonStats = True
+                                writer.WriteLine(headerLine & ControlChars.Tab & addonHeaderColumns & ControlChars.Tab & reporterIonHeaders)
+                            Else
+                                writer.WriteLine(headerLine & ControlChars.Tab & addonHeaderColumns)
                             End If
-
-                            writer.WriteLine(headerLine & ControlChars.Tab & addonHeaderColumns)
 
                             headerLineWritten = True
                         End If
