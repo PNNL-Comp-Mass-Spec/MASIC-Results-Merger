@@ -26,7 +26,7 @@ Public Class clsMASICResultsMerger
     Inherits FileProcessor.ProcessFilesBase
 
     Public Sub New()
-        MyBase.mFileDate = "July 5, 2019"
+        MyBase.mFileDate = "July 19, 2019"
         InitializeLocalVariables()
     End Sub
 
@@ -38,6 +38,8 @@ Public Class clsMASICResultsMerger
 
     Public Const RESULTS_SUFFIX As String = "_PlusSICStats.txt"
     Public Const DEFAULT_SCAN_NUMBER_COLUMN As Integer = 2
+
+    Public Const SCAN_STATS_ELUTION_TIME_COLUMN = "ElutionTime"
 
     ''' <summary>
     ''' Error codes specialized for this class
@@ -119,6 +121,8 @@ Public Class clsMASICResultsMerger
 
 #Region "Properties"
 
+    Public Property GroupProteins As Boolean
+
     Public Property MageResults As Boolean
 
     Public Property MASICResultsDirectoryPath As String
@@ -144,6 +148,8 @@ Public Class clsMASICResultsMerger
     ''' <returns></returns>
     Public Property SeparateByCollisionMode As Boolean
 
+    Public Property ProteinColumn As Integer
+
     ''' <summary>
     ''' For the input file, defines which column tracks scan number; the first column is column 1 (not zero)
     ''' </summary>
@@ -151,6 +157,103 @@ Public Class clsMASICResultsMerger
     Public Property ScanNumberColumn As Integer
 
 #End Region
+
+    Private Function ColumnExists(
+      msgfPlusColumns As IReadOnlyDictionary(Of System.Enum, Integer),
+      requiredColumn As clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns) As Boolean
+        Dim columnIndex As Integer
+
+        If msgfPlusColumns.TryGetValue(requiredColumn, columnIndex) Then
+            If columnIndex >= 0 Then Return True
+        End If
+
+        Return False
+
+    End Function
+
+    Private Function ConsolidatePSMs(psmFilePath As String, multiJobFile As Boolean) As Boolean
+
+        Try
+            Dim inputFile = New FileInfo(psmFilePath)
+            Dim outputFilePath = Path.Combine(inputFile.DirectoryName, Path.GetFileNameWithoutExtension(inputFile.Name) & "_ForDartID.txt")
+
+            Dim msgfPlusColumns = New SortedDictionary(Of System.Enum, Integer)
+            Dim scanTimeColIndex = -1
+
+            Dim requiredColumns = New List(Of clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns) From {
+                clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Peptide,
+                clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.SpecProb_EValue,
+                clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Charge,
+                clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Protein
+            }
+
+
+            Dim datasetName As String
+            If multiJobFile Then
+                datasetName = "TBD"
+            Else
+                ' Obtain the dataset name from the filename
+
+                If psmFilePath.EndsWith(RESULTS_SUFFIX, StringComparison.OrdinalIgnoreCase) Then
+                    datasetName = Path.GetFileName(psmFilePath.Substring(0, psmFilePath.Length - RESULTS_SUFFIX.Length))
+                Else
+                    datasetName = Path.GetFileNameWithoutExtension(psmFilePath)
+                End If
+
+                If datasetName.EndsWith("_syn", StringComparison.OrdinalIgnoreCase) OrElse
+                   datasetName.EndsWith("_fht", StringComparison.OrdinalIgnoreCase) Then
+                    datasetName = datasetName.Substring(0, datasetName.Length - 4)
+                End If
+
+                ' ReSharper disable StringLiteralTypo
+                If datasetName.EndsWith("_msgfplus", StringComparison.OrdinalIgnoreCase) Then
+                    datasetName = datasetName.Substring(0, datasetName.Length - "_msgfplus".Length)
+                ElseIf datasetName.EndsWith("_msgfdb", StringComparison.OrdinalIgnoreCase) Then
+                    datasetName = datasetName.Substring(0, datasetName.Length - "_msgfdb".Length)
+                End If
+                ' ReSharper restore StringLiteralTypo
+            End If
+
+            Using reader = New StreamReader(New FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                Using writer = New StreamWriter(New FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite))
+                    While Not reader.EndOfStream
+                        Dim dataLine = reader.ReadLine
+
+                        If scanTimeColIndex < 0 Then
+                            Dim success = ParseMergedFileHeaderLine(dataLine, scanTimeColIndex, msgfPlusColumns)
+                            If Not success Then
+                                Return False
+                            ElseIf scanTimeColIndex < 0 Then
+                                OnErrorEvent(String.Format("File {0} is missing column {1} on the header line",
+                                                           inputFile.Name, SCAN_STATS_ELUTION_TIME_COLUMN))
+                                Return False
+                            End If
+
+                            ' Validate that the required columns exist
+                            For Each requiredColumn In requiredColumns
+                                If Not ColumnExists(msgfPlusColumns, requiredColumn) Then
+                                    OnErrorEvent(String.Format("File {0} is missing column {1} on the header line",
+                                                               inputFile.Name, requiredColumn.ToString()))
+                                    Return False
+                                End If
+                            Next
+                        End If
+
+                        Dim columns = dataLine.Split(ControlChars.Tab)
+                        Dim peptide = PHRPReader.clsPHRPReader.LookupColumnValue(columns, clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Peptide, msgfPlusColumns, String.Empty)
+
+                    End While
+                End Using
+            End Using
+
+            Throw New NotImplementedException
+
+        Catch ex As Exception
+            HandleException("Error in ConsolidatePSMs", ex)
+            Return False
+        End Try
+
+    End Function
 
     Private Function FindMASICFiles(
       masicResultsDirectory As String,
@@ -262,10 +365,27 @@ Public Class clsMASICResultsMerger
         Next
     End Sub
 
+    Private Sub FindProteinColumn(inputFile As FileSystemInfo, lineParts As IList(Of String))
+
+        ' Check for a column named "Protein" or "Proteins"
+        For colIndex = 0 To lineParts.Count - 1
+            If lineParts(colIndex).Equals("Protein", StringComparison.OrdinalIgnoreCase) OrElse
+               lineParts(colIndex).Equals("Proteins", StringComparison.OrdinalIgnoreCase) Then
+
+                If ProteinColumn <> colIndex + 1 Then
+                    ProteinColumn = colIndex + 1
+                    ShowMessage(
+                        String.Format("Note: Reading protein names from column {0} ({1}) in file {2}",
+                                      ProteinColumn, lineParts(colIndex), inputFile.Name))
+                End If
+            End If
+        Next
+    End Sub
+
     Private Function GetScanStatsHeaders() As List(Of String)
 
         Dim scanStatsColumns = New List(Of String) From {
-            "ElutionTime",
+            SCAN_STATS_ELUTION_TIME_COLUMN,
             "ScanType",
             "TotalIonIntensity",
             "BasePeakIntensity",
@@ -613,6 +733,12 @@ Public Class clsMASICResultsMerger
                 Next
             End If
 
+            If GroupProteins Then
+                For Each item In outputFilePaths.ToList()
+                    Dim successConsolidating = ConsolidatePSMs(item.Value, False)
+                Next
+            End If
+
             ' See if any of the files had no data written to them
             ' If there are, then delete the empty output file
             ' However, retain at least one output file
@@ -642,7 +768,7 @@ Public Class clsMASICResultsMerger
 
                     If linesWritten(index) = 0 Then
                         Try
-                            ShowMessage("Deleting empty output file: " & ControlChars.NewLine & " --> " & Path.GetFileName(outputFilePaths(index).Value))
+                            ShowMessage("Deleting empty output file: " & Environment.NewLine & " --> " & Path.GetFileName(outputFilePaths(index).Value))
                             File.Delete(outputFilePaths(index).Value)
                         Catch ex As Exception
                             ' Ignore errors here
@@ -817,6 +943,36 @@ Public Class clsMASICResultsMerger
         Return True
 
     End Function
+
+    Private Function ParseMergedFileHeaderLine(
+      headerLine As String,
+      ByRef scanTimeColIndex As Integer,
+      msgfPlusColumns As IDictionary(Of System.Enum, Integer)) As Boolean
+
+        Try
+            Dim headerNames = headerLine.Split(ControlChars.Tab).ToList()
+
+            Dim columnNameToIndexMap = clsPHRPParserMSGFPlus.GetColumnMapFromHeaderLine(headerNames)
+            For Each item In columnNameToIndexMap
+                msgfPlusColumns.Add(item.Key, item.Value)
+            Next
+
+            For index = 0 To headerNames.Count - 1
+                If headerNames(index).Equals(SCAN_STATS_ELUTION_TIME_COLUMN, StringComparison.OrdinalIgnoreCase) Then
+                    scanTimeColIndex = index
+                    Exit For
+                End If
+            Next
+
+            Return True
+
+        Catch ex As Exception
+            HandleException("Error in ParseHeaderLine", ex)
+            Return False
+        End Try
+
+    End Function
+
 
     ''' <summary>
     ''' Main processing function
@@ -1079,6 +1235,10 @@ Public Class clsMASICResultsMerger
             If jobsSuccessfullyMerged > 0 Then
                 Console.WriteLine()
                 ShowMessage("Merged MASIC results for " & jobsSuccessfullyMerged & " jobs")
+            End If
+
+            If GroupProteins Then
+                Dim successConsolidating = ConsolidatePSMs(outputFilePath, True)
             End If
 
             If jobsSuccessfullyMerged > 0 Then
@@ -1528,7 +1688,7 @@ Public Class clsMASICResultsMerger
                                 Exit While
                             End If
 
-                            ' Also look for the scan number column, auto-updating ScanNumberColumn if necessary
+                            ' Also look for the scan number column and the protein column
                             FindScanNumColumn(inputFile, lineParts)
 
                             Continue While
