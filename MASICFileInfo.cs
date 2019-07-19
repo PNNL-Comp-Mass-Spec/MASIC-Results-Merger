@@ -1,13 +1,19 @@
-﻿Public Class clsMASICFileInfo
+﻿namespace MASICResultsMerger
+{
+    class MASICFileInfo
+    {
+        public string ScanStatsFileName { get; set; }
+        public string SICStatsFileName { get; set; }
+        public string ReporterIonsFileName { get; set; }
 
-    Public Property ScanStatsFileName As String
-    Public Property SICStatsFileName As String
-    Public Property ReporterIonsFileName As String
-
-    Public Sub New()
-        ScanStatsFileName = String.Empty
-        SICStatsFileName = String.Empty
-        ReporterIonsFileName = String.Empty
-    End Sub
-
-End Class
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        public MASICFileInfo()
+        {
+            ScanStatsFileName = string.Empty;
+            SICStatsFileName = string.Empty;
+            ReporterIonsFileName = string.Empty;
+        }
+    }
+}

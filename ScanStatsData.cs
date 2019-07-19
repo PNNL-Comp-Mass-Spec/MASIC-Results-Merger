@@ -1,30 +1,51 @@
-﻿Public Class clsScanStatsData : Implements IComparable(Of clsScanStatsData)
+﻿
+namespace MASICResultsMerger
+{
+    class ScanStatsData
+    {
 
-    Public ReadOnly ScanNumber As Integer
-    Public Property ElutionTime As String
-    Public Property ScanType As String
-    Public Property TotalIonIntensity As String
-    Public Property BasePeakIntensity As String
-    Public Property BasePeakMZ As String
-    Public Property CollisionMode As String          ' Comes from _ReporterIons.txt file (Nothing if the file doesn't exist)
-    Public Property ReporterIonData As String        ' Comes from _ReporterIons.txt file (Nothing if the file doesn't exist)
+        public int ScanNumber { get; }
+        public string ElutionTime { get; set; }
+        public string ScanType { get; set; }
+        public string TotalIonIntensity { get; set; }
+        public string BasePeakIntensity { get; set; }
+        public string BasePeakMZ { get; set; }
+        public string CollisionMode { get; set; }
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <param name="scanNum"></param>
-    Public Sub New(scanNum As Integer)
-        ScanNumber = scanNum
-    End Sub
+        /// <summary>
+        /// Comes from _ReporterIons.txt file (Nothing if the file doesn't exist)
+        /// </summary>
+        public string ReporterIonData { get; set; }
 
-    Public Function CompareTo(other As clsScanStatsData) As Integer Implements IComparable(Of clsScanStatsData).CompareTo
-        If Me.ScanNumber < other.ScanNumber Then
-            Return -1
-        ElseIf Me.ScanNumber > other.ScanNumber Then
-            Return 1
-        Else
-            Return 0
-        End If
-    End Function
+        /// <summary>
+        /// Comes from _ReporterIons.txt file (Nothing if the file doesn't exist)
+        /// </summary>
+        public string ScanStatsFileName { get; set; }
 
-End Class
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="scanNumber"></param>
+        public ScanStatsData(int scanNumber)
+        {
+            ScanNumber = scanNumber;
+        }
+
+        public int CompareTo(ScanStatsData other)
+        {
+            if (ScanNumber < other.ScanNumber)
+            {
+                return -1;
+            }
+
+            if (ScanNumber > other.ScanNumber)
+            {
+                return 1;
+            }
+
+            return 0;
+
+        }
+    }
+
+}

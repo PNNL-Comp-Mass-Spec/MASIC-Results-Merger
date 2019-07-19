@@ -1,10 +1,14 @@
-﻿Public Class clsDatasetInfo
+﻿namespace MASICResultsMerger
+{
+    class DatasetInfo
+    {
+        public string DatasetName { get; set; }
+        public int DatasetID { get; set; }
 
-    Public ReadOnly Property DatasetName As String
-    Public ReadOnly Property DatasetID As Integer
-
-    Public Sub New(name As String, id As Integer)
-        DatasetName = name
-        DatasetID = id
-    End Sub
-End Class
+        public DatasetInfo(string datasetName, int datasetId)
+        {
+            DatasetName = datasetName;
+            DatasetID = datasetId;
+        }
+    }
+}

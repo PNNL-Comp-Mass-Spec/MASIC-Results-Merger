@@ -1,36 +1,44 @@
-﻿Public Class clsProcessedFileInfo
+﻿using System.Collections.Generic;
 
-    Public Const COLLISION_MODE_NOT_DEFINED As String = "Collision_Mode_Not_Defined"
+namespace MASICResultsMerger
+{
+    class ProcessedFileInfo
+    {
+        public const string COLLISION_MODE_NOT_DEFINED = "Collision_Mode_Not_Defined";
 
-    Public Property BaseName As String
+        public string BaseName { get; set; }
 
-    Protected ReadOnly mOutputFiles As Dictionary(Of String, String)
+        /// <summary>
+        /// The Key is the collision mode and the value is the output file path
+        /// </summary>
+        public Dictionary<string, string> OutputFiles { get; }
 
-    ''' <summary>
-    ''' The Key is the collision mode and the value is the output file path
-    ''' </summary>
-    ''' <returns></returns>
-    Public ReadOnly Property OutputFiles As Dictionary(Of String, String)
-        Get
-            Return mOutputFiles
-        End Get
-    End Property
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="baseDatasetName"></param>
+        public ProcessedFileInfo(string baseDatasetName)
+        {
+            BaseName = baseDatasetName;
+            OutputFiles = new Dictionary<string, string>();
+        }
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <param name="baseDatasetName"></param>
-    Public Sub New(baseDatasetName As String)
-        BaseName = baseDatasetName
-        mOutputFiles = New Dictionary(Of String, String)
-    End Sub
+        /// <summary>
+        /// Add an output file
+        /// </summary>
+        /// <param name="collisionMode"></param>
+        /// <param name="outputFilePath"></param>
+        public void AddOutputFile(string collisionMode, string outputFilePath)
+        {
+            if (string.IsNullOrEmpty(collisionMode))
+            {
+                OutputFiles.Add(COLLISION_MODE_NOT_DEFINED, outputFilePath);
+            }
+            else
+            {
+                OutputFiles.Add(collisionMode, outputFilePath);
+            }
 
-    Public Sub AddOutputFile(collisionMode As String, outputFilePath As String)
-        If String.IsNullOrEmpty(collisionMode) Then
-            mOutputFiles.Add(COLLISION_MODE_NOT_DEFINED, outputFilePath)
-        Else
-            mOutputFiles.Add(collisionMode, outputFilePath)
-        End If
-
-    End Sub
-End Class
+        }
+    }
+}

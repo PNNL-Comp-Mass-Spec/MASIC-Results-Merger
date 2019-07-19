@@ -1,31 +1,25 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27004.2002
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29102.190
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "MASICResultsMerger", "MASICResultsMerger.vbproj", "{6DC66E88-5A38-4364-96D9-4562266CF5E9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MASICResultsMerger", "MASICResultsMerger.csproj", "{6EC9D3EA-8A91-4AF4-8310-9B4810657013}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
-		Debug|x86 = Debug|x86
 		Release|Any CPU = Release|Any CPU
-		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{6DC66E88-5A38-4364-96D9-4562266CF5E9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6DC66E88-5A38-4364-96D9-4562266CF5E9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6DC66E88-5A38-4364-96D9-4562266CF5E9}.Debug|x86.ActiveCfg = Debug|x86
-		{6DC66E88-5A38-4364-96D9-4562266CF5E9}.Debug|x86.Build.0 = Debug|x86
-		{6DC66E88-5A38-4364-96D9-4562266CF5E9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6DC66E88-5A38-4364-96D9-4562266CF5E9}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6DC66E88-5A38-4364-96D9-4562266CF5E9}.Release|x86.ActiveCfg = Release|x86
-		{6DC66E88-5A38-4364-96D9-4562266CF5E9}.Release|x86.Build.0 = Release|x86
+		{6EC9D3EA-8A91-4AF4-8310-9B4810657013}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6EC9D3EA-8A91-4AF4-8310-9B4810657013}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6EC9D3EA-8A91-4AF4-8310-9B4810657013}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6EC9D3EA-8A91-4AF4-8310-9B4810657013}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {F82C5313-98FF-4578-A666-890E344DC177}
+		SolutionGuid = {893EBC7C-F399-40AB-BB92-5913188CCAB2}
 	EndGlobalSection
 EndGlobal

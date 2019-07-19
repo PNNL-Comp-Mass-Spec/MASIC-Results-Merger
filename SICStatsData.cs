@@ -1,31 +1,41 @@
-﻿Public Class clsSICStatsData : Implements IComparable(Of clsSICStatsData)
+﻿namespace MASICResultsMerger
+{
+    class SICStatsData
+    {
 
-    Public ReadOnly Property FragScanNumber As Integer
-    Public Property OptimalScanNumber As String
-    Public Property PeakMaxIntensity As String
-    Public Property PeakSignalToNoiseRatio As String
-    Public Property FWHMInScans As String
-    Public Property PeakArea As String
-    Public Property ParentIonIntensity As String
-    Public Property ParentIonMZ As String
-    Public Property StatMomentsArea As String
+        public int FragScanNumber { get; }
+        public string OptimalScanNumber { get; set; }
+        public string PeakMaxIntensity { get; set; }
+        public string PeakSignalToNoiseRatio { get; set; }
+        public string FWHMInScans { get; set; }
+        public string PeakArea { get; set; }
+        public string ParentIonIntensity { get; set; }
+        public string ParentIonMZ { get; set; }
+        public string StatMomentsArea { get; set; }
 
-    ''' <summary>
-    ''' Constructor
-    ''' </summary>
-    ''' <param name="fragScanNum"></param>
-    Public Sub New(fragScanNum As Integer)
-        FragScanNumber = fragScanNum
-    End Sub
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="fragScanNumber"></param>
+        public SICStatsData(int fragScanNumber)
+        {
+            FragScanNumber = fragScanNumber;
+        }
 
-    Public Function CompareTo(other As clsSICStatsData) As Integer Implements IComparable(Of clsSICStatsData).CompareTo
-        If Me.FragScanNumber < other.FragScanNumber Then
-            Return -1
-        ElseIf Me.FragScanNumber > other.FragScanNumber Then
-            Return 1
-        Else
-            Return 0
-        End If
-    End Function
+        public int CompareTo(SICStatsData other)
+        {
+            if (FragScanNumber < other.FragScanNumber)
+            {
+                return -1;
+            }
 
-End Class
+            if (FragScanNumber > other.FragScanNumber)
+            {
+                return 1;
+            }
+
+            return 0;
+        }
+    }
+
+}
