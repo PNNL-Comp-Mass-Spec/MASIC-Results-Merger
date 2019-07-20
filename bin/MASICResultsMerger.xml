@@ -4,6 +4,32 @@
         <name>MASICResultsMerger</name>
     </assembly>
     <members>
+        <member name="P:MASICResultsMerger.DartIdData.Peptide">
+            <summary>
+            Peptide sequence, including prefix and suffix letters
+            Optionally contains mod symbols
+            </summary>
+        </member>
+        <member name="P:MASICResultsMerger.DartIdData.PrimarySequence">
+            <summary>
+            Peptide sequence (possibly with mods), but without prefix and suffix residues
+            </summary>
+        </member>
+        <member name="M:MASICResultsMerger.DartIdData.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="M:MASICResultsMerger.DartIdData.#ctor(System.String,System.Int32,System.String,System.String,System.String)">
+            <summary>
+            Constructor
+            </summary>
+            <param name="dataLine"></param>
+            <param name="scanNumber"></param>
+            <param name="peptide"></param>
+            <param name="primarySequence"></param>
+            <param name="proteinName"></param>
+        </member>
         <member name="T:MASICResultsMerger.DartIdPreprocessor">
             <summary>
             Transforms a Dataset_PlusSICStats.txt data file from MASICResultsMerger into a format compatible with DART-ID

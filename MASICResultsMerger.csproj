@@ -47,6 +47,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DartIdData.cs" />
     <Compile Include="DARTIDPreprocessor.cs" />
     <Compile Include="DatasetInfo.cs" />
     <Compile Include="MASICFileInfo.cs" />

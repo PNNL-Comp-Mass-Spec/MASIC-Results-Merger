@@ -1679,7 +1679,7 @@ namespace MASICResultsMerger
             }
             catch (Exception ex)
             {
-                HandleException("Error in ReadSICStatsFile", ex);
+                HandleException("Error in ReadReporterIonStatsFile", ex);
                 return false;
             }
         }
