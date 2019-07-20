@@ -156,8 +156,12 @@ namespace MASICResultsMerger
 
         #endregion
 
-        private bool FindMASICFiles(string masicResultsDirectory, DatasetInfo datasetInfo, MASICFileInfo masicFiles, string masicFileSearchInfo,
-                                    int job)
+        private bool FindMASICFiles(
+            string masicResultsDirectory,
+            DatasetInfo datasetInfo,
+            MASICFileInfo masicFiles,
+            string masicFileSearchInfo,
+            int job)
         {
             var triedDatasetID = false;
             var success = false;
@@ -242,11 +246,13 @@ namespace MASICResultsMerger
 
             if (string.IsNullOrWhiteSpace(masicFiles.ScanStatsFileName))
             {
-                ShowMessage("  Note: The MASIC SIC stats file was found, but the ScanStats file dose not exist " + masicFileSearchInfo);
+                // ReSharper disable once StringLiteralTypo
+                ShowMessage("  Note: The MASIC SICstats file was found, but the ScanStats file dose not exist " + masicFileSearchInfo);
             }
             else if (string.IsNullOrWhiteSpace(masicFiles.SICStatsFileName))
             {
-                ShowMessage("  Note: The MASIC ScanStats file was found, but the SIC stats file dose not exist " + masicFileSearchInfo);
+                // ReSharper disable once StringLiteralTypo
+                ShowMessage("  Note: The MASIC ScanStats file was found, but the SICstats file dose not exist " + masicFileSearchInfo);
             }
 
             return true;
@@ -394,8 +400,12 @@ namespace MASICResultsMerger
             mLocalErrorCode = eResultsProcessorErrorCodes.NoError;
         }
 
-        private bool MergePeptideHitAndMASICFiles(FileSystemInfo inputFile, string outputDirectoryPath, Dictionary<int, ScanStatsData> dctScanStats,
-                                                  IReadOnlyDictionary<int, SICStatsData> dctSICStats, string reporterIonHeaders)
+        private bool MergePeptideHitAndMASICFiles(
+            FileSystemInfo inputFile,
+            string outputDirectoryPath,
+            Dictionary<int, ScanStatsData> scanStats,
+            IReadOnlyDictionary<int, SICStatsData> sicStats,
+            string reporterIonHeaders)
         {
             StreamWriter[] writers;
             int[] linesWritten;
@@ -455,8 +465,8 @@ namespace MASICResultsMerger
 
                 for (var index = 0; index < outputFileCount; index++)
                 {
-                    writers[index] =
-                        new StreamWriter(new FileStream(outputFilePaths[index].Value, FileMode.Create, FileAccess.Write, FileShare.Read));
+                    writers[index] = new StreamWriter(
+                        new FileStream(outputFilePaths[index].Value, FileMode.Create, FileAccess.Write, FileShare.Read));
                 }
 
             }
@@ -534,8 +544,7 @@ namespace MASICResultsMerger
                             //  Initialize blankAdditionalReporterIonColumns
                             if (reporterIonHeaders.Length > 0)
                             {
-                                blankAdditionalReporterIonColumns =
-                                    new string('\t', reporterIonHeaders.Split('\t').ToList().Count - 1);
+                                blankAdditionalReporterIonColumns = new string('\t', reporterIonHeaders.Split('\t').ToList().Count - 1);
                             }
 
                             //  Initialize the AddOn header columns
