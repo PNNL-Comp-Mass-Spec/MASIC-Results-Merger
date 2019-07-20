@@ -44,6 +44,8 @@ namespace MASICResultsMerger
 
         public const string SCAN_STATS_ELUTION_TIME_COLUMN = "ElutionTime";
 
+        public const string PEAK_WIDTH_MINUTES_COLUMN = "PeakWidthMinutes";
+
         /// <summary>
         /// Error codes specialized for this class
         /// </summary>
@@ -155,6 +157,31 @@ namespace MASICResultsMerger
         public int ScanNumberColumn { get; set; }
 
         #endregion
+
+
+        private double ComputePeakWidthMinutes(IReadOnlyDictionary<int, ScanStatsData> scanStats, string peakScanStart, string peakScanEnd)
+        {
+            if (!int.TryParse(peakScanStart, out var startScan))
+                return 0;
+
+            if (!int.TryParse(peakScanEnd, out var endScan))
+                return 0;
+
+
+            if (!scanStats.TryGetValue(startScan, out var startScanStats))
+                return 0;
+
+            if (!scanStats.TryGetValue(endScan, out var endScanStats))
+                return 0;
+
+            if (!double.TryParse(startScanStats.ElutionTime, out var startTimeMinutes))
+                return 0;
+
+            if (!double.TryParse(endScanStats.ElutionTime, out var endTimeMinutes))
+                return 0;
+
+            return endTimeMinutes - startTimeMinutes;
+        }
 
         private bool FindMASICFiles(
             string masicResultsDirectory,
@@ -311,11 +338,14 @@ namespace MASICResultsMerger
                 "ParentIonIntensity",
                 "ParentIonMZ",
                 "StatMomentsArea",
+                "PeakScanStart",
+                "PeakScanEnd",
+                PEAK_WIDTH_MINUTES_COLUMN
             };
             return sicStatsColumns;
         }
 
-        private string FlattenList(IReadOnlyList<string> lstData)
+        private string FlattenList(IEnumerable<string> lstData)
         {
             return string.Join("\t", lstData);
         }
@@ -608,6 +638,11 @@ namespace MASICResultsMerger
                                 addonColumns.Add(sicStatsEntry.ParentIonIntensity);
                                 addonColumns.Add(sicStatsEntry.ParentIonMZ);
                                 addonColumns.Add(sicStatsEntry.StatMomentsArea);
+                                addonColumns.Add(sicStatsEntry.PeakScanStart);
+                                addonColumns.Add(sicStatsEntry.PeakScanEnd);
+
+                                var peakWidthMinutes = ComputePeakWidthMinutes(scanStats, sicStatsEntry.PeakScanStart, sicStatsEntry.PeakScanEnd);
+                                addonColumns.Add(PRISM.StringUtilities.DblToString(peakWidthMinutes, 4));
                             }
 
                         }
@@ -1052,11 +1087,14 @@ namespace MASICResultsMerger
 
                 var scanStatsHeaders = GetScanStatsHeaders();
                 var sicStatsHeaders = GetSICStatsHeaders();
+
                 //  Populate blankAdditionalScanStatsColumns with tab characters based on the number of items in scanStatsHeaders
                 var blankAdditionalScanStatsColumns = new string('\t', scanStatsHeaders.Count - 1);
                 var blankAdditionalSICColumns = new string('\t', sicStatsHeaders.Count);
+
                 var outputFileName = Path.GetFileNameWithoutExtension(inputFile.Name) + RESULTS_SUFFIX;
                 var outputFilePath = Path.Combine(mOutputDirectoryPath, outputFileName);
+
                 var jobsSuccessfullyMerged = 0;
 
                 //  Initialize the output file
@@ -1190,6 +1228,11 @@ namespace MASICResultsMerger
                                 addonColumns.Add(sicStatsEntry.ParentIonIntensity);
                                 addonColumns.Add(sicStatsEntry.ParentIonMZ);
                                 addonColumns.Add(sicStatsEntry.StatMomentsArea);
+                                addonColumns.Add(sicStatsEntry.PeakScanStart);
+                                addonColumns.Add(sicStatsEntry.PeakScanEnd);
+
+                                var peakWidthMinutes = ComputePeakWidthMinutes(scanStats, sicStatsEntry.PeakScanStart, sicStatsEntry.PeakScanEnd);
+                                addonColumns.Add(PRISM.StringUtilities.DblToString(peakWidthMinutes, 4));
                             }
 
                             if (writeReporterIonStats)
@@ -1522,6 +1565,8 @@ namespace MASICResultsMerger
                                 PeakMaxIntensity = string.Copy(lineParts[(int)eSICStatsColumns.PeakMaxIntensity]),
                                 PeakSignalToNoiseRatio = string.Copy(lineParts[(int)eSICStatsColumns.PeakSignalToNoiseRatio]),
                                 FWHMInScans = string.Copy(lineParts[(int)eSICStatsColumns.FWHMInScans]),
+                                PeakScanStart = string.Copy(lineParts[(int)eSICStatsColumns.PeakScanStart]),
+                                PeakScanEnd = string.Copy(lineParts[(int)eSICStatsColumns.PeakScanEnd]),
                                 PeakArea = string.Copy(lineParts[(int)eSICStatsColumns.PeakArea]),
                                 ParentIonIntensity = string.Copy(lineParts[(int)eSICStatsColumns.ParentIonIntensity]),
                                 ParentIonMZ = string.Copy(lineParts[(int)eSICStatsColumns.MZ]),

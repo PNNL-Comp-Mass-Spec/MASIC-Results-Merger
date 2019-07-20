@@ -8,6 +8,8 @@
         public string PeakMaxIntensity { get; set; }
         public string PeakSignalToNoiseRatio { get; set; }
         public string FWHMInScans { get; set; }
+        public string PeakScanStart { get; set; }
+        public string PeakScanEnd { get; set; }
         public string PeakArea { get; set; }
         public string ParentIonIntensity { get; set; }
         public string ParentIonMZ { get; set; }
