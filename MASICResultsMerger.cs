@@ -410,7 +410,7 @@ namespace MASICResultsMerger
             var blankAdditionalSICColumns = string.Empty;
             var blankAdditionalReporterIonColumns = string.Empty;
 
-            Dictionary<string, int> dctCollisionModeFileMap;
+            Dictionary<string, int> collisionModeFileMap;
 
             try
             {
@@ -434,7 +434,7 @@ namespace MASICResultsMerger
 
                 if (SeparateByCollisionMode)
                 {
-                    outputFilePaths = SummarizeCollisionModes(inputFile, baseFileName, outputDirectoryPath, dctScanStats, out dctCollisionModeFileMap);
+                    outputFilePaths = SummarizeCollisionModes(inputFile, baseFileName, outputDirectoryPath, scanStats, out collisionModeFileMap);
                     outputFileCount = outputFilePaths.Length;
                     if (outputFileCount < 1)
                     {
@@ -444,7 +444,7 @@ namespace MASICResultsMerger
                 }
                 else
                 {
-                    dctCollisionModeFileMap = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
+                    collisionModeFileMap = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
                     outputFileCount = 1;
                     outputFilePaths = new KeyValuePair<string, string>[0];
                     outputFilePaths[0] = new KeyValuePair<string, string>("", Path.Combine(outputDirectoryPath, baseFileName + RESULTS_SUFFIX));
@@ -481,7 +481,7 @@ namespace MASICResultsMerger
                 {
                     var linesRead = 0;
                     var writeReporterIonStats = false;
-                    var writeSICStats = (dctSICStats.Count > 0);
+                    var writeSICStats = (sicStats.Count > 0);
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -566,9 +566,9 @@ namespace MASICResultsMerger
                             continue;
                         }
 
-                        //  Look for scanNumber in dctScanStats
+                        //  Look for scanNumber in scanStats
                         var addonColumns = new List<string>();
-                        if (!dctScanStats.TryGetValue(scanNumber, out var scanStatsEntry))
+                        if (!scanStats.TryGetValue(scanNumber, out var scanStatsEntry))
                         {
                             //  Match not found; use the blank columns in blankAdditionalScanStatsColumns
                             addonColumns.Add(blankAdditionalScanStatsColumns);
@@ -584,7 +584,7 @@ namespace MASICResultsMerger
 
                         if (writeSICStats)
                         {
-                            if (!dctSICStats.TryGetValue(scanNumber, out var sicStatsEntry))
+                            if (!sicStats.TryGetValue(scanNumber, out var sicStatsEntry))
                             {
                                 //  Match not found; use the blank columns in blankAdditionalSICColumns
                                 addonColumns.Add(blankAdditionalSICColumns);
@@ -639,7 +639,7 @@ namespace MASICResultsMerger
                             if (collisionModeCurrentScan != null)
                             {
                                 //  Determine the correct output file
-                                if (!dctCollisionModeFileMap.TryGetValue(collisionModeCurrentScan, out outFileIndex))
+                                if (!collisionModeFileMap.TryGetValue(collisionModeCurrentScan, out outFileIndex))
                                 {
                                     outFileIndex = 0;
                                 }
@@ -957,10 +957,10 @@ namespace MASICResultsMerger
                 return false;
             }
 
-            var fiInputFile = new FileInfo(inputFilePath);
+            var inputFile = new FileInfo(inputFilePath);
             if (string.IsNullOrWhiteSpace(mMASICResultsDirectoryPath))
             {
-                masicResultsDirectory = fiInputFile.DirectoryName;
+                masicResultsDirectory = inputFile.DirectoryName;
             }
             else
             {
@@ -971,45 +971,45 @@ namespace MASICResultsMerger
 
             if (MageResults)
             {
-                success = ProcessMageExtractorFile(fiInputFile, masicResultsDirectory);
+                success = ProcessMageExtractorFile(inputFile, masicResultsDirectory);
             }
             else
             {
-                success = ProcessSingleJobFile(fiInputFile, masicResultsDirectory);
+                success = ProcessSingleJobFile(inputFile, masicResultsDirectory);
             }
 
             return success;
         }
 
-        private bool ProcessMageExtractorFile(FileInfo fiInputFile, string masicResultsDirectory)
+        private bool ProcessMageExtractorFile(FileInfo inputFile, string masicResultsDirectory)
         {
-            var dctScanStats = new Dictionary<int, ScanStatsData>();
-            var dctSICStats = new Dictionary<int, SICStatsData>();
+            var scanStats = new Dictionary<int, ScanStatsData>();
+            var sicStats = new Dictionary<int, SICStatsData>();
             try
             {
                 //  Read the Mage Metadata file
-                FileInfo fiMetadataFile;
-                var metadataFileName = Path.GetFileNameWithoutExtension(fiInputFile.Name) + "_metadata.txt";
+                FileInfo metadataFile;
+                var metadataFileName = Path.GetFileNameWithoutExtension(inputFile.Name) + "_metadata.txt";
 
-                if (fiInputFile.DirectoryName != null)
+                if (inputFile.DirectoryName != null)
                 {
-                    fiMetadataFile = new FileInfo(Path.Combine(fiInputFile.DirectoryName, metadataFileName));
+                    metadataFile = new FileInfo(Path.Combine(inputFile.DirectoryName, metadataFileName));
                 }
                 else
                 {
-                    fiMetadataFile = new FileInfo(metadataFileName);
+                    metadataFile = new FileInfo(metadataFileName);
                 }
 
-                if (!fiMetadataFile.Exists)
+                if (!metadataFile.Exists)
                 {
-                    ShowErrorMessage("Error: Mage Metadata File not found: " + fiMetadataFile.FullName);
+                    ShowErrorMessage("Error: Mage Metadata File not found: " + metadataFile.FullName);
                     SetLocalErrorCode(eResultsProcessorErrorCodes.MissingMageFiles);
                     return false;
                 }
 
                 //  Keys in this dictionary are the job, values are the DatasetID and DatasetName
-                var dctJobToDatasetMap = ReadMageMetadataFile(fiMetadataFile.FullName);
-                if (dctJobToDatasetMap == null || dctJobToDatasetMap.Count == 0)
+                var jobToDatasetMap = ReadMageMetadataFile(metadataFile.FullName);
+                if (jobToDatasetMap == null || jobToDatasetMap.Count == 0)
                 {
                     ShowErrorMessage("Error: ReadMageMetadataFile returned an empty job mapping");
                     return false;
@@ -1019,12 +1019,12 @@ namespace MASICResultsMerger
                 int jobColumnIndex;
 
                 // Open the Mage Extractor data file so that we can validate and cache the header row
-                using (var reader = new StreamReader(new FileStream(fiInputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using (var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     headerLine = reader.ReadLine();
                     var invalidFileMessage = string.Format(
                         "Input file is not a valid Mage Extractor results file; it must contain a \"Job\" column: " +
-                        fiInputFile.FullName);
+                        inputFile.FullName);
 
                     if (string.IsNullOrWhiteSpace(headerLine))
                     {
@@ -1046,7 +1046,7 @@ namespace MASICResultsMerger
                 //  Populate blankAdditionalScanStatsColumns with tab characters based on the number of items in scanStatsHeaders
                 var blankAdditionalScanStatsColumns = new string('\t', scanStatsHeaders.Count - 1);
                 var blankAdditionalSICColumns = new string('\t', sicStatsHeaders.Count);
-                var outputFileName = Path.GetFileNameWithoutExtension(fiInputFile.Name) + RESULTS_SUFFIX;
+                var outputFileName = Path.GetFileNameWithoutExtension(inputFile.Name) + RESULTS_SUFFIX;
                 var outputFilePath = Path.Combine(mOutputDirectoryPath, outputFileName);
                 var jobsSuccessfullyMerged = 0;
 
@@ -1054,7 +1054,7 @@ namespace MASICResultsMerger
                 using (var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     //  Open the Mage Extractor data file and read the data for each job
-                    var phrpReader = new clsPHRPReader(fiInputFile.FullName, clsPHRPReader.ePeptideHitResultType.Unknown, false, false, false)
+                    var phrpReader = new clsPHRPReader(inputFile.FullName, clsPHRPReader.ePeptideHitResultType.Unknown, false, false, false)
                     {
                         EchoMessagesToConsole = false,
                         SkipDuplicatePSMs = false
@@ -1092,7 +1092,7 @@ namespace MASICResultsMerger
                             //  New job; read and cache the MASIC data
                             masicDataLoaded = false;
 
-                            if (!dctJobToDatasetMap.TryGetValue(job, out var datasetInfo))
+                            if (!jobToDatasetMap.TryGetValue(job, out var datasetInfo))
                             {
                                 ShowErrorMessage("Error: Job " + job + " was not defined in the Metadata file; unable to determine the dataset");
                             }
@@ -1105,10 +1105,10 @@ namespace MASICResultsMerger
                                 if (success)
                                 {
                                     //  Read and cache the MASIC data
-                                    dctScanStats = new Dictionary<int, ScanStatsData>();
-                                    dctSICStats = new Dictionary<int, SICStatsData>();
+                                    scanStats = new Dictionary<int, ScanStatsData>();
+                                    sicStats = new Dictionary<int, SICStatsData>();
 
-                                    masicDataLoaded = ReadMASICData(masicResultsDirectory, masicFiles, dctScanStats, dctSICStats, out reporterIonHeaders);
+                                    masicDataLoaded = ReadMASICData(masicResultsDirectory, masicFiles, scanStats, sicStats, out reporterIonHeaders);
                                     if (masicDataLoaded)
                                     {
                                         jobsSuccessfullyMerged++;
@@ -1150,9 +1150,9 @@ namespace MASICResultsMerger
                                 headerLineWritten = true;
                             }
 
-                            //  Look for scanNumber in dctScanStats
+                            //  Look for scanNumber in scanStats
                             var addonColumns = new List<string>();
-                            if (!dctScanStats.TryGetValue(psm.ScanNumber, out var scanStatsEntry))
+                            if (!scanStats.TryGetValue(psm.ScanNumber, out var scanStatsEntry))
                             {
                                 //  Match not found; use the blank columns in blankAdditionalColumns
                                 addonColumns.Add(blankAdditionalScanStatsColumns);
@@ -1166,7 +1166,7 @@ namespace MASICResultsMerger
                                 addonColumns.Add(scanStatsEntry.BasePeakMZ);
                             }
 
-                            if (!dctSICStats.TryGetValue(psm.ScanNumber, out var sicStatsEntry))
+                            if (!sicStats.TryGetValue(psm.ScanNumber, out var sicStatsEntry))
                             {
                                 //  Match not found; use the blank columns in blankAdditionalSICColumns
                                 addonColumns.Add(blankAdditionalSICColumns);
@@ -1217,7 +1217,7 @@ namespace MASICResultsMerger
 
                         }
 
-                        UpdateProgress("Loading data from " + fiInputFile.Name, phrpReader.PercentComplete);
+                        UpdateProgress("Loading data from " + inputFile.Name, phrpReader.PercentComplete);
                         lastJob = job;
                     }
                 }
@@ -1243,11 +1243,11 @@ namespace MASICResultsMerger
             }
         }
 
-        private bool ProcessSingleJobFile(FileSystemInfo fiInputFile, string masicResultsDirectory)
+        private bool ProcessSingleJobFile(FileSystemInfo inputFile, string masicResultsDirectory)
         {
             try
             {
-                var datasetName = Path.GetFileNameWithoutExtension(fiInputFile.FullName);
+                var datasetName = Path.GetFileNameWithoutExtension(inputFile.FullName);
                 var datasetInfo = new DatasetInfo(datasetName, 0);
                 //  Note that FindMASICFiles will first try the full filename, and if it doesn't find a match,
                 //  it will start removing text from the end of the filename by looking for underscores
@@ -1262,14 +1262,14 @@ namespace MASICResultsMerger
                 }
 
                 //  Read and cache the MASIC data
-                var dctScanStats = new Dictionary<int, ScanStatsData>();
-                var dctSICStats = new Dictionary<int, SICStatsData>();
+                var scanStats = new Dictionary<int, ScanStatsData>();
+                var sicStats = new Dictionary<int, SICStatsData>();
 
-                success = ReadMASICData(masicResultsDirectory, masicFiles, dctScanStats, dctSICStats, out var reporterIonHeaders);
+                success = ReadMASICData(masicResultsDirectory, masicFiles, scanStats, sicStats, out var reporterIonHeaders);
                 if (success)
                 {
                     //  Merge the MASIC data with the input file
-                    success = MergePeptideHitAndMASICFiles(fiInputFile, mOutputDirectoryPath, dctScanStats, dctSICStats, reporterIonHeaders);
+                    success = MergePeptideHitAndMASICFiles(inputFile, mOutputDirectoryPath, scanStats, sicStats, reporterIonHeaders);
                 }
 
                 if (success)
@@ -1295,8 +1295,8 @@ namespace MASICResultsMerger
         private bool ReadMASICData(
             string sourceDirectory,
             MASICFileInfo masicFiles,
-            IDictionary<int, ScanStatsData> dctScanStats,
-            IDictionary<int, SICStatsData> dctSICStats,
+            IDictionary<int, ScanStatsData> scanStats,
+            IDictionary<int, SICStatsData> sicStats,
             out string reporterIonHeaders)
         {
             try
@@ -1309,7 +1309,7 @@ namespace MASICResultsMerger
                 }
                 else
                 {
-                    scanStatsRead = ReadScanStatsFile(sourceDirectory, masicFiles.ScanStatsFileName, dctScanStats);
+                    scanStatsRead = ReadScanStatsFile(sourceDirectory, masicFiles.ScanStatsFileName, scanStats);
                 }
 
                 if (string.IsNullOrWhiteSpace(masicFiles.SICStatsFileName))
@@ -1318,7 +1318,7 @@ namespace MASICResultsMerger
                 }
                 else
                 {
-                    sicStatsRead = ReadSICStatsFile(sourceDirectory, masicFiles.SICStatsFileName, dctSICStats);
+                    sicStatsRead = ReadSICStatsFile(sourceDirectory, masicFiles.SICStatsFileName, sicStats);
                 }
 
                 if (string.IsNullOrWhiteSpace(masicFiles.ReporterIonsFileName))
@@ -1327,7 +1327,7 @@ namespace MASICResultsMerger
                 }
                 else
                 {
-                    ReadReporterIonStatsFile(sourceDirectory, masicFiles.ReporterIonsFileName, dctScanStats, out reporterIonHeaders);
+                    ReadReporterIonStatsFile(sourceDirectory, masicFiles.ReporterIonsFileName, scanStats, out reporterIonHeaders);
                 }
 
                 return scanStatsRead || sicStatsRead;
@@ -1341,12 +1341,12 @@ namespace MASICResultsMerger
 
         }
 
-        private bool ReadScanStatsFile(string sourceDirectory, string scanStatsFileName, IDictionary<int, ScanStatsData> dctScanStats)
+        private bool ReadScanStatsFile(string sourceDirectory, string scanStatsFileName, IDictionary<int, ScanStatsData> scanStats)
         {
             try
             {
-                //  Initialize dctScanStats
-                dctScanStats.Clear();
+                //  Initialize scanStats
+                scanStats.Clear();
                 ShowMessage("  Reading: " + scanStatsFileName);
                 using (var reader = new StreamReader(new FileStream(Path.Combine(sourceDirectory, scanStatsFileName), FileMode.Open, FileAccess.Read,
                                                                     FileShare.ReadWrite)))
@@ -1382,7 +1382,7 @@ namespace MASICResultsMerger
                             ReporterIonData = string.Empty
                         };
 
-                        dctScanStats.Add(scanNumber, scanStatsEntry);
+                        scanStats.Add(scanNumber, scanStatsEntry);
                     }
                 }
 
@@ -1400,7 +1400,7 @@ namespace MASICResultsMerger
 
         private Dictionary<int, DatasetInfo> ReadMageMetadataFile(string metadataFilePath)
         {
-            var dctJobToDatasetMap = new Dictionary<int, DatasetInfo>();
+            var jobToDatasetMap = new Dictionary<int, DatasetInfo>();
             var headersParsed = false;
             var jobIndex = -1;
             var datasetIndex = -1;
@@ -1456,7 +1456,7 @@ namespace MASICResultsMerger
                                 {
                                     var datasetName = lineParts[datasetIndex];
                                     var datasetInfo = new DatasetInfo(datasetName, datasetID);
-                                    dctJobToDatasetMap.Add(jobNumber, datasetInfo);
+                                    jobToDatasetMap.Add(jobNumber, datasetInfo);
                                 }
                                 else
                                 {
@@ -1480,16 +1480,16 @@ namespace MASICResultsMerger
                 return null;
             }
 
-            return dctJobToDatasetMap;
+            return jobToDatasetMap;
         }
 
-        private bool ReadSICStatsFile(string sourceDirectory, string sicStatsFileName, IDictionary<int, SICStatsData> dctSICStats)
+        private bool ReadSICStatsFile(string sourceDirectory, string sicStatsFileName, IDictionary<int, SICStatsData> sicStats)
         {
 
             try
             {
-                //  Initialize dctSICStats
-                dctSICStats.Clear();
+                //  Initialize sicStats
+                sicStats.Clear();
                 ShowMessage("  Reading: " + sicStatsFileName);
                 using (var reader = new StreamReader(new FileStream(Path.Combine(sourceDirectory, sicStatsFileName), FileMode.Open, FileAccess.Read,
                                                                     FileShare.ReadWrite)))
@@ -1519,7 +1519,7 @@ namespace MASICResultsMerger
                                 StatMomentsArea = string.Copy(lineParts[(int)eSICStatsColumns.StatMomentsArea])
                             };
 
-                            dctSICStats.Add(fragScanNumber, sicStatsEntry);
+                            sicStats.Add(fragScanNumber, sicStatsEntry);
                         }
 
                     }
@@ -1538,7 +1538,7 @@ namespace MASICResultsMerger
         private bool ReadReporterIonStatsFile(
             string sourceDirectory,
             string reporterIonStatsFileName,
-            IDictionary<int, ScanStatsData> dctScanStats,
+            IDictionary<int, ScanStatsData> scanStats,
             out string reporterIonHeaders)
         {
             var warningCount = 0;
@@ -1588,7 +1588,7 @@ namespace MASICResultsMerger
                         }
 
                         //  Look for scanNumber in scanNumbers
-                        if (!dctScanStats.TryGetValue(scanNumber, out var scanStatsEntry))
+                        if (!scanStats.TryGetValue(scanNumber, out var scanStatsEntry))
                         {
                             if (warningCount < 10)
                             {
@@ -1660,28 +1660,28 @@ namespace MASICResultsMerger
             FileSystemInfo inputFile,
             string baseFileName,
             string outputDirectoryPath,
-            Dictionary<int, ScanStatsData> dctScanStats,
-            out Dictionary<string, int> dctCollisionModeFileMap)
+            Dictionary<int, ScanStatsData> scanStats,
+            out Dictionary<string, int> collisionModeFileMap)
         {
-            dctCollisionModeFileMap = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
+            collisionModeFileMap = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
             var collisionModeTypeCount = 0;
-            foreach (var scanStatsItem in dctScanStats.Values)
+            foreach (var scanStatsItem in scanStats.Values)
             {
-                if (!dctCollisionModeFileMap.ContainsKey(scanStatsItem.CollisionMode))
+                if (!collisionModeFileMap.ContainsKey(scanStatsItem.CollisionMode))
                 {
                     //  Store this collision mode in htCollisionModes; the value stored will be the index in collisionModes()
-                    dctCollisionModeFileMap.Add(scanStatsItem.CollisionMode, collisionModeTypeCount);
+                    collisionModeFileMap.Add(scanStatsItem.CollisionMode, collisionModeTypeCount);
                     collisionModeTypeCount++;
                 }
 
             }
 
-            if (dctCollisionModeFileMap.Count == 0 ||
-                dctCollisionModeFileMap.Count == 1 && string.IsNullOrWhiteSpace(dctCollisionModeFileMap.First().Key))
+            if (collisionModeFileMap.Count == 0 ||
+                collisionModeFileMap.Count == 1 && string.IsNullOrWhiteSpace(collisionModeFileMap.First().Key))
             {
                 //  Try to load the collision mode info from the input file
                 //  MS-GF+ results report this in the FragMethod column
-                dctCollisionModeFileMap.Clear();
+                collisionModeFileMap.Clear();
                 collisionModeTypeCount = 0;
                 try
                 {
@@ -1738,20 +1738,20 @@ namespace MASICResultsMerger
                             }
 
                             var collisionMode = lineParts[fragMethodColNumber - 1];
-                            if (!dctCollisionModeFileMap.ContainsKey(collisionMode))
+                            if (!collisionModeFileMap.ContainsKey(collisionMode))
                             {
                                 //  Store this collision mode in htCollisionModes; the value stored will be the index in collisionModes()
-                                dctCollisionModeFileMap.Add(collisionMode, collisionModeTypeCount);
+                                collisionModeFileMap.Add(collisionMode, collisionModeTypeCount);
                                 collisionModeTypeCount++;
                             }
 
-                            if (!dctScanStats.TryGetValue(scanNumber, out var scanStatsEntry))
+                            if (!scanStats.TryGetValue(scanNumber, out var scanStatsEntry))
                             {
                                 scanStatsEntry = new ScanStatsData(scanNumber)
                                 {
                                     CollisionMode = collisionMode
                                 };
-                                dctScanStats.Add(scanNumber, scanStatsEntry);
+                                scanStats.Add(scanNumber, scanStatsEntry);
                             }
                             else
                             {
@@ -1765,7 +1765,7 @@ namespace MASICResultsMerger
                 catch (Exception ex)
                 {
                     HandleException("Error extraction collision mode information from the input file", ex);
-                    return new KeyValuePair<string, string>[collisionModeTypeCount - 1];
+                    return new KeyValuePair<string, string>[collisionModeTypeCount];
                 }
 
             }
@@ -1775,15 +1775,15 @@ namespace MASICResultsMerger
                 collisionModeTypeCount = 1;
             }
 
-            var outputFilePaths = new KeyValuePair<string, string>[collisionModeTypeCount - 1];
+            var outputFilePaths = new KeyValuePair<string, string>[collisionModeTypeCount];
 
-            if (dctCollisionModeFileMap.Count == 0)
+            if (collisionModeFileMap.Count == 0)
             {
                 outputFilePaths[0] = new KeyValuePair<string, string>("na", Path.Combine(outputDirectoryPath, baseFileName + "_na" + RESULTS_SUFFIX));
             }
             else
             {
-                foreach (var item in dctCollisionModeFileMap)
+                foreach (var item in collisionModeFileMap)
                 {
                     var collisionMode = item.Key;
                     if (string.IsNullOrWhiteSpace(collisionMode))
