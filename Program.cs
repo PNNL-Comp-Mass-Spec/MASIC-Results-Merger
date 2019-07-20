@@ -108,7 +108,7 @@ namespace MASICResultsMerger
                 {
                     if (mMASICResultsMerger.ProcessFilesAndRecurseDirectories(mInputFilePath, mOutputDirectoryPath,
                                                                               mOutputDirectoryAlternatePath,
-                                                                              mRecreateDirectoryHierarchyInAlternatePath, "",
+                                                                              mRecreateDirectoryHierarchyInAlternatePath, string.Empty,
                                                                               mRecurseDirectoriesMaxLevels))
                     {
                         returnCode = 0;

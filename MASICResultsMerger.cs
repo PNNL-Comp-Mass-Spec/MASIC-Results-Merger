@@ -457,7 +457,7 @@ namespace MASICResultsMerger
                     collisionModeFileMap = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
                     outputFileCount = 1;
                     outputFilePaths = new KeyValuePair<string, string>[0];
-                    outputFilePaths[0] = new KeyValuePair<string, string>("", Path.Combine(outputDirectoryPath, baseFileName + RESULTS_SUFFIX));
+                    outputFilePaths[0] = new KeyValuePair<string, string>(string.Empty, Path.Combine(outputDirectoryPath, baseFileName + RESULTS_SUFFIX));
                 }
 
                 writers = new StreamWriter[outputFileCount - 1];
