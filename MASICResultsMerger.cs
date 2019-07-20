@@ -256,7 +256,7 @@ namespace MASICResultsMerger
         {
             //  Check for a column named "ScanNum" or "ScanNumber" or "Scan Num" or "Scan Number"
             //  If found, override ScanNumberColumn
-            for (var colIndex = 0; colIndex <= lineParts.Count - 1; colIndex++)
+            for (var colIndex = 0; colIndex < lineParts.Count; colIndex++)
             {
                 if (lineParts[colIndex].Equals("Scan", StringComparison.OrdinalIgnoreCase) ||
                     lineParts[colIndex].Equals("ScanNum", StringComparison.OrdinalIgnoreCase) ||
@@ -322,6 +322,7 @@ namespace MASICResultsMerger
                 return text;
             }
 
+            for (var index = indexStart; index < lineParts.Count; index++)
             {
                 string column;
                 if (lineParts[index] == null)
@@ -452,7 +453,7 @@ namespace MASICResultsMerger
                 writers = new StreamWriter[outputFileCount - 1];
                 linesWritten = new int[outputFileCount - 1];
 
-                for (var index = 0; index <= outputFileCount - 1; index++)
+                for (var index = 0; index < outputFileCount; index++)
                 {
                     writers[index] =
                         new StreamWriter(new FileStream(outputFilePaths[index].Value, FileMode.Create, FileAccess.Write, FileShare.Read));
@@ -500,7 +501,7 @@ namespace MASICResultsMerger
                             {
                                 //  The input file doesn't have a header line; we will add one, using generic column names for the data in the input file
                                 var genericHeaders = new List<string>();
-                                for (var index = 0; index <= lineParts.Count - 1; index++)
+                                for (var index = 0; index < lineParts.Count; index++)
                                 {
                                     genericHeaders.Add("Column" + index.ToString("00"));
                                 }
@@ -552,7 +553,7 @@ namespace MASICResultsMerger
                             }
 
                             //  Write out the headers
-                            for (var index = 0; index <= outputFileCount - 1; index++)
+                            for (var index = 0; index < outputFileCount; index++)
                             {
                                 writers[index].WriteLine(headerLine + '\t' + addonHeaders);
                             }
@@ -655,7 +656,7 @@ namespace MASICResultsMerger
                 //  Close the output files
                 if (writers != null)
                 {
-                    for (var index = 0; index <= outputFileCount - 1; index++)
+                    for (var index = 0; index < outputFileCount; index++)
                     {
                         if (writers[index] != null)
                         {
@@ -681,7 +682,7 @@ namespace MASICResultsMerger
                 //  If there are, then delete the empty output file
                 //  However, retain at least one output file
                 var emptyOutFileCount = 0;
-                for (var index = 0; index <= outputFileCount - 1; index++)
+                for (var index = 0; index < outputFileCount; index++)
                 {
                     if (linesWritten[index] == 0)
                     {
@@ -708,7 +709,7 @@ namespace MASICResultsMerger
                         linesWritten[0] = 1;
                     }
 
-                    for (var index = 0; index <= outputFileCount - 1; index++)
+                    for (var index = 0; index < outputFileCount; index++)
                     {
                         //  Wait 250 msec before continuing
                         Thread.Sleep(250);
@@ -790,7 +791,7 @@ namespace MASICResultsMerger
                     else
                     {
                         var charsInCommon = 0;
-                        for (var index = 0; index <= baseFileName.Length - 1; index++)
+                        for (var index = 0; index < baseFileName.Length; index++)
                         {
                             if (index >= candidateName.Length)
                             {
@@ -1701,7 +1702,7 @@ namespace MASICResultsMerger
                             if (linesRead == 1)
                             {
                                 //  Header line; look for the FragMethod column
-                                for (var colIndex = 0; colIndex <= lineParts.Length - 1; colIndex++)
+                                for (var colIndex = 0; colIndex < lineParts.Length; colIndex++)
                                 {
                                     if (string.Equals(lineParts[colIndex], "FragMethod", StringComparison.OrdinalIgnoreCase))
                                     {
