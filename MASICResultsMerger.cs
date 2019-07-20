@@ -39,7 +39,7 @@ namespace MASICResultsMerger
         const string SCAN_STATS_FILE_EXTENSION = "_ScanStats.txt";
         const string REPORTER_IONS_FILE_EXTENSION = "_ReporterIons.txt";
 
-        const string RESULTS_SUFFIX = "_PlusSICStats.txt";
+        public const string RESULTS_SUFFIX = "_PlusSICStats.txt";
         public const int DEFAULT_SCAN_NUMBER_COLUMN = 2;
 
         public const string SCAN_STATS_ELUTION_TIME_COLUMN = "ElutionTime";
@@ -146,146 +146,12 @@ namespace MASICResultsMerger
         /// </summary>
         public bool SeparateByCollisionMode { get; set; }
 
-        public int ProteinColumn { get; set; }
-
         /// <summary>
         ///  For the input file, defines which column tracks scan number; the first column is column 1 (not zero)
         /// </summary>
         public int ScanNumberColumn { get; set; }
 
         #endregion
-
-        private bool ColumnExists(IReadOnlyDictionary<Enum, int> msgfPlusColumns, clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns requiredColumn)
-        {
-            if (msgfPlusColumns.TryGetValue(requiredColumn, out var columnIndex))
-            {
-                if (columnIndex >= 0)
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private bool ConsolidatePSMs(string psmFilePath, bool multiJobFile)
-        {
-            try
-            {
-                var inputFile = new FileInfo(psmFilePath);
-                var outputFileName = Path.GetFileNameWithoutExtension(inputFile.Name) + "_ForDartID.txt";
-                string outputFilePath;
-
-                if (inputFile.DirectoryName != null)
-                {
-                    outputFilePath = Path.Combine(inputFile.DirectoryName, outputFileName);
-                }
-                else
-                {
-                    outputFilePath = outputFileName;
-                }
-
-                var msgfPlusColumns = new SortedDictionary<Enum, int>();
-                var scanTimeColIndex = -1;
-
-                var requiredColumns = new List<clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns>
-                {
-                    clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Peptide,
-                    clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.SpecProb_EValue,
-                    clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Charge,
-                    clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Protein
-                };
-
-                string datasetName;
-                if (multiJobFile)
-                {
-                    datasetName = "TBD";
-                }
-                else
-                {
-                    //  Obtain the dataset name from the filename
-                    if (psmFilePath.EndsWith(RESULTS_SUFFIX, StringComparison.OrdinalIgnoreCase))
-                    {
-                        datasetName = Path.GetFileName(psmFilePath.Substring(0, psmFilePath.Length - RESULTS_SUFFIX.Length));
-                    }
-                    else
-                    {
-                        datasetName = Path.GetFileNameWithoutExtension(psmFilePath);
-                    }
-
-                    if (datasetName.EndsWith("_syn", StringComparison.OrdinalIgnoreCase) ||
-                        datasetName.EndsWith("_fht", StringComparison.OrdinalIgnoreCase))
-                    {
-                        datasetName = datasetName.Substring(0, datasetName.Length - 4);
-                    }
-
-                    //  ReSharper disable StringLiteralTypo
-                    if (datasetName.EndsWith("_msgfplus", StringComparison.OrdinalIgnoreCase))
-                    {
-                        datasetName = datasetName.Substring(0, datasetName.Length - "_msgfplus".Length);
-                    }
-                    else if (datasetName.EndsWith("_msgfdb", StringComparison.OrdinalIgnoreCase))
-                    {
-                        datasetName = datasetName.Substring(0, datasetName.Length - "_msgfdb".Length);
-                    }
-
-                    //  ReSharper restore StringLiteralTypo
-                }
-
-                using (var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
-                {
-                    while (!reader.EndOfStream)
-                    {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
-
-                        if (scanTimeColIndex < 0)
-                        {
-                            var success = ParseMergedFileHeaderLine(dataLine, ref scanTimeColIndex, msgfPlusColumns);
-                            if (!success)
-                            {
-                                return false;
-                            }
-
-                            if (scanTimeColIndex < 0)
-                            {
-                                OnErrorEvent(string.Format("File {0} is missing column {1} on the header line", inputFile.Name,
-                                                           SCAN_STATS_ELUTION_TIME_COLUMN));
-                                return false;
-                            }
-
-                            //  Validate that the required columns exist
-                            foreach (var requiredColumn in requiredColumns)
-                            {
-                                if (!ColumnExists(msgfPlusColumns, requiredColumn))
-                                {
-                                    OnErrorEvent(string.Format("File {0} is missing column {1} on the header line", inputFile.Name,
-                                                               requiredColumn.ToString()));
-                                    return false;
-                                }
-
-                            }
-
-                        }
-
-                        var columns = dataLine.Split('\t');
-                        var peptide = clsPHRPReader.LookupColumnValue(columns, clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Peptide,
-                                                                      msgfPlusColumns, string.Empty);
-
-                    }
-                }
-
-                throw new NotImplementedException();
-            }
-            catch (Exception ex)
-            {
-                HandleException("Error in ConsolidatePSMs", ex);
-                return false;
-            }
-
-        }
 
         private bool FindMASICFiles(string masicResultsDirectory, DatasetInfo datasetInfo, MASICFileInfo masicFiles, string masicFileSearchInfo,
                                     int job)
@@ -402,27 +268,7 @@ namespace MASICResultsMerger
                         ScanNumberColumn = colIndex + 1;
                         ShowMessage(string.Format("Note: Reading scan numbers from column {0} ({1}) in file {2}",
                                                   ScanNumberColumn, lineParts[colIndex], inputFile.Name));
-                    }
-
-                }
-
-            }
-
-        }
-
-        private void FindProteinColumn(FileSystemInfo inputFile, IList<string> lineParts)
-        {
-            //  Check for a column named "Protein" or "Proteins"
-            for (var colIndex = 0; colIndex <= lineParts.Count - 1; colIndex++)
-            {
-                if (lineParts[colIndex].Equals("Protein", StringComparison.OrdinalIgnoreCase) ||
-                    lineParts[colIndex].Equals("Proteins", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (ProteinColumn != colIndex + 1)
-                    {
-                        ProteinColumn = colIndex + 1;
-                        ShowMessage(string.Format("Note: Reading protein names from column {0} ({1}) in file {2}",
-                                                  ProteinColumn, lineParts[colIndex], inputFile.Name));
+                        break;
                     }
 
                 }
@@ -473,7 +319,6 @@ namespace MASICResultsMerger
                 return text;
             }
 
-            for (var index = indexStart; index <= lineParts.Count - 1; index++)
             {
                 string column;
                 if (lineParts[index] == null)
@@ -820,9 +665,11 @@ namespace MASICResultsMerger
 
                 if (GroupProteins)
                 {
+                    var preprocessor = new DartIdPreprocessor();
+
                     foreach (var item in outputFilePaths.ToList())
                     {
-                        var successConsolidating = ConsolidatePSMs(item.Value, false);
+                        var successConsolidating = preprocessor.ConsolidatePSMs(item.Value, false);
                     }
 
                 }
@@ -1070,39 +917,6 @@ namespace MASICResultsMerger
             catch (Exception ex)
             {
                 HandleException("Error in MergeProcessedDatasets", ex);
-                return false;
-            }
-
-        }
-
-
-
-        private bool ParseMergedFileHeaderLine(string headerLine, ref int scanTimeColIndex, IDictionary<Enum, int> msgfPlusColumns)
-        {
-            try
-            {
-                var headerNames = headerLine.Split('\t').ToList();
-                var columnNameToIndexMap = clsPHRPParserMSGFPlus.GetColumnMapFromHeaderLine(headerNames);
-                foreach (var item in columnNameToIndexMap)
-                {
-                    msgfPlusColumns.Add(item.Key, item.Value);
-                }
-
-                for (var index = 0; index <= headerNames.Count - 1; index++)
-                {
-                    if (headerNames[index].Equals(SCAN_STATS_ELUTION_TIME_COLUMN, StringComparison.OrdinalIgnoreCase))
-                    {
-                        scanTimeColIndex = index;
-                        break;
-                    }
-
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                HandleException("Error in ParseHeaderLine", ex);
                 return false;
             }
 
@@ -1412,7 +1226,8 @@ namespace MASICResultsMerger
 
                 if (GroupProteins)
                 {
-                    var successConsolidating = ConsolidatePSMs(outputFilePath, true);
+                    var preprocessor = new DartIdPreprocessor();
+                    var successConsolidating = preprocessor.ConsolidatePSMs(outputFilePath, true);
                 }
 
                 return jobsSuccessfullyMerged > 0;

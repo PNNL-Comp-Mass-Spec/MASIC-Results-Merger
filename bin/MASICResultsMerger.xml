@@ -4,6 +4,13 @@
         <name>MASICResultsMerger</name>
     </assembly>
     <members>
+        <member name="T:MASICResultsMerger.DartIdPreprocessor">
+            <summary>
+            Transforms a Dataset_PlusSICStats.txt data file from MASICResultsMerger into a format compatible with DART-ID
+            Dart-ID Manuscript: PLoS Computational Biology. 2019 Jul 1;15(7):e1007082
+            https://www.ncbi.nlm.nih.gov/pubmed/31260443
+            </summary>
+        </member>
         <member name="M:MASICResultsMerger.MASICFileInfo.#ctor">
             <summary>
             Constructor
@@ -30,6 +37,11 @@
         <member name="T:MASICResultsMerger.MASICResultsMerger.eResultsProcessorErrorCodes">
             <summary>
             Error codes specialized for this class
+            </summary>
+        </member>
+        <member name="P:MASICResultsMerger.MASICResultsMerger.CreateDartIdInputFile">
+            <summary>
+            When true, create a DART-ID compatible file from the Dataset_PlusSICStats.txt file
             </summary>
         </member>
         <member name="P:MASICResultsMerger.MASICResultsMerger.ProcessedDatasets">
