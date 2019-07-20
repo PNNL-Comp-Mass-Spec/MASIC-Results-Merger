@@ -27,7 +27,7 @@ namespace MASICResultsMerger
         const string PROGRAM_DATE = "July 19, 2019";
 
         static string mInputFilePath;
-        static bool mGroupProteins;
+        static bool mCreateDartIdInputFile;
         static bool mMageResults;
         static bool mMergeWildcardResults;
 
@@ -54,7 +54,7 @@ namespace MASICResultsMerger
             //  Returns 0 if no error, error code if an error
             var commandLineParser = new clsParseCommandLine();
             mInputFilePath = string.Empty;
-            mGroupProteins = false;
+            mCreateDartIdInputFile = false;
             mMageResults = false;
             mMergeWildcardResults = false;
             mMASICResultsDirectoryPath = string.Empty;
@@ -92,7 +92,7 @@ namespace MASICResultsMerger
                     MASICResultsDirectoryPath = mMASICResultsDirectoryPath,
                     ScanNumberColumn = mScanNumberColumn,
                     SeparateByCollisionMode = mSeparateByCollisionMode,
-                    GroupProteins = mGroupProteins,
+                    CreateDartIdInputFile = mCreateDartIdInputFile,
                     MageResults = mMageResults
                 };
 
@@ -191,6 +191,7 @@ namespace MASICResultsMerger
                 "C",
                 "Mage",
                 "Append",
+                "DartID",
                 "S",
                 "A",
                 "R"
@@ -250,9 +251,9 @@ namespace MASICResultsMerger
                     mMergeWildcardResults = true;
                 }
 
-                if (commandLineParser.IsParameterPresent("GroupProteins"))
+                if (commandLineParser.IsParameterPresent("DartID"))
                 {
-                    mGroupProteins = true;
+                    mCreateDartIdInputFile = true;
                 }
 
                 if (commandLineParser.RetrieveValueForParameter("S", out var maxLevelsToRecurse))
@@ -316,7 +317,7 @@ namespace MASICResultsMerger
                                 + Environment.NewLine + Path.GetFileName(ProcessFilesOrDirectoriesBase.GetAppPath()));
                 Console.WriteLine(" InputFilePathSpec [/M:MASICResultsDirectoryPath] [/O:OutputDirectoryPath]");
                 Console.WriteLine(" [/N:ScanNumberColumn] [/C] [/Mage] [/Append]");
-                Console.WriteLine(" [/GroupProteins]");
+                Console.WriteLine(" [/DartID]");
                 Console.WriteLine(" [/S:[MaxLevel]] [/A:AlternateOutputDirectoryPath] [/R]");
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
@@ -361,10 +362,10 @@ namespace MASICResultsMerger
                                       "along with a second file mapping DatasetID to Dataset Name"));
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "Use /GroupProteins to only list each peptide once per scan. " +
+                                      "Use /DartID to only list each peptide once per scan. " +
                                       "The Protein column will list the first protein, while the " +
                                       "Proteins column will be a comma separated list of all of the proteins. " +
-                                      "This format is compatible with DART-ID"));
+                                      "This format is compatible with DART-ID (https://www.ncbi.nlm.nih.gov/pubmed/31260443)"));
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                                       "Use /S to process all valid files in the input directory and subdirectories. " +

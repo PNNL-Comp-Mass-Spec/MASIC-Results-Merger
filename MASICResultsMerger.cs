@@ -126,7 +126,10 @@ namespace MASICResultsMerger
 
         #region "Properties"
 
-        public bool GroupProteins { get; set; }
+        /// <summary>
+        /// When true, create a DART-ID compatible file from the Dataset_PlusSICStats.txt file
+        /// </summary>
+        public bool CreateDartIdInputFile { get; set; }
 
         public bool MageResults { get; set; }
 
@@ -663,7 +666,7 @@ namespace MASICResultsMerger
 
                 }
 
-                if (GroupProteins)
+                if (CreateDartIdInputFile)
                 {
                     var preprocessor = new DartIdPreprocessor();
 
@@ -1224,7 +1227,7 @@ namespace MASICResultsMerger
                     ShowMessage("Merged MASIC results for " + jobsSuccessfullyMerged + " jobs");
                 }
 
-                if (GroupProteins)
+                if (CreateDartIdInputFile)
                 {
                     var preprocessor = new DartIdPreprocessor();
                     var successConsolidating = preprocessor.ConsolidatePSMs(outputFilePath, true);
