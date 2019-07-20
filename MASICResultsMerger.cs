@@ -456,12 +456,12 @@ namespace MASICResultsMerger
                 {
                     collisionModeFileMap = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
                     outputFileCount = 1;
-                    outputFilePaths = new KeyValuePair<string, string>[0];
+                    outputFilePaths = new KeyValuePair<string, string>[outputFileCount];
                     outputFilePaths[0] = new KeyValuePair<string, string>(string.Empty, Path.Combine(outputDirectoryPath, baseFileName + RESULTS_SUFFIX));
                 }
 
-                writers = new StreamWriter[outputFileCount - 1];
-                linesWritten = new int[outputFileCount - 1];
+                writers = new StreamWriter[outputFileCount];
+                linesWritten = new int[outputFileCount];
 
                 for (var index = 0; index < outputFileCount; index++)
                 {
