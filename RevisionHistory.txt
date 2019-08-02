@@ -1,5 +1,12 @@
 MASIC Results Merger Revision History
 
+Version 2.0.7153 August 2, 2018
+	- Add support for creating DART-ID compatible input files (https://www.ncbi.nlm.nih.gov/pubmed/31260443)
+		- Use switch /DartID
+	- Lists each peptide once per scan
+	- The Protein column will list the first protein, while the Proteins column will be a comma separated list of all of the proteins
+	- This format is compatible with DART-ID
+
 Version 1.2.6582; January 8, 2018
 	- Use FileProcessor.ProcessFilesBase in PRISM.dll
 	- Examine header column names to possibly auto-update column number to examine for scan numbers
