@@ -507,13 +507,13 @@
         </member>
         <member name="T:PHRPReader.clsMSGFPlusParamFileModExtractor">
             <summary>
-            This class reads a DMS-based parameter file for MSGF+ or MSPathFinder to extract the dynamic and static modification information
+            This class reads a DMS-based parameter file for MS-GF+ or MSPathFinder to extract the dynamic and static modification information
             </summary>
             <remarks>See above for an example parameter file</remarks>
         </member>
         <member name="F:PHRPReader.clsMSGFPlusParamFileModExtractor.UNKNOWN_MSGFPlus_MOD_SYMBOL">
             <summary>
-            Unknown MSGF+ mod symbols
+            Unknown MS-GF+ mod symbols
             </summary>
         </member>
         <member name="F:PHRPReader.clsMSGFPlusParamFileModExtractor.PARAM_TAG_MOD_STATIC">
@@ -533,7 +533,7 @@
         </member>
         <member name="T:PHRPReader.clsMSGFPlusParamFileModExtractor.eMSGFPlusModType">
             <summary>
-            MSGF+ modification type
+            MS-GF+ modification type
             </summary>
         </member>
         <member name="F:PHRPReader.clsMSGFPlusParamFileModExtractor.eMSGFPlusModType.Unknown">
@@ -583,7 +583,7 @@
         </member>
         <member name="F:PHRPReader.clsMSGFPlusParamFileModExtractor.ModSpecFormats.MSGFPlusAndMSPathFinder">
             <summary>
-            MSGF+ or MSPathFinder
+            MS-GF+ or MSPathFinder
             </summary>
         </member>
         <member name="F:PHRPReader.clsMSGFPlusParamFileModExtractor.ModSpecFormats.TopPIC">
@@ -608,7 +608,7 @@
         </member>
         <member name="F:PHRPReader.clsMSGFPlusParamFileModExtractor.udtModInfoType.ModName">
             <summary>
-            Mod name (read from the parameter file) isn't used by MSGF+, but it is used by MSPathFinder
+            Mod name (read from the parameter file) isn't used by MS-GF+, but it is used by MSPathFinder
             </summary>
         </member>
         <member name="F:PHRPReader.clsMSGFPlusParamFileModExtractor.udtModInfoType.ModMass">
@@ -652,14 +652,14 @@
             Constructor
             </summary>
             <param name="toolName">
-            Search engine name, typically MSGF+
+            Search engine name, typically MS-GF+
             This name is only used in log messages
             </param>
             <remarks></remarks>
         </member>
         <member name="M:PHRPReader.clsMSGFPlusParamFileModExtractor.ExtractModInfoFromParamFile(System.String,PHRPReader.clsMSGFPlusParamFileModExtractor.ModSpecFormats,System.Collections.Generic.List{PHRPReader.clsMSGFPlusParamFileModExtractor.udtModInfoType}@)">
             <summary>
-            Extracts mod info from a MSGF+ or MSPathFinder param file, or from a MSGFPlus_Mods.txt file (previously MSGFDB_Mods.txt)
+            Extracts mod info from a MS-GF+ or MSPathFinder param file, or from a MSGFPlus_Mods.txt file (previously MSGFDB_Mods.txt)
             </summary>
             <param name="paramFilePath"></param>
             <param name="modSpecFormat"></param>
@@ -669,7 +669,7 @@
         </member>
         <member name="M:PHRPReader.clsMSGFPlusParamFileModExtractor.ParseModSpecMSGFPlus(System.String,System.Collections.Generic.IReadOnlyList{System.String},System.Int32@,PHRPReader.clsMSGFPlusParamFileModExtractor.udtModInfoType@)">
             <summary>
-            Parse the mod spec definition from a MSGF+ or MSPathFinder parameter file
+            Parse the mod spec definition from a MS-GF+ or MSPathFinder parameter file
             </summary>
             <param name="paramFilePath"></param>
             <param name="splitLine"></param>
@@ -690,7 +690,7 @@
         </member>
         <member name="M:PHRPReader.clsMSGFPlusParamFileModExtractor.ResolveMSGFPlusModsWithModDefinitions(System.Collections.Generic.List{PHRPReader.clsMSGFPlusParamFileModExtractor.udtModInfoType},PHRPReader.clsPeptideModificationContainer)">
             <summary>
-            Resolve MSGF+, MSPathFinder, or TopPIC mods with mod definitions
+            Resolve MS-GF+, MSPathFinder, or TopPIC mods with mod definitions
             </summary>
             <param name="modInfo"></param>
             <param name="peptideMods"></param>
@@ -2128,7 +2128,7 @@
             <summary>
             Read a Search Engine parameter file where settings are stored as key/value pairs
             </summary>
-            <param name="searchEngineName">Search engine name (e.g. MSGF+)</param>
+            <param name="searchEngineName">Search engine name (e.g. MS-GF+)</param>
             <param name="searchEngineParamFileName">Search engine parameter file name (must exist in InputDirectoryPath)</param>
             <param name="ePeptideHitResultType">PeptideHitResultType (only important if reading a ModA parameter file</param>
             <param name="searchEngineParams">SearchEngineParams container class (must be initialized by the calling function)</param>
@@ -2937,6 +2937,11 @@
             <returns>True if success, false if an error</returns>
             <remarks>When fastReadMode is True, you should call FinalizePSM to populate the remaining fields</remarks>
         </member>
+        <member name="T:PHRPReader.clsPHRPParserMSGFDB">
+            <summary>
+            Old PHRP parser for MS-GF+
+            </summary>
+        </member>
         <member name="M:PHRPReader.clsPHRPParserMSGFDB.#ctor(System.String,System.String)">
             <summary>
             Constructor; assumes loadModsAndSeqInfo=True
@@ -2965,7 +2970,7 @@
         </member>
         <member name="T:PHRPReader.clsPHRPParserMSGFPlus">
             <summary>
-            PHRP parser for MSGF+
+            PHRP parser for MS-GF+
             </summary>
         </member>
         <member name="T:PHRPReader.clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns">
@@ -3046,7 +3051,7 @@
         </member>
         <member name="M:PHRPReader.clsPHRPParserMSGFPlus.DeterminePrecursorMassTolerance(PHRPReader.clsSearchEngineParameters,System.Double@,PHRPReader.clsPHRPReader.ePeptideHitResultType)">
             <summary>
-            Determines the precursor mass tolerance for either MSGF+, MSPathFinder, or TopPIC
+            Determines the precursor mass tolerance for either MS-GF+, MSPathFinder, or TopPIC
             </summary>
             <param name="searchEngineParams"></param>
             <param name="tolerancePPM">Precursor mass tolerance, in ppm</param>
@@ -3056,7 +3061,7 @@
         </member>
         <member name="M:PHRPReader.clsPHRPParserMSGFPlus.GetCustomChargeCarrierMass(PHRPReader.clsSearchEngineParameters,System.Double@)">
             <summary>
-            Look for MSGF+ parameter ChargeCarrierMass
+            Look for MS-GF+ parameter ChargeCarrierMass
             If defined, update chargeCarrierMass with the associated mass value and return True
             Otherwise return false
             </summary>
@@ -3076,7 +3081,7 @@
             Header names and enums for the PHRP synopsis file for this tool
             </summary>
             <returns></returns>
-            <remarks>This includes headers for synopsis files from both MSGFDB and MSGF+</remarks>
+            <remarks>This includes headers for synopsis files from both MSGFDB and MS-GF+</remarks>
         </member>
         <member name="M:PHRPReader.clsPHRPParserMSGFPlus.GetColumnMapFromHeaderLine(System.Collections.Generic.List{System.String})">
             <summary>
@@ -3169,7 +3174,7 @@
         </member>
         <member name="M:PHRPReader.clsPHRPParserMSGFPlus.UpdateMassCalculatorMasses(System.String,PHRPReader.clsMSGFPlusParamFileModExtractor,PHRPReader.clsPeptideMassCalculator,System.String@)">
             <summary>
-            Look for custom amino acid definitions in the MSGF+ parameter file
+            Look for custom amino acid definitions in the MS-GF+ parameter file
             If any are found, update the amino acid mass values in the PeptideMassCalculator instance
             </summary>
             <param name="searchEngineParamFilePath"></param>
@@ -4108,7 +4113,7 @@
         </member>
         <member name="P:PHRPReader.clsPHRPReader.PeptideHitResultType">
             <summary>
-            Peptide hit result type; Sequest, XTandem, Inspect, or MSGFPlus (aka MSGF+)
+            Peptide hit result type; Sequest, XTandem, Inspect, or MSGFPlus (aka MS-GF+)
             </summary>
             <value></value>
             <returns></returns>
@@ -4822,7 +4827,7 @@
         </member>
         <member name="P:PHRPReader.clsPHRPStartupOptions.LoadMSGFResults">
             <summary>
-            If true, load MSGF results (not MSGF+)
+            If true, load MSGF results (not MS-GF+)
             </summary>
         </member>
         <member name="P:PHRPReader.clsPHRPStartupOptions.LoadScanStatsData">
@@ -5709,7 +5714,7 @@
             </summary>
             <param name="searchEngineName"></param>
             <param name="modInfo"></param>
-            <param name="Parameters"></param>
+            <param name="parameters"></param>
         </member>
         <member name="M:PHRPReader.clsSearchEngineParameters.AddModification(PHRPReader.clsModificationDefinition)">
             <summary>
@@ -5727,8 +5732,8 @@
             <summary>
             Add/update a parameter
             </summary>
-            <param name="ParamName"></param>
-            <param name="ParamValue"></param>
+            <param name="paramName"></param>
+            <param name="paramValue"></param>
         </member>
         <member name="M:PHRPReader.clsSearchEngineParameters.ClearModifications">
             <summary>
