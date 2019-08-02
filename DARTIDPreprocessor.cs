@@ -260,6 +260,14 @@ namespace MASICResultsMerger
                     {
                         mPeakWidthMinutesColIndex = index;
                     }
+                    else if (headerNames[index].Equals("SpecEValue", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // In .tsv files created by MzidToTsvConverter, the MSGFDB_SpecEValue is named SpecEValue
+                        if (!msgfPlusColumns.ContainsKey(clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.SpecProb_EValue))
+                        {
+                            msgfPlusColumns.Add(clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.SpecProb_EValue, index);
+                        }
+                    }
                 }
 
                 return true;
