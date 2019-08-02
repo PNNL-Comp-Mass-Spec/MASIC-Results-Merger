@@ -217,7 +217,7 @@ namespace MASICResultsMerger
                 groupData.SpecEValue,
                 groupData.Charge.ToString(),
                 groupData.Proteins.First(),
-                string.Join(";", groupData.Proteins),
+                string.Join(";", groupData.Proteins.Distinct()),
                 groupData.ElutionTime,
                 groupData.PeakWidthMinutes
             };
@@ -262,10 +262,18 @@ namespace MASICResultsMerger
                     }
                     else if (headerNames[index].Equals("SpecEValue", StringComparison.OrdinalIgnoreCase))
                     {
-                        // In .tsv files created by MzidToTsvConverter, the MSGFDB_SpecEValue is named SpecEValue
+                        // In .tsv files created by MzidToTsvConverter, the MSGFDB_SpecEValue column is named SpecEValue
                         if (!msgfPlusColumns.ContainsKey(clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.SpecProb_EValue))
                         {
                             msgfPlusColumns.Add(clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.SpecProb_EValue, index);
+                        }
+                    }
+                    else if (headerNames[index].Equals("ScanNum", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // In .tsv files created by MzidToTsvConverter, the Scan column is named ScanNum
+                        if (!msgfPlusColumns.ContainsKey(clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Scan))
+                        {
+                            msgfPlusColumns.Add(clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Scan, index);
                         }
                     }
                 }
