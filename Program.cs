@@ -24,7 +24,7 @@ namespace MASICResultsMerger
     /// http://www.apache.org/licenses/LICENSE-2.0
     class Program
     {
-        const string PROGRAM_DATE = "July 19, 2019";
+        const string PROGRAM_DATE = "August 2, 2019";
 
         static string mInputFilePath;
         static bool mCreateDartIdInputFile;
@@ -369,8 +369,8 @@ namespace MASICResultsMerger
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                                       "Use /S to process all valid files in the input directory and subdirectories. " +
-                                      "Include a number after /S (like /S:2) to limit the level of subdirectories to examine." +
-                                      "When using /S, you can redirect the output of the results using /A to specify an alternate output directory." +
+                                      "Include a number after /S (like /S:2) to limit the level of subdirectories to examine. " +
+                                      "When using /S, you can redirect the output of the results using /A to specify an alternate output directory. " +
                                       "When using /S, you can use /R to re-create the input directory hierarchy in the alternate output directory (if defined)."));
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
