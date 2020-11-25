@@ -2,7 +2,6 @@
 {
     class SICStatsData
     {
-
         public int FragScanNumber { get; }
         public string OptimalScanNumber { get; set; }
         public string PeakMaxIntensity { get; set; }
@@ -39,5 +38,4 @@
             return 0;
         }
     }
-
 }

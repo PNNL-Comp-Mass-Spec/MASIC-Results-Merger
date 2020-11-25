@@ -158,7 +158,6 @@ namespace MASICResultsMerger
 
         #endregion
 
-
         private double ComputePeakWidthMinutes(IReadOnlyDictionary<int, ScanStatsData> scanStats, string peakScanStart, string peakScanEnd)
         {
             if (!int.TryParse(peakScanStart, out var startScan))
@@ -166,7 +165,6 @@ namespace MASICResultsMerger
 
             if (!int.TryParse(peakScanEnd, out var endScan))
                 return 0;
-
 
             if (!scanStats.TryGetValue(startScan, out var startScanStats))
                 return 0;
@@ -240,9 +238,7 @@ namespace MASICResultsMerger
                         //  No more underscores; we're unable to determine the dataset name
                         break;
                     }
-
                 }
-
             }
             catch (Exception ex)
             {
@@ -306,11 +302,8 @@ namespace MASICResultsMerger
                                                   ScanNumberColumn, lineParts[colIndex], inputFile.Name));
                         break;
                     }
-
                 }
-
             }
-
         }
 
         private List<string> GetScanStatsHeaders()
@@ -378,12 +371,10 @@ namespace MASICResultsMerger
                 {
                     text = string.Copy(column);
                 }
-
             }
 
             return text;
         }
-
 
         /// <summary>
         /// Get the current error state, if any
@@ -480,7 +471,6 @@ namespace MASICResultsMerger
                     {
                         return false;
                     }
-
                 }
                 else
                 {
@@ -498,7 +488,6 @@ namespace MASICResultsMerger
                     writers[index] = new StreamWriter(
                         new FileStream(outputFilePaths[index].Value, FileMode.Create, FileAccess.Write, FileShare.Read));
                 }
-
             }
             catch (Exception ex)
             {
@@ -596,7 +585,6 @@ namespace MASICResultsMerger
                             {
                                 writers[index].WriteLine(headerLine + '\t' + addonHeaders);
                             }
-
                         }
 
                         if (lineParts.Count < ScanNumberColumn ||
@@ -644,7 +632,6 @@ namespace MASICResultsMerger
                                 var peakWidthMinutes = ComputePeakWidthMinutes(scanStats, sicStatsEntry.PeakScanStart, sicStatsEntry.PeakScanEnd);
                                 addonColumns.Add(PRISM.StringUtilities.DblToString(peakWidthMinutes, 4));
                             }
-
                         }
 
                         if (writeReporterIonStats)
@@ -662,7 +649,6 @@ namespace MASICResultsMerger
                                 addonColumns.Add(scanStatsEntry.ReporterIonData);
                                 collisionModeCurrentScan = string.Copy(scanStatsEntry.CollisionMode);
                             }
-
                         }
                         else if (SeparateByCollisionMode)
                         {
@@ -674,7 +660,6 @@ namespace MASICResultsMerger
                             {
                                 collisionModeCurrentScan = string.Copy(scanStatsEntry.CollisionMode);
                             }
-
                         }
 
                         var outFileIndex = 0;
@@ -687,9 +672,7 @@ namespace MASICResultsMerger
                                 {
                                     outFileIndex = 0;
                                 }
-
                             }
-
                         }
 
                         writers[outFileIndex].WriteLine(dataLine + '\t' + FlattenList(addonColumns));
@@ -706,9 +689,7 @@ namespace MASICResultsMerger
                         {
                             writers[index].Close();
                         }
-
                     }
-
                 }
 
                 if (CreateDartIdInputFile)
@@ -719,7 +700,6 @@ namespace MASICResultsMerger
                     {
                         var successConsolidating = preprocessor.ConsolidatePSMs(item.Value, false);
                     }
-
                 }
 
                 //  See if any of the files had no data written to them
@@ -732,7 +712,6 @@ namespace MASICResultsMerger
                     {
                         emptyOutFileCount++;
                     }
-
                 }
 
                 var outputPathEntry = new ProcessedFileInfo(baseFileName);
@@ -742,7 +721,6 @@ namespace MASICResultsMerger
                     {
                         outputPathEntry.AddOutputFile(item.Key, item.Value);
                     }
-
                 }
                 else
                 {
@@ -769,15 +747,12 @@ namespace MASICResultsMerger
                             {
                                 //  Ignore errors here
                             }
-
                         }
                         else
                         {
                             outputPathEntry.AddOutputFile(outputFilePaths[index].Key, outputFilePaths[index].Value);
                         }
-
                     }
-
                 }
 
                 if (outputPathEntry.OutputFiles.Count > 0)
@@ -792,7 +767,6 @@ namespace MASICResultsMerger
                 HandleException("Error in MergePeptideHitAndMASICFiles", ex);
                 return false;
             }
-
         }
 
         public bool MergeProcessedDatasets()
@@ -818,7 +792,6 @@ namespace MASICResultsMerger
                         {
                             collisionModes.Add(processedFile.Key);
                         }
-
                     }
 
                     if (!datasetNameIdMap.ContainsKey(processedDataset.BaseName))
@@ -859,11 +832,8 @@ namespace MASICResultsMerger
                             {
                                 baseFileName = baseFileName.Substring(0, lastUnderscore);
                             }
-
                         }
-
                     }
-
                 }
 
                 if (collisionModes.Count == 0)
@@ -947,12 +917,9 @@ namespace MASICResultsMerger
                                 {
                                     writer.WriteLine(datasetId + '\t' + dataLine);
                                 }
-
                             }
                         }
-
                     }
-
                 }
 
                 foreach (var outputFile in outputFileHandles)
@@ -967,7 +934,6 @@ namespace MASICResultsMerger
                 HandleException("Error in MergeProcessedDatasets", ex);
                 return false;
             }
-
         }
 
         /// <summary>
@@ -1167,15 +1133,10 @@ namespace MASICResultsMerger
                                                 blankAdditionalReporterIonColumns =
                                                     new string('\t', reporterIonHeaders.Split('\t').ToList().Count - 1);
                                             }
-
                                         }
-
                                     }
-
                                 }
-
                             }
-
                         }
 
                         if (masicDataLoaded)
@@ -1249,7 +1210,6 @@ namespace MASICResultsMerger
                                     addonColumns.Add(scanStatsEntry.CollisionMode);
                                     addonColumns.Add(scanStatsEntry.ReporterIonData);
                                 }
-
                             }
 
                             writer.WriteLine(psm.DataLineText + '\t' + FlattenList(addonColumns));
@@ -1266,7 +1226,6 @@ namespace MASICResultsMerger
                             {
                                 writer.WriteLine(psm.DataLineText + blankAddonColumns);
                             }
-
                         }
 
                         UpdateProgress("Loading data from " + inputFile.Name, phrpReader.PercentComplete);
@@ -1341,7 +1300,6 @@ namespace MASICResultsMerger
                 HandleException("Error in ProcessSingleJobFile", ex);
                 return false;
             }
-
         }
 
         private bool ReadMASICData(
@@ -1390,7 +1348,6 @@ namespace MASICResultsMerger
                 reporterIonHeaders = string.Empty;
                 return false;
             }
-
         }
 
         private bool ReadScanStatsFile(string sourceDirectory, string scanStatsFileName, IDictionary<int, ScanStatsData> scanStats)
@@ -1445,10 +1402,7 @@ namespace MASICResultsMerger
                 HandleException("Error in ReadScanStatsFile", ex);
                 return false;
             }
-
         }
-
-
 
         private Dictionary<int, DatasetInfo> ReadMageMetadataFile(string metadataFilePath)
         {
@@ -1514,15 +1468,12 @@ namespace MASICResultsMerger
                                 {
                                     ShowMessage("Warning: Dataset_ID number not numeric in metadata file, line " + dataLine);
                                 }
-
                             }
                             else
                             {
                                 ShowMessage("Warning: Job number not numeric in metadata file, line " + dataLine);
                             }
-
                         }
-
                     }
                 }
             }
@@ -1537,7 +1488,6 @@ namespace MASICResultsMerger
 
         private bool ReadSICStatsFile(string sourceDirectory, string sicStatsFileName, IDictionary<int, SICStatsData> sicStats)
         {
-
             try
             {
                 //  Initialize sicStats
@@ -1575,7 +1525,6 @@ namespace MASICResultsMerger
 
                             sicStats.Add(fragScanNumber, sicStatsEntry);
                         }
-
                     }
                 }
 
@@ -1586,7 +1535,6 @@ namespace MASICResultsMerger
                 HandleException("Error in ReadSICStatsFile", ex);
                 return false;
             }
-
         }
 
         private bool ReadReporterIonStatsFile(
@@ -1628,7 +1576,6 @@ namespace MASICResultsMerger
                                 //  There aren't enough columns in the header line; this is unexpected
                                 reporterIonHeaders = "Collision Mode" + '\t' + "AdditionalReporterIonColumns";
                             }
-
                         }
 
                         if (lineParts.Length < (int)eReporterIonStatsColumns.ReporterIonIntensityMax + 1)
@@ -1671,7 +1618,6 @@ namespace MASICResultsMerger
                             scanStatsEntry.CollisionMode = string.Copy(lineParts[(int)eReporterIonStatsColumns.CollisionMode]);
                             scanStatsEntry.ReporterIonData = FlattenArray(lineParts, (int)eReporterIonStatsColumns.ReporterIonIntensityMax);
                         }
-
                     }
                 }
 
@@ -1699,15 +1645,12 @@ namespace MASICResultsMerger
                     {
                         SetBaseClassErrorCode(ProcessFilesErrorCodes.NoError);
                     }
-
                 }
                 else
                 {
                     SetBaseClassErrorCode(ProcessFilesErrorCodes.LocalizedError);
                 }
-
             }
-
         }
 
         private KeyValuePair<string, string>[] SummarizeCollisionModes(
@@ -1727,7 +1670,6 @@ namespace MASICResultsMerger
                     collisionModeFileMap.Add(scanStatsItem.CollisionMode, collisionModeTypeCount);
                     collisionModeTypeCount++;
                 }
-
             }
 
             if (collisionModeFileMap.Count == 0 ||
@@ -1763,7 +1705,6 @@ namespace MASICResultsMerger
                                         fragMethodColNumber = colIndex + 1;
                                         break;
                                     }
-
                                 }
 
                                 if (fragMethodColNumber == 0)
@@ -1811,17 +1752,14 @@ namespace MASICResultsMerger
                             {
                                 scanStatsEntry.CollisionMode = collisionMode;
                             }
-
                         }
                     }
-
                 }
                 catch (Exception ex)
                 {
                     HandleException("Error extraction collision mode information from the input file", ex);
                     return new KeyValuePair<string, string>[collisionModeTypeCount];
                 }
-
             }
 
             if (collisionModeTypeCount == 0)
@@ -1848,7 +1786,6 @@ namespace MASICResultsMerger
                     var outputFilePath = Path.Combine(outputDirectoryPath, baseFileName + "_" + collisionMode + RESULTS_SUFFIX);
                     outputFilePaths[item.Value] = new KeyValuePair<string, string>(collisionMode, outputFilePath);
                 }
-
             }
 
             return outputFilePaths;

@@ -3,7 +3,6 @@ namespace MASICResultsMerger
 {
     class ScanStatsData
     {
-
         public int ScanNumber { get; }
         public string ElutionTime { get; set; }
         public string ScanType { get; set; }
@@ -46,5 +45,4 @@ namespace MASICResultsMerger
             return 0;
         }
     }
-
 }

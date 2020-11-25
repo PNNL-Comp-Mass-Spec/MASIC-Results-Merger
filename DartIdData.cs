@@ -5,7 +5,6 @@ namespace MASICResultsMerger
 {
     class DartIdData
     {
-
         public int Charge { get; set; }
 
         public string DataLine { get; }
@@ -57,6 +56,5 @@ namespace MASICResultsMerger
                 proteinName
             };
         }
-
     }
 }

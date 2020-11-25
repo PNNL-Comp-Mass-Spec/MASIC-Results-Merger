@@ -144,7 +144,6 @@ namespace MASICResultsMerger
                                 return false;
                             }
 
-
                             //  Validate that the required columns exist
                             foreach (var requiredColumn in requiredColumns)
                             {
@@ -154,7 +153,6 @@ namespace MASICResultsMerger
                                                                requiredColumn.ToString()));
                                     return false;
                                 }
-
                             }
 
                             continue;
@@ -189,7 +187,6 @@ namespace MASICResultsMerger
                         {
                             psmGroup.Proteins.Add(protein);
                         }
-
                     }
 
                     StoreResult(writer, psmGroup, datasetName);
@@ -202,7 +199,6 @@ namespace MASICResultsMerger
                 OnErrorEvent("Error in ConsolidatePSMs", ex);
                 return false;
             }
-
         }
 
         private void StoreResult(TextWriter writer, DartIdData groupData, string datasetName)
@@ -285,10 +281,6 @@ namespace MASICResultsMerger
                 OnErrorEvent("Error in ParseHeaderLine", ex);
                 return false;
             }
-
         }
-
-
-
     }
 }

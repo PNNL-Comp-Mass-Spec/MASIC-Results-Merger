@@ -7,24 +7,14 @@ using PRISM.FileProcessor;
 
 namespace MASICResultsMerger
 {
+    /// <summary>
     /// This program merges the contents of a tab-delimited peptide hit results file
     /// (e.g. from SEQUEST, X!Tandem, or MS-GF+) with the corresponding MASIC results files,
     /// appending the relevant MASIC stats for each peptide hit result
-    ///
-    /// -------------------------------------------------------------------------------
-    /// Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
-    /// Program started November 26, 2008
-    ///
-    /// E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
-    /// Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/
-    /// -------------------------------------------------------------------------------
-    ///
-    /// Licensed under the Apache License, Version 2.0; you may not use this file except
-    /// in compliance with the License.  You may obtain a copy of the License at
-    /// http://www.apache.org/licenses/LICENSE-2.0
-    class Program
+    /// </summary>
+    public static class Program
     {
-        const string PROGRAM_DATE = "August 2, 2019";
+        const string PROGRAM_DATE = "November 25, 2020";
 
         static string mInputFilePath;
         static bool mCreateDartIdInputFile;
@@ -117,7 +107,6 @@ namespace MASICResultsMerger
                     {
                         returnCode = (int)mMASICResultsMerger.ErrorCode;
                     }
-
                 }
                 else if (mMASICResultsMerger.ProcessFilesWildcard(mInputFilePath, mOutputDirectoryPath))
                 {
@@ -130,7 +119,6 @@ namespace MASICResultsMerger
                     {
                         ShowErrorMessage("Error while processing: " + mMASICResultsMerger.GetErrorMessage());
                     }
-
                 }
 
                 if (mMergeWildcardResults && mMASICResultsMerger.ProcessedDatasets.Count > 0)
@@ -169,14 +157,12 @@ namespace MASICResultsMerger
             {
                 Console.WriteLine();
             }
-
         }
 
         private static string GetAppVersion()
         {
             return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version + " (" + PROGRAM_DATE + ")";
         }
-
 
         static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
         {
@@ -233,7 +219,6 @@ namespace MASICResultsMerger
                     {
                         mScanNumberColumn = value;
                     }
-
                 }
 
                 if (commandLineParser.IsParameterPresent("C"))
@@ -263,7 +248,6 @@ namespace MASICResultsMerger
                     {
                         mRecurseDirectoriesMaxLevels = levels;
                     }
-
                 }
 
                 if (commandLineParser.RetrieveValueForParameter("A", out var alternatePath))
@@ -277,7 +261,6 @@ namespace MASICResultsMerger
                 }
 
                 return true;
-
             }
             catch (Exception ex)
             {
@@ -388,7 +371,6 @@ namespace MASICResultsMerger
             {
                 ShowErrorMessage("Error displaying the program syntax: " + ex.Message);
             }
-
         }
 
         private static void MASICResultsMerger_ErrorEvent(string message, Exception ex)
@@ -425,7 +407,6 @@ namespace MASICResultsMerger
                         DisplayProgressPercent(mLastProgressReportValue, false);
                         Console.WriteLine();
                     }
-
                 }
                 else
                 {
@@ -447,9 +428,7 @@ namespace MASICResultsMerger
                 {
                     Console.Write(".");
                 }
-
             }
-
         }
 
         private static void MASICResultsMerger_ProgressReset()
