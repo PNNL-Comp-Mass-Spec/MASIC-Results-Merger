@@ -49,7 +49,7 @@ namespace MASICResultsMerger
         /// <summary>
         /// Error codes specialized for this class
         /// </summary>
-        public enum eResultsProcessorErrorCodes
+        public enum ResultsProcessorErrorCodes
         {
             NoError = 0,
             MissingMASICFiles = 1,
@@ -59,7 +59,7 @@ namespace MASICResultsMerger
 
         //  ReSharper disable UnusedMember.Local
         //  ReSharper disable UnusedMember.Global
-        private enum eScanStatsColumns
+        private enum ScanStatsColumns
         {
             Dataset = 0,
             ScanNumber = 1,
@@ -73,7 +73,7 @@ namespace MASICResultsMerger
             IonCountRaw = 9,
         }
 
-        private enum eSICStatsColumns
+        private enum SICStatsColumns
         {
             Dataset = 0,
             ParentIonIndex = 1,
@@ -102,7 +102,7 @@ namespace MASICResultsMerger
             StatMomentsDataCountUsed = 24,
         }
 
-        private enum eReporterIonStatsColumns
+        private enum ReporterIonStatsColumns
         {
             Dataset = 0,
             ScanNumber = 1,
@@ -118,9 +118,8 @@ namespace MASICResultsMerger
 
         #endregion
 
-        #region "Classwide Variables"
 
-        private eResultsProcessorErrorCodes mLocalErrorCode;
+        private ResultsProcessorErrorCodes mLocalErrorCode;
 
         private string mMASICResultsDirectoryPath = string.Empty;
 
@@ -388,16 +387,16 @@ namespace MASICResultsMerger
             {
                 switch (mLocalErrorCode)
                 {
-                    case eResultsProcessorErrorCodes.NoError:
+                    case ResultsProcessorErrorCodes.NoError:
                         errorMessage = string.Empty;
                         break;
-                    case eResultsProcessorErrorCodes.UnspecifiedError:
+                    case ResultsProcessorErrorCodes.UnspecifiedError:
                         errorMessage = "Unspecified localized error";
                         break;
-                    case eResultsProcessorErrorCodes.MissingMASICFiles:
+                    case ResultsProcessorErrorCodes.MissingMASICFiles:
                         errorMessage = "Missing MASIC Files";
                         break;
-                    case eResultsProcessorErrorCodes.MissingMageFiles:
+                    case ResultsProcessorErrorCodes.MissingMageFiles:
                         errorMessage = "Missing Mage Extractor Files";
                         break;
                     default:
@@ -418,7 +417,7 @@ namespace MASICResultsMerger
             mMASICResultsDirectoryPath = string.Empty;
             ScanNumberColumn = DEFAULT_SCAN_NUMBER_COLUMN;
             SeparateByCollisionMode = false;
-            mLocalErrorCode = eResultsProcessorErrorCodes.NoError;
+            mLocalErrorCode = ResultsProcessorErrorCodes.NoError;
         }
 
         private bool MergePeptideHitAndMASICFiles(
@@ -950,7 +949,7 @@ namespace MASICResultsMerger
             string masicResultsDirectory;
             if (resetErrorCode)
             {
-                SetLocalErrorCode(eResultsProcessorErrorCodes.NoError);
+                SetLocalErrorCode(ResultsProcessorErrorCodes.NoError);
             }
 
             if (string.IsNullOrEmpty(inputFilePath))
@@ -1013,7 +1012,7 @@ namespace MASICResultsMerger
                 if (!metadataFile.Exists)
                 {
                     ShowErrorMessage("Error: Mage Metadata File not found: " + metadataFile.FullName);
-                    SetLocalErrorCode(eResultsProcessorErrorCodes.MissingMageFiles);
+                    SetLocalErrorCode(ResultsProcessorErrorCodes.MissingMageFiles);
                     return false;
                 }
 
@@ -1268,7 +1267,7 @@ namespace MASICResultsMerger
                 var success = FindMASICFiles(masicResultsDirectory, datasetInfo, masicFiles, masicFileSearchInfo, 0);
                 if (!success)
                 {
-                    SetLocalErrorCode(eResultsProcessorErrorCodes.MissingMASICFiles);
+                    SetLocalErrorCode(ResultsProcessorErrorCodes.MissingMASICFiles);
                     return false;
                 }
 
@@ -1289,7 +1288,7 @@ namespace MASICResultsMerger
                 }
                 else
                 {
-                    SetLocalErrorCode(eResultsProcessorErrorCodes.UnspecifiedError);
+                    SetLocalErrorCode(ResultsProcessorErrorCodes.UnspecifiedError);
                     ShowErrorMessage("Error");
                 }
 
@@ -1369,12 +1368,12 @@ namespace MASICResultsMerger
                         }
 
                         var lineParts = dataLine.Split('\t');
-                        if (lineParts.Length < (int)eScanStatsColumns.BasePeakMZ + 1)
+                        if (lineParts.Length < (int)ScanStatsColumns.BasePeakMZ + 1)
                         {
                             continue;
                         }
 
-                        if (!int.TryParse(lineParts[(int)eScanStatsColumns.ScanNumber], out var scanNumber))
+                        if (!int.TryParse(lineParts[(int)ScanStatsColumns.ScanNumber], out var scanNumber))
                         {
                             continue;
                         }
@@ -1382,11 +1381,11 @@ namespace MASICResultsMerger
                         //  Note: the remaining values are stored as strings to prevent the number format from changing
                         var scanStatsEntry = new ScanStatsData(scanNumber)
                         {
-                            ElutionTime = string.Copy(lineParts[(int)eScanStatsColumns.ScanTime]),
-                            ScanType = string.Copy(lineParts[(int)eScanStatsColumns.ScanType]),
-                            TotalIonIntensity = string.Copy(lineParts[(int)eScanStatsColumns.TotalIonIntensity]),
-                            BasePeakIntensity = string.Copy(lineParts[(int)eScanStatsColumns.BasePeakIntensity]),
-                            BasePeakMZ = string.Copy(lineParts[(int)eScanStatsColumns.BasePeakMZ]),
+                            ElutionTime = string.Copy(lineParts[(int)ScanStatsColumns.ScanTime]),
+                            ScanType = string.Copy(lineParts[(int)ScanStatsColumns.ScanType]),
+                            TotalIonIntensity = string.Copy(lineParts[(int)ScanStatsColumns.TotalIonIntensity]),
+                            BasePeakIntensity = string.Copy(lineParts[(int)ScanStatsColumns.BasePeakIntensity]),
+                            BasePeakMZ = string.Copy(lineParts[(int)ScanStatsColumns.BasePeakMZ]),
                             CollisionMode = string.Empty,
                             ReporterIonData = string.Empty
                         };
@@ -1505,22 +1504,22 @@ namespace MASICResultsMerger
                         }
 
                         var lineParts = dataLine.Split('\t');
-                        if (lineParts.Length >= (int)eSICStatsColumns.StatMomentsArea + 1 &&
-                            int.TryParse(lineParts[(int)eSICStatsColumns.FragScanNumber], out var fragScanNumber))
+                        if (lineParts.Length >= (int)SICStatsColumns.StatMomentsArea + 1 &&
+                            int.TryParse(lineParts[(int)SICStatsColumns.FragScanNumber], out var fragScanNumber))
                         {
                             //  Note: the remaining values are stored as strings to prevent the number format from changing
                             var sicStatsEntry = new SICStatsData(fragScanNumber)
                             {
-                                OptimalScanNumber = string.Copy(lineParts[(int)eSICStatsColumns.OptimalPeakApexScanNumber]),
-                                PeakMaxIntensity = string.Copy(lineParts[(int)eSICStatsColumns.PeakMaxIntensity]),
-                                PeakSignalToNoiseRatio = string.Copy(lineParts[(int)eSICStatsColumns.PeakSignalToNoiseRatio]),
-                                FWHMInScans = string.Copy(lineParts[(int)eSICStatsColumns.FWHMInScans]),
-                                PeakScanStart = string.Copy(lineParts[(int)eSICStatsColumns.PeakScanStart]),
-                                PeakScanEnd = string.Copy(lineParts[(int)eSICStatsColumns.PeakScanEnd]),
-                                PeakArea = string.Copy(lineParts[(int)eSICStatsColumns.PeakArea]),
-                                ParentIonIntensity = string.Copy(lineParts[(int)eSICStatsColumns.ParentIonIntensity]),
-                                ParentIonMZ = string.Copy(lineParts[(int)eSICStatsColumns.MZ]),
-                                StatMomentsArea = string.Copy(lineParts[(int)eSICStatsColumns.StatMomentsArea])
+                                OptimalScanNumber = string.Copy(lineParts[(int)SICStatsColumns.OptimalPeakApexScanNumber]),
+                                PeakMaxIntensity = string.Copy(lineParts[(int)SICStatsColumns.PeakMaxIntensity]),
+                                PeakSignalToNoiseRatio = string.Copy(lineParts[(int)SICStatsColumns.PeakSignalToNoiseRatio]),
+                                FWHMInScans = string.Copy(lineParts[(int)SICStatsColumns.FWHMInScans]),
+                                PeakScanStart = string.Copy(lineParts[(int)SICStatsColumns.PeakScanStart]),
+                                PeakScanEnd = string.Copy(lineParts[(int)SICStatsColumns.PeakScanEnd]),
+                                PeakArea = string.Copy(lineParts[(int)SICStatsColumns.PeakArea]),
+                                ParentIonIntensity = string.Copy(lineParts[(int)SICStatsColumns.ParentIonIntensity]),
+                                ParentIonMZ = string.Copy(lineParts[(int)SICStatsColumns.MZ]),
+                                StatMomentsArea = string.Copy(lineParts[(int)SICStatsColumns.StatMomentsArea])
                             };
 
                             sicStats.Add(fragScanNumber, sicStatsEntry);
@@ -1566,10 +1565,10 @@ namespace MASICResultsMerger
                         if (linesRead == 1)
                         {
                             //  This is the header line; we need to cache it
-                            if (lineParts.Length >= (int)eReporterIonStatsColumns.ReporterIonIntensityMax + 1)
+                            if (lineParts.Length >= (int)ReporterIonStatsColumns.ReporterIonIntensityMax + 1)
                             {
-                                reporterIonHeaders = lineParts[(int)eReporterIonStatsColumns.CollisionMode];
-                                reporterIonHeaders += '\t' + FlattenArray(lineParts, (int)eReporterIonStatsColumns.ReporterIonIntensityMax);
+                                reporterIonHeaders = lineParts[(int)ReporterIonStatsColumns.CollisionMode];
+                                reporterIonHeaders += '\t' + FlattenArray(lineParts, (int)ReporterIonStatsColumns.ReporterIonIntensityMax);
                             }
                             else
                             {
@@ -1578,12 +1577,12 @@ namespace MASICResultsMerger
                             }
                         }
 
-                        if (lineParts.Length < (int)eReporterIonStatsColumns.ReporterIonIntensityMax + 1)
+                        if (lineParts.Length < (int)ReporterIonStatsColumns.ReporterIonIntensityMax + 1)
                         {
                             continue;
                         }
 
-                        if (!int.TryParse(lineParts[(int)eReporterIonStatsColumns.ScanNumber], out var scanNumber))
+                        if (!int.TryParse(lineParts[(int)ReporterIonStatsColumns.ScanNumber], out var scanNumber))
                         {
                             continue;
                         }
@@ -1615,8 +1614,8 @@ namespace MASICResultsMerger
                         }
                         else
                         {
-                            scanStatsEntry.CollisionMode = string.Copy(lineParts[(int)eReporterIonStatsColumns.CollisionMode]);
-                            scanStatsEntry.ReporterIonData = FlattenArray(lineParts, (int)eReporterIonStatsColumns.ReporterIonIntensityMax);
+                            scanStatsEntry.CollisionMode = string.Copy(lineParts[(int)ReporterIonStatsColumns.CollisionMode]);
+                            scanStatsEntry.ReporterIonData = FlattenArray(lineParts, (int)ReporterIonStatsColumns.ReporterIonIntensityMax);
                         }
                     }
                 }
@@ -1630,16 +1629,16 @@ namespace MASICResultsMerger
             }
         }
 
-        private void SetLocalErrorCode(eResultsProcessorErrorCodes eNewErrorCode, bool leaveExistingErrorCodeUnchanged = false)
+        private void SetLocalErrorCode(ResultsProcessorErrorCodes eNewErrorCode, bool leaveExistingErrorCodeUnchanged = false)
         {
-            if (leaveExistingErrorCodeUnchanged && mLocalErrorCode != eResultsProcessorErrorCodes.NoError)
+            if (leaveExistingErrorCodeUnchanged && mLocalErrorCode != ResultsProcessorErrorCodes.NoError)
             {
                 //  An error code is already defined; do not change it
             }
             else
             {
                 mLocalErrorCode = eNewErrorCode;
-                if (eNewErrorCode == eResultsProcessorErrorCodes.NoError)
+                if (eNewErrorCode == ResultsProcessorErrorCodes.NoError)
                 {
                     if (ErrorCode == ProcessFilesErrorCodes.LocalizedError)
                     {
