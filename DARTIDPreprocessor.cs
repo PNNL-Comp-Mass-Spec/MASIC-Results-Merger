@@ -13,6 +13,8 @@ namespace MASICResultsMerger
     /// </summary>
     internal class DartIdPreprocessor : PRISM.EventNotifier
     {
+        // Ignore Spelling: tsv, fht, msgfdb
+
         private int mScanTimeColIndex;
 
         private int mPeakWidthMinutesColIndex;

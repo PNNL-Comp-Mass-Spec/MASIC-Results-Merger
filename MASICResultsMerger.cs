@@ -14,6 +14,9 @@ namespace MASICResultsMerger
     /// </summary>
     internal class MASICResultsMerger : PRISM.FileProcessor.ProcessFilesBase
     {
+        // ReSharper disable once CommentTypo
+        // Ignore Spelling: Frag, SICstats
+
         public MASICResultsMerger()
         {
             mFileDate = "July 19, 2019";

@@ -50,6 +50,7 @@
     <Compile Include="DartIdData.cs" />
     <Compile Include="DARTIDPreprocessor.cs" />
     <Compile Include="DatasetInfo.cs" />
+    <Compile Include="GlobalSuppressions.cs" />
     <Compile Include="MASICFileInfo.cs" />
     <Compile Include="MASICResultsMerger.cs" />
     <Compile Include="ProcessedFileInfo.cs" />
