@@ -43,24 +43,18 @@
             </summary>
         </member>
         <member name="T:MASICResultsMerger.MASICResultsMerger">
-             This class merges the contents of a tab-delimited peptide hit results file
-             (e.g. from SEQUEST, X!Tandem, or MS-GF+) with the corresponding MASIC results files,
-             appending the relevant MASIC stats for each peptide hit result
-            
-             -------------------------------------------------------------------------------
-             Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
-             Program started November 26, 2008
-            
-             E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
-             Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/
-             -------------------------------------------------------------------------------
-            
-             Licensed under the Apache License, Version 2.0; you may not use this file except
-             in compliance with the License.  You may obtain a copy of the License at
-             http://www.apache.org/licenses/LICENSE-2.0
-            
+            <summary>
+            This class merges the contents of a tab-delimited peptide hit results file
+            (e.g. from SEQUEST, X!Tandem, or MS-GF+) with the corresponding MASIC results files,
+            appending the relevant MASIC stats for each peptide hit result
+            </summary>
         </member>
-        <member name="T:MASICResultsMerger.MASICResultsMerger.eResultsProcessorErrorCodes">
+        <member name="M:MASICResultsMerger.MASICResultsMerger.#ctor">
+            <summary>
+            Constructor
+            </summary>
+        </member>
+        <member name="T:MASICResultsMerger.MASICResultsMerger.ResultsProcessorErrorCodes">
             <summary>
             Error codes specialized for this class
             </summary>
@@ -120,21 +114,11 @@
             <param name="outputFilePath"></param>
         </member>
         <member name="T:MASICResultsMerger.Program">
-             This program merges the contents of a tab-delimited peptide hit results file
-             (e.g. from SEQUEST, X!Tandem, or MS-GF+) with the corresponding MASIC results files,
-             appending the relevant MASIC stats for each peptide hit result
-            
-             -------------------------------------------------------------------------------
-             Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
-             Program started November 26, 2008
-            
-             E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
-             Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/
-             -------------------------------------------------------------------------------
-            
-             Licensed under the Apache License, Version 2.0; you may not use this file except
-             in compliance with the License.  You may obtain a copy of the License at
-             http://www.apache.org/licenses/LICENSE-2.0
+            <summary>
+            This program merges the contents of a tab-delimited peptide hit results file
+            (e.g. from SEQUEST, X!Tandem, or MS-GF+) with the corresponding MASIC results files,
+            appending the relevant MASIC stats for each peptide hit result
+            </summary>
         </member>
         <member name="M:MASICResultsMerger.SICStatsData.#ctor(System.Int32)">
             <summary>

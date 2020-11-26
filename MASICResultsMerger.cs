@@ -7,22 +7,11 @@ using PHRPReader;
 
 namespace MASICResultsMerger
 {
+    /// <summary>
     /// This class merges the contents of a tab-delimited peptide hit results file
     /// (e.g. from SEQUEST, X!Tandem, or MS-GF+) with the corresponding MASIC results files,
     /// appending the relevant MASIC stats for each peptide hit result
-    ///
-    /// -------------------------------------------------------------------------------
-    /// Written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)
-    /// Program started November 26, 2008
-    ///
-    /// E-mail: matthew.monroe@pnnl.gov or matt@alchemistmatt.com
-    /// Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/
-    /// -------------------------------------------------------------------------------
-    ///
-    /// Licensed under the Apache License, Version 2.0; you may not use this file except
-    /// in compliance with the License.  You may obtain a copy of the License at
-    /// http://www.apache.org/licenses/LICENSE-2.0
-    ///
+    /// </summary>
     internal class MASICResultsMerger : PRISM.FileProcessor.ProcessFilesBase
     {
         public MASICResultsMerger()
