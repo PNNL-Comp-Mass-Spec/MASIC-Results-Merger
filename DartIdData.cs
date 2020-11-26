@@ -3,7 +3,7 @@ using PHRPReader;
 
 namespace MASICResultsMerger
 {
-    class DartIdData
+    internal class DartIdData
     {
         public int Charge { get; set; }
 

@@ -2,7 +2,7 @@
 
 namespace MASICResultsMerger
 {
-    class ProcessedFileInfo
+    internal class ProcessedFileInfo
     {
         public const string COLLISION_MODE_NOT_DEFINED = "Collision_Mode_Not_Defined";
 

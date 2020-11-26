@@ -1,6 +1,6 @@
 ﻿namespace MASICResultsMerger
 {
-    class DatasetInfo
+    internal class DatasetInfo
     {
         public string DatasetName { get; set; }
         public int DatasetID { get; set; }

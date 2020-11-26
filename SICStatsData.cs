@@ -1,6 +1,6 @@
 ﻿namespace MASICResultsMerger
 {
-    class SICStatsData
+    internal class SICStatsData
     {
         public int FragScanNumber { get; }
         public string OptimalScanNumber { get; set; }

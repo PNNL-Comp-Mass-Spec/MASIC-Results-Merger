@@ -11,7 +11,7 @@ namespace MASICResultsMerger
     /// Dart-ID Manuscript: PLoS Computational Biology. 2019 Jul 1;15(7):e1007082
     /// https://www.ncbi.nlm.nih.gov/pubmed/31260443
     /// </summary>
-    class DartIdPreprocessor : PRISM.EventNotifier
+    internal class DartIdPreprocessor : PRISM.EventNotifier
     {
         private int mScanTimeColIndex;
 

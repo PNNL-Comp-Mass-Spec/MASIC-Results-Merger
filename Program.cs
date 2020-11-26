@@ -14,32 +14,33 @@ namespace MASICResultsMerger
     /// </summary>
     public static class Program
     {
-        const string PROGRAM_DATE = "November 25, 2020";
 
-        static string mInputFilePath;
-        static bool mCreateDartIdInputFile;
-        static bool mMageResults;
-        static bool mMergeWildcardResults;
+        private const string PROGRAM_DATE = "November 25, 2020";
 
-        static string mMASICResultsDirectoryPath;
-        static string mOutputDirectoryPath;
+        private static string mInputFilePath;
+        private static bool mCreateDartIdInputFile;
+        private static bool mMageResults;
+        private static bool mMergeWildcardResults;
 
-        static string mOutputDirectoryAlternatePath;
-        static bool mRecreateDirectoryHierarchyInAlternatePath;
+        private static string mMASICResultsDirectoryPath;
+        private static string mOutputDirectoryPath;
 
-        static bool mRecurseDirectories;
-        static int mRecurseDirectoriesMaxLevels;
+        private static string mOutputDirectoryAlternatePath;
+        private static bool mRecreateDirectoryHierarchyInAlternatePath;
 
-        static bool mLogMessagesToFile;
+        private static bool mRecurseDirectories;
+        private static int mRecurseDirectoriesMaxLevels;
 
-        static int mScanNumberColumn;
-        static bool mSeparateByCollisionMode;
+        private static bool mLogMessagesToFile;
 
-        static MASICResultsMerger mMASICResultsMerger;
-        static DateTime mLastProgressReportTime;
-        static int mLastProgressReportValue;
+        private static int mScanNumberColumn;
+        private static bool mSeparateByCollisionMode;
 
-        static int Main(string[] args)
+        private static MASICResultsMerger mMASICResultsMerger;
+        private static DateTime mLastProgressReportTime;
+        private static int mLastProgressReportValue;
+
+        private static int Main()
         {
             //  Returns 0 if no error, error code if an error
             var commandLineParser = new clsParseCommandLine();
@@ -164,7 +165,7 @@ namespace MASICResultsMerger
             return System.Reflection.Assembly.GetExecutingAssembly().GetName().Version + " (" + PROGRAM_DATE + ")";
         }
 
-        static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
+        private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
         {
             //  Returns True if no problems; otherwise, returns false
 

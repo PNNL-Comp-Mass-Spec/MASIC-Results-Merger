@@ -1,7 +1,7 @@
 ﻿
 namespace MASICResultsMerger
 {
-    class ScanStatsData
+    internal class ScanStatsData
     {
         public int ScanNumber { get; }
         public string ElutionTime { get; set; }

@@ -23,7 +23,7 @@ namespace MASICResultsMerger
     /// in compliance with the License.  You may obtain a copy of the License at
     /// http://www.apache.org/licenses/LICENSE-2.0
     ///
-    class MASICResultsMerger : PRISM.FileProcessor.ProcessFilesBase
+    internal class MASICResultsMerger : PRISM.FileProcessor.ProcessFilesBase
     {
         public MASICResultsMerger()
         {
@@ -35,9 +35,9 @@ namespace MASICResultsMerger
 
         #region "Constants and Enums"
 
-        const string SIC_STATS_FILE_EXTENSION = "_SICStats.txt";
-        const string SCAN_STATS_FILE_EXTENSION = "_ScanStats.txt";
-        const string REPORTER_IONS_FILE_EXTENSION = "_ReporterIons.txt";
+        private const string SIC_STATS_FILE_EXTENSION = "_SICStats.txt";
+        private const string SCAN_STATS_FILE_EXTENSION = "_ScanStats.txt";
+        private const string REPORTER_IONS_FILE_EXTENSION = "_ReporterIons.txt";
 
         public const string RESULTS_SUFFIX = "_PlusSICStats.txt";
         public const int DEFAULT_SCAN_NUMBER_COLUMN = 2;

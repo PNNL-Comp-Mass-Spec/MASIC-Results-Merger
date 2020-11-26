@@ -1,6 +1,6 @@
 ﻿namespace MASICResultsMerger
 {
-    class MASICFileInfo
+    internal class MASICFileInfo
     {
         public string ScanStatsFileName { get; set; }
         public string SICStatsFileName { get; set; }
