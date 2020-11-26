@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using PHRPReader;
+using PRISM;
 
 namespace MASICResultsMerger
 {
@@ -17,9 +18,12 @@ namespace MASICResultsMerger
         // ReSharper disable once CommentTypo
         // Ignore Spelling: Frag, SICstats
 
+        /// <summary>
+        /// Constructor
+        /// </summary>
         public MASICResultsMerger()
         {
-            mFileDate = "July 19, 2019";
+            mFileDate = "November 25, 2020";
             ProcessedDatasets = new List<ProcessedFileInfo>();
 
             InitializeLocalVariables();
@@ -110,6 +114,7 @@ namespace MASICResultsMerger
 
         #endregion
 
+        #region "Class wide Variables"
 
         private ResultsProcessorErrorCodes mLocalErrorCode;
 
@@ -337,7 +342,7 @@ namespace MASICResultsMerger
         private string FlattenArray(IList<string> lineParts, int indexStart)
         {
             var text = string.Empty;
-            if (lineParts == null || lineParts.Count <= 0)
+            if (lineParts == null || lineParts.Count == 0)
             {
                 return text;
             }
@@ -496,7 +501,7 @@ namespace MASICResultsMerger
                     ScanNumberColumn = DEFAULT_SCAN_NUMBER_COLUMN;
                 }
 
-                //  Read from reader and write out to the file(s) in swOutFile
+                //  Read from reader and write out to the file(s) in writers[]
                 using (var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     var linesRead = 0;
@@ -676,10 +681,7 @@ namespace MASICResultsMerger
                 {
                     for (var index = 0; index < outputFileCount; index++)
                     {
-                        if (writers[index] != null)
-                        {
-                            writers[index].Close();
-                        }
+                        writers[index]?.Close();
                     }
                 }
 
@@ -689,7 +691,7 @@ namespace MASICResultsMerger
 
                     foreach (var item in outputFilePaths.ToList())
                     {
-                        var successConsolidating = preprocessor.ConsolidatePSMs(item.Value, false);
+                        preprocessor.ConsolidatePSMs(item.Value, false);
                     }
                 }
 
@@ -728,15 +730,17 @@ namespace MASICResultsMerger
                         Thread.Sleep(250);
                         if (linesWritten[index] == 0)
                         {
+                            var fileName = Path.GetFileName(outputFilePaths[index].Value);
+
                             try
                             {
                                 ShowMessage("Deleting empty output file: " + Environment.NewLine +
-                                            " --> " + Path.GetFileName(outputFilePaths[index].Value));
+                                            " --> " + fileName);
                                 File.Delete(outputFilePaths[index].Value);
                             }
-                            catch (Exception)
+                            catch (Exception ex)
                             {
-                                //  Ignore errors here
+                                ConsoleMsgUtils.ShowDebug("Unable to delete empty output file named '{0}': {1}", fileName, ex.Message);
                             }
                         }
                         else
@@ -937,7 +941,6 @@ namespace MASICResultsMerger
         /// <returns>True if success, False if failure</returns>
         public override bool ProcessFile(string inputFilePath, string outputDirectoryPath, string parameterFilePath, bool resetErrorCode)
         {
-            bool success;
             string masicResultsDirectory;
             if (resetErrorCode)
             {
@@ -972,14 +975,10 @@ namespace MASICResultsMerger
 
             if (MageResults)
             {
-                success = ProcessMageExtractorFile(inputFile, masicResultsDirectory);
-            }
-            else
-            {
-                success = ProcessSingleJobFile(inputFile, masicResultsDirectory);
+                return ProcessMageExtractorFile(inputFile, masicResultsDirectory);
             }
 
-            return success;
+            return ProcessSingleJobFile(inputFile, masicResultsDirectory);
         }
 
         private bool ProcessMageExtractorFile(FileInfo inputFile, string masicResultsDirectory)
@@ -1233,7 +1232,7 @@ namespace MASICResultsMerger
                 if (CreateDartIdInputFile)
                 {
                     var preprocessor = new DartIdPreprocessor();
-                    var successConsolidating = preprocessor.ConsolidatePSMs(outputFilePath, true);
+                    preprocessor.ConsolidatePSMs(outputFilePath, true);
                 }
 
                 return jobsSuccessfullyMerged > 0;
@@ -1528,7 +1527,7 @@ namespace MASICResultsMerger
             }
         }
 
-        private bool ReadReporterIonStatsFile(
+        private void ReadReporterIonStatsFile(
             string sourceDirectory,
             string reporterIonStatsFileName,
             IDictionary<int, ScanStatsData> scanStats,
@@ -1611,13 +1610,10 @@ namespace MASICResultsMerger
                         }
                     }
                 }
-
-                return true;
             }
             catch (Exception ex)
             {
                 HandleException("Error in ReadReporterIonStatsFile", ex);
-                return false;
             }
         }
 

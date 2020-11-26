@@ -322,15 +322,16 @@ namespace MASICResultsMerger
                                       "If the MASIC result files are not in the same directory as the input file, " +
                                       "use /M to define the path to the correct directory."));
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "The output directory switch is optional. " + "If omitted, the output file will be created in the same directory as the input file. "));
+                                      "The output directory switch is optional. " +
+                                      "If omitted, the output file will be created in the same directory as the input file"));
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                                       "Use /N to change the column number that contains scan number in the input file. " +
-                                      "The default is 2 (meaning /N:2). "));
+                                      "The default is 2 (meaning /N:2)."));
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                                       "When reading data with _ReporterIons.txt files, you can use /C to specify " +
-                                      "that a separate output file be created for each collision mode type " + "in the input file (typically pqd, cid, and etd)."));
+                                      "that a separate output file be created for each collision mode type " + "in the input file (typically PQD, CID, and ETD)."));
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
                                       "Use /Mage to specify that the input file is a results file from Mage Extractor. " +
@@ -420,7 +421,7 @@ namespace MASICResultsMerger
                     DisplayProgressPercent(mLastProgressReportValue, false);
                 }
 
-                mLastProgressReportValue = mLastProgressReportValue + PERCENT_REPORT_INTERVAL;
+                mLastProgressReportValue += PERCENT_REPORT_INTERVAL;
                 mLastProgressReportTime = DateTime.UtcNow;
             }
             else if (DateTime.UtcNow.Subtract(mLastProgressReportTime).TotalMilliseconds > PROGRESS_DOT_INTERVAL_MSEC)
