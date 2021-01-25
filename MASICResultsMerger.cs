@@ -23,7 +23,7 @@ namespace MASICResultsMerger
         /// </summary>
         public MASICResultsMerger()
         {
-            mFileDate = "November 25, 2020";
+            mFileDate = "January 25, 2021";
             ProcessedDatasets = new List<ProcessedFileInfo>();
 
             InitializeLocalVariables();
@@ -1057,7 +1057,7 @@ namespace MASICResultsMerger
                 using (var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     //  Open the Mage Extractor data file and read the data for each job
-                    var phrpReader = new clsPHRPReader(inputFile.FullName, clsPHRPReader.ePeptideHitResultType.Unknown, false, false, false)
+                    var phrpReader = new clsPHRPReader(inputFile.FullName, clsPHRPReader.PeptideHitResultTypes.Unknown, false, false, false)
                     {
                         EchoMessagesToConsole = false,
                         SkipDuplicatePSMs = false
