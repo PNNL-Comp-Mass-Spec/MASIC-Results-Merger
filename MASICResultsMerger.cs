@@ -1057,7 +1057,7 @@ namespace MASICResultsMerger
                 using (var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
                     //  Open the Mage Extractor data file and read the data for each job
-                    var phrpReader = new clsPHRPReader(inputFile.FullName, clsPHRPReader.PeptideHitResultTypes.Unknown, false, false, false)
+                    var phrpReader = new ReaderFactory(inputFile.FullName, PeptideHitResultTypes.Unknown, false, false, false)
                     {
                         EchoMessagesToConsole = false,
                         SkipDuplicatePSMs = false

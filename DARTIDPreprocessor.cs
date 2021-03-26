@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using PHRPReader;
+using PHRPReader.Data;
+using PHRPReader.Reader;
 
 namespace MASICResultsMerger
 {
@@ -19,7 +21,7 @@ namespace MASICResultsMerger
 
         private int mPeakWidthMinutesColIndex;
 
-        private bool ColumnExists(IReadOnlyDictionary<Enum, int> msgfPlusColumns, clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns requiredColumn)
+        private bool ColumnExists(IReadOnlyDictionary<Enum, int> msgfPlusColumns, MSGFPlusSynFileColumns requiredColumn)
         {
             if (msgfPlusColumns.TryGetValue(requiredColumn, out var columnIndex))
             {
@@ -53,12 +55,12 @@ namespace MASICResultsMerger
                 mScanTimeColIndex = -1;
                 mPeakWidthMinutesColIndex = -1;
 
-                var requiredColumns = new List<clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns>
+                var requiredColumns = new List<MSGFPlusSynFileColumns>
                 {
-                    clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Peptide,
-                    clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.SpecProb_EValue,
-                    clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Charge,
-                    clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Protein
+                    MSGFPlusSynFileColumns.Peptide,
+                    MSGFPlusSynFileColumns.SpecProb_EValue,
+                    MSGFPlusSynFileColumns.Charge,
+                    MSGFPlusSynFileColumns.Protein
                 };
 
                 string datasetName;
@@ -161,12 +163,12 @@ namespace MASICResultsMerger
                         }
 
                         var dataColumns = dataLine.Split('\t');
-                        var scanNumber = GetValueInt(dataColumns, msgfPlusColumns, clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Scan);
-                        var charge = GetValueInt(dataColumns, msgfPlusColumns, clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Charge);
-                        var peptide = GetValue(dataColumns, msgfPlusColumns, clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Peptide);
-                        var protein = GetValue(dataColumns, msgfPlusColumns, clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Protein);
+                        var scanNumber = GetValueInt(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.Scan);
+                        var charge = GetValueInt(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.Charge);
+                        var peptide = GetValue(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.Peptide);
+                        var protein = GetValue(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.Protein);
 
-                        if (!clsPeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(peptide, out var primarySequence, out _, out _))
+                        if (!PeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(peptide, out var primarySequence, out _, out _))
                         {
                             primarySequence = peptide;
                         }
@@ -179,7 +181,7 @@ namespace MASICResultsMerger
 
                             psmGroup = new DartIdData(dataLine, scanNumber, peptide, primarySequence, protein)
                             {
-                                SpecEValue = GetValue(dataColumns, msgfPlusColumns, clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.SpecProb_EValue),
+                                SpecEValue = GetValue(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.SpecProb_EValue),
                                 Charge = charge,
                                 ElutionTime = dataColumns[mScanTimeColIndex],
                                 PeakWidthMinutes = dataColumns[mPeakWidthMinutesColIndex]
@@ -223,12 +225,12 @@ namespace MASICResultsMerger
             writer.WriteLine(string.Join("\t", outputValues));
         }
 
-        private string GetValue(string[] dataColumns, SortedDictionary<Enum, int> msgfPlusColumns, clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns columnEnum)
+        private string GetValue(string[] dataColumns, SortedDictionary<Enum, int> msgfPlusColumns, MSGFPlusSynFileColumns columnEnum)
         {
-            return clsPHRPReader.LookupColumnValue(dataColumns, columnEnum, msgfPlusColumns, string.Empty);
+            return ReaderFactory.LookupColumnValue(dataColumns, columnEnum, msgfPlusColumns, string.Empty);
         }
 
-        private int GetValueInt(string[] dataColumns, SortedDictionary<Enum, int> msgfPlusColumns, clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns columnEnum)
+        private int GetValueInt(string[] dataColumns, SortedDictionary<Enum, int> msgfPlusColumns, MSGFPlusSynFileColumns columnEnum)
         {
             var dataValue = GetValue(dataColumns, msgfPlusColumns, columnEnum);
             if (int.TryParse(dataValue, out var value))
@@ -242,7 +244,7 @@ namespace MASICResultsMerger
             try
             {
                 var headerNames = headerLine.Split('\t').ToList();
-                var columnNameToIndexMap = clsPHRPParserMSGFPlus.GetColumnMapFromHeaderLine(headerNames);
+                var columnNameToIndexMap = MSGFPlusSynFileReader.GetColumnMapFromHeaderLine(headerNames);
                 foreach (var item in columnNameToIndexMap)
                 {
                     msgfPlusColumns.Add(item.Key, item.Value);
@@ -261,17 +263,17 @@ namespace MASICResultsMerger
                     else if (headerNames[index].Equals("SpecEValue", StringComparison.OrdinalIgnoreCase))
                     {
                         // In .tsv files created by MzidToTsvConverter, the MSGFDB_SpecEValue column is named SpecEValue
-                        if (!msgfPlusColumns.ContainsKey(clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.SpecProb_EValue))
+                        if (!msgfPlusColumns.ContainsKey(MSGFPlusSynFileColumns.SpecProb_EValue))
                         {
-                            msgfPlusColumns.Add(clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.SpecProb_EValue, index);
+                            msgfPlusColumns.Add(MSGFPlusSynFileColumns.SpecProb_EValue, index);
                         }
                     }
                     else if (headerNames[index].Equals("ScanNum", StringComparison.OrdinalIgnoreCase))
                     {
                         // In .tsv files created by MzidToTsvConverter, the Scan column is named ScanNum
-                        if (!msgfPlusColumns.ContainsKey(clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Scan))
+                        if (!msgfPlusColumns.ContainsKey(MSGFPlusSynFileColumns.Scan))
                         {
-                            msgfPlusColumns.Add(clsPHRPParserMSGFPlus.MSGFPlusSynFileColumns.Scan, index);
+                            msgfPlusColumns.Add(MSGFPlusSynFileColumns.Scan, index);
                         }
                     }
                 }
