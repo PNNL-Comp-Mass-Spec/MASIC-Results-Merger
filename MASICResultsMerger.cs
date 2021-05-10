@@ -284,35 +284,19 @@ namespace MASICResultsMerger
         /// <returns>Returns an empty string if no error</returns>
         public override string GetErrorMessage()
         {
-            string errorMessage;
-            if (ErrorCode == ProcessFilesErrorCodes.LocalizedError ||
-                ErrorCode == ProcessFilesErrorCodes.NoError)
+            if (ErrorCode is ProcessFilesErrorCodes.LocalizedError or ProcessFilesErrorCodes.NoError)
             {
-                switch (mLocalErrorCode)
+                return mLocalErrorCode switch
                 {
-                    case ResultsProcessorErrorCodes.NoError:
-                        errorMessage = string.Empty;
-                        break;
-                    case ResultsProcessorErrorCodes.UnspecifiedError:
-                        errorMessage = "Unspecified localized error";
-                        break;
-                    case ResultsProcessorErrorCodes.MissingMASICFiles:
-                        errorMessage = "Missing MASIC Files";
-                        break;
-                    case ResultsProcessorErrorCodes.MissingMageFiles:
-                        errorMessage = "Missing Mage Extractor Files";
-                        break;
-                    default:
-                        errorMessage = "Unknown error state";
-                        break;
-                }
-            }
-            else
-            {
-                errorMessage = GetBaseClassErrorMessage();
+                    ResultsProcessorErrorCodes.NoError => string.Empty,
+                    ResultsProcessorErrorCodes.UnspecifiedError => "Unspecified localized error",
+                    ResultsProcessorErrorCodes.MissingMASICFiles => "Missing MASIC Files",
+                    ResultsProcessorErrorCodes.MissingMageFiles => "Missing Mage Extractor Files",
+                    _ => "Unknown error state",
+                };
             }
 
-            return errorMessage;
+            return GetBaseClassErrorMessage();
         }
 
         private void InitializeLocalVariables()
