@@ -62,14 +62,13 @@ namespace MASICResultsMerger
                     throw new NotImplementedException(
                         "ConsolidatePSMs needs to be updated to support an input file where Job or Dataset is the first column");
                 }
-                else
+
+                // Obtain the dataset name from the filename
+                if (psmFilePath.EndsWith(MASICResultsMerger.RESULTS_SUFFIX, StringComparison.OrdinalIgnoreCase))
                 {
-                    // Obtain the dataset name from the filename
-                    if (psmFilePath.EndsWith(MASICResultsMerger.RESULTS_SUFFIX, StringComparison.OrdinalIgnoreCase))
-                    {
-                        datasetName = Path.GetFileName(psmFilePath.Substring(0, psmFilePath.Length - MASICResultsMerger.RESULTS_SUFFIX.Length));
-                    }
-                    else
+                    datasetName = Path.GetFileName(psmFilePath.Substring(0, psmFilePath.Length - MASICResultsMerger.RESULTS_SUFFIX.Length));
+                }
+                else
                     {
                         datasetName = Path.GetFileNameWithoutExtension(psmFilePath);
                     }
@@ -85,13 +84,12 @@ namespace MASICResultsMerger
                     {
                         datasetName = datasetName.Substring(0, datasetName.Length - "_msgfplus".Length);
                     }
-                    else if (datasetName.EndsWith("_msgfdb", StringComparison.OrdinalIgnoreCase))
-                    {
-                        datasetName = datasetName.Substring(0, datasetName.Length - "_msgfdb".Length);
-                    }
-
-                    // ReSharper restore StringLiteralTypo
+                else if (datasetName.EndsWith("_msgfdb", StringComparison.OrdinalIgnoreCase))
+                {
+                    datasetName = datasetName.Substring(0, datasetName.Length - "_msgfdb".Length);
                 }
+
+                // ReSharper restore StringLiteralTypo
 
                 var psmGroup = new DartIdData();
 
@@ -143,12 +141,13 @@ namespace MASICResultsMerger
                         // Validate that the required columns exist
                         foreach (var requiredColumn in requiredColumns)
                         {
-                            if (!ColumnExists(msgfPlusColumns, requiredColumn))
+                            if (ColumnExists(msgfPlusColumns, requiredColumn))
                             {
-                                OnErrorEvent(string.Format("File {0} is missing column {1} on the header line", inputFile.Name,
-                                    requiredColumn.ToString()));
-                                return false;
+                                continue;
                             }
+
+                            OnErrorEvent(string.Format("File {0} is missing column {1} on the header line", inputFile.Name, requiredColumn.ToString()));
+                            return false;
                         }
 
                         continue;
