@@ -344,10 +344,7 @@ namespace MASICResultsMerger
                 }
 
                 // Define the output file path
-                if (outputDirectoryPath == null)
-                {
-                    outputDirectoryPath = string.Empty;
-                }
+                outputDirectoryPath ??= string.Empty;
 
                 if (SeparateByCollisionMode)
                 {
@@ -522,7 +519,7 @@ namespace MASICResultsMerger
                                 addonColumns.Add(sicStatsEntry.PeakScanEnd);
 
                                 var peakWidthMinutes = ComputePeakWidthMinutes(scanStats, sicStatsEntry.PeakScanStart, sicStatsEntry.PeakScanEnd);
-                                addonColumns.Add(PRISM.StringUtilities.DblToString(peakWidthMinutes, 4));
+                                addonColumns.Add(StringUtilities.DblToString(peakWidthMinutes, 4));
                             }
                         }
 
@@ -1078,7 +1075,7 @@ namespace MASICResultsMerger
                                 addonColumns.Add(sicStatsEntry.PeakScanEnd);
 
                                 var peakWidthMinutes = ComputePeakWidthMinutes(scanStats, sicStatsEntry.PeakScanStart, sicStatsEntry.PeakScanEnd);
-                                addonColumns.Add(PRISM.StringUtilities.DblToString(peakWidthMinutes, 4));
+                                addonColumns.Add(StringUtilities.DblToString(peakWidthMinutes, 4));
                             }
 
                             if (writeReporterIonStats)
