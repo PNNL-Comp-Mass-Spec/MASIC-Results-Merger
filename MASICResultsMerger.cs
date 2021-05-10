@@ -1101,6 +1101,12 @@ namespace MASICResultsMerger
                         }
                         else
                         {
+                            if (!headerLineWritten)
+                            {
+                                writer.WriteLine(headerLine);
+                                headerLineWritten = true;
+                            }
+
                             var blankAddonColumns = '\t' + blankAdditionalScanStatsColumns + '\t' + blankAdditionalSICColumns;
 
                             if (writeReporterIonStats)
