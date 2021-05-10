@@ -76,7 +76,7 @@
         </member>
         <member name="P:MASICResultsMerger.MASICResultsMerger.ScanNumberColumn">
             <summary>
-             For the input file, defines which column tracks scan number; the first column is column 1 (not zero)
+            For the input file, defines which column tracks scan number; the first column is column 1 (not zero)
             </summary>
         </member>
         <member name="M:MASICResultsMerger.MASICResultsMerger.GetErrorMessage">
@@ -126,12 +126,12 @@
             </summary>
             <param name="fragScanNumber"></param>
         </member>
-        <member name="P:MASICResultsMerger.ScanStatsData.ReporterIonData">
+        <member name="P:MASICResultsMerger.ScanStatsData.CollisionMode">
             <summary>
             Comes from _ReporterIons.txt file (Nothing if the file doesn't exist)
             </summary>
         </member>
-        <member name="P:MASICResultsMerger.ScanStatsData.ScanStatsFileName">
+        <member name="P:MASICResultsMerger.ScanStatsData.ReporterIonData">
             <summary>
             Comes from _ReporterIons.txt file (Nothing if the file doesn't exist)
             </summary>

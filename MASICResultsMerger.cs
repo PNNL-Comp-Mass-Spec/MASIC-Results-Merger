@@ -89,7 +89,7 @@ namespace MASICResultsMerger
         public bool SeparateByCollisionMode { get; set; }
 
         /// <summary>
-        ///  For the input file, defines which column tracks scan number; the first column is column 1 (not zero)
+        /// For the input file, defines which column tracks scan number; the first column is column 1 (not zero)
         /// </summary>
         public int ScanNumberColumn { get; set; }
 
@@ -1501,7 +1501,7 @@ namespace MASICResultsMerger
             {
                 if (!collisionModeFileMap.ContainsKey(scanStatsItem.CollisionMode))
                 {
-                    // Store this collision mode in htCollisionModes; the value stored will be the index in collisionModes()
+                    // Store this collision mode in collisionModeFileMap; the value stored will be the index in collisionModes()
                     collisionModeFileMap.Add(scanStatsItem.CollisionMode, collisionModeTypeCount);
                     collisionModeTypeCount++;
                 }
@@ -1572,7 +1572,7 @@ namespace MASICResultsMerger
 
                         if (!collisionModeFileMap.ContainsKey(collisionMode))
                         {
-                            // Store this collision mode in htCollisionModes; the value stored will be the index in collisionModes()
+                            // Store this collision mode in collisionModeFileMap; the value stored will be the index in collisionModes()
                             collisionModeFileMap.Add(collisionMode, collisionModeTypeCount);
                             collisionModeTypeCount++;
                         }
