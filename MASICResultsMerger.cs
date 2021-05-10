@@ -53,65 +53,6 @@ namespace MASICResultsMerger
             UnspecifiedError = -1,
         }
 
-        // ReSharper disable UnusedMember.Local
-        // ReSharper disable UnusedMember.Global
-        private enum ScanStatsColumns
-        {
-            Dataset = 0,
-            ScanNumber = 1,
-            ScanTime = 2,
-            ScanType = 3,
-            TotalIonIntensity = 4,
-            BasePeakIntensity = 5,
-            BasePeakMZ = 6,
-            BasePeakSignalToNoiseRatio = 7,
-            IonCount = 8,
-            IonCountRaw = 9,
-        }
-
-        private enum SICStatsColumns
-        {
-            Dataset = 0,
-            ParentIonIndex = 1,
-            MZ = 2,
-            SurveyScanNumber = 3,
-            FragScanNumber = 4,
-            OptimalPeakApexScanNumber = 5,
-            PeakApexOverrideParentIonIndex = 6,
-            CustomSICPeak = 7,
-            PeakScanStart = 8,
-            PeakScanEnd = 9,
-            PeakScanMaxIntensity = 10,
-            PeakMaxIntensity = 11,
-            PeakSignalToNoiseRatio = 12,
-            FWHMInScans = 13,
-            PeakArea = 14,
-            ParentIonIntensity = 15,
-            PeakBaselineNoiseLevel = 16,
-            PeakBaselineNoiseStDev = 17,
-            PeakBaselinePointsUsed = 18,
-            StatMomentsArea = 19,
-            CenterOfMassScan = 20,
-            PeakStDev = 21,
-            PeakSkew = 22,
-            PeakKSStat = 23,
-            StatMomentsDataCountUsed = 24,
-        }
-
-        private enum ReporterIonStatsColumns
-        {
-            Dataset = 0,
-            ScanNumber = 1,
-            CollisionMode = 2,
-            ParentIonMZ = 3,
-            BasePeakIntensity = 4,
-            BasePeakMZ = 5,
-            ReporterIonIntensityMax = 6,
-        }
-
-        // ReSharper restore UnusedMember.Local
-        // ReSharper restore UnusedMember.Global
-
         #endregion
 
         #region "Class wide Variables"
@@ -304,7 +245,7 @@ namespace MASICResultsMerger
 
         private List<string> GetScanStatsHeaders()
         {
-            var scanStatsColumns = new List<string>()
+            return new()
             {
                 SCAN_STATS_ELUTION_TIME_COLUMN,
                 "ScanType",
@@ -312,12 +253,11 @@ namespace MASICResultsMerger
                 "BasePeakIntensity",
                 "BasePeakMZ"
             };
-            return scanStatsColumns;
         }
 
         private List<string> GetSICStatsHeaders()
         {
-            var sicStatsColumns = new List<string>
+            return new()
             {
                 "Optimal_Scan_Number",
                 "PeakMaxIntensity",
@@ -331,45 +271,11 @@ namespace MASICResultsMerger
                 "PeakScanEnd",
                 PEAK_WIDTH_MINUTES_COLUMN
             };
-            return sicStatsColumns;
         }
 
         private string FlattenList(IEnumerable<string> lstData)
         {
             return string.Join("\t", lstData);
-        }
-
-        private string FlattenArray(IList<string> lineParts, int indexStart)
-        {
-            var text = string.Empty;
-            if (lineParts == null || lineParts.Count == 0)
-            {
-                return text;
-            }
-
-            for (var index = indexStart; index < lineParts.Count; index++)
-            {
-                string column;
-                if (lineParts[index] == null)
-                {
-                    column = string.Empty;
-                }
-                else
-                {
-                    column = string.Copy(lineParts[index]);
-                }
-
-                if (index > indexStart)
-                {
-                    text += '\t' + column;
-                }
-                else
-                {
-                    text = string.Copy(column);
-                }
-            }
-
-            return text;
         }
 
         /// <summary>
@@ -1335,7 +1241,10 @@ namespace MASICResultsMerger
                 }
                 else
                 {
-                    ReadReporterIonStatsFile(sourceDirectory, masicFiles.ReporterIonsFileName, scanStats, out reporterIonHeaders);
+                    ReadReporterIonStatsFile(sourceDirectory, masicFiles.ReporterIonsFileName, scanStats, out var reporterIonHeadersFromReader);
+
+                    // Combine "Collision Mode" with the reporter ion headers obtained from ReadReporterIonStatsFile
+                    reporterIonHeaders = "Collision Mode\t" + reporterIonHeadersFromReader;
                 }
 
                 return scanStatsRead || sicStatsRead;
@@ -1356,36 +1265,23 @@ namespace MASICResultsMerger
                 scanStats.Clear();
                 ShowMessage("  Reading: " + scanStatsFileName);
 
-                using var reader = new StreamReader(
-                    new FileStream(Path.Combine(sourceDirectory, scanStatsFileName), FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                var reader = new PHRPReader.Reader.ScanStatsReader();
+                RegisterEvents(reader);
 
-                while (!reader.EndOfStream)
+                var scanStatsData = reader.ReadScanStatsData(Path.Combine(sourceDirectory, scanStatsFileName));
+
+                foreach (var item in scanStatsData)
                 {
-                    var dataLine = reader.ReadLine();
-                    if (string.IsNullOrWhiteSpace(dataLine))
-                    {
-                        continue;
-                    }
-
-                    var lineParts = dataLine.Split('\t');
-                    if (lineParts.Length < (int)ScanStatsColumns.BasePeakMZ + 1)
-                    {
-                        continue;
-                    }
-
-                    if (!int.TryParse(lineParts[(int)ScanStatsColumns.ScanNumber], out var scanNumber))
-                    {
-                        continue;
-                    }
+                    var scanNumber = item.Value.ScanNumber;
 
                     // Note: the remaining values are stored as strings to prevent the number format from changing
                     var scanStatsEntry = new ScanStatsData(scanNumber)
                     {
-                        ElutionTime = string.Copy(lineParts[(int)ScanStatsColumns.ScanTime]),
-                        ScanType = string.Copy(lineParts[(int)ScanStatsColumns.ScanType]),
-                        TotalIonIntensity = string.Copy(lineParts[(int)ScanStatsColumns.TotalIonIntensity]),
-                        BasePeakIntensity = string.Copy(lineParts[(int)ScanStatsColumns.BasePeakIntensity]),
-                        BasePeakMZ = string.Copy(lineParts[(int)ScanStatsColumns.BasePeakMZ]),
+                        ElutionTime = item.Value.ScanTimeMinutesText,
+                        ScanType = item.Value.ScanType.ToString(),
+                        TotalIonIntensity = item.Value.TotalIonIntensityText,
+                        BasePeakIntensity = item.Value.BasePeakIntensityText,
+                        BasePeakMZ = item.Value.BasePeakMzText,
                         CollisionMode = string.Empty,
                         ReporterIonData = string.Empty
                     };
@@ -1491,38 +1387,30 @@ namespace MASICResultsMerger
                 sicStats.Clear();
                 ShowMessage("  Reading: " + sicStatsFileName);
 
-                using var reader = new StreamReader(
-                    new FileStream(Path.Combine(sourceDirectory, sicStatsFileName), FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                var reader = new PHRPReader.Reader.SICStatsReader();
+                RegisterEvents(reader);
 
-                while (!reader.EndOfStream)
+                var sicStatsData = reader.ReadSICStatsData(Path.Combine(sourceDirectory, sicStatsFileName));
+
+                foreach (var item in sicStatsData)
                 {
-                    var dataLine = reader.ReadLine();
-                    if (string.IsNullOrWhiteSpace(dataLine))
-                    {
-                        continue;
-                    }
+                    var fragScanNumber = item.Value.FragScanNumber;
 
-                    var lineParts = dataLine.Split('\t');
-                    if (lineParts.Length >= (int)SICStatsColumns.StatMomentsArea + 1 &&
-                        int.TryParse(lineParts[(int)SICStatsColumns.FragScanNumber], out var fragScanNumber))
+                    var sicStatsEntry = new SICStatsData(fragScanNumber)
                     {
-                        // Note: the remaining values are stored as strings to prevent the number format from changing
-                        var sicStatsEntry = new SICStatsData(fragScanNumber)
-                        {
-                            OptimalScanNumber = string.Copy(lineParts[(int)SICStatsColumns.OptimalPeakApexScanNumber]),
-                            PeakMaxIntensity = string.Copy(lineParts[(int)SICStatsColumns.PeakMaxIntensity]),
-                            PeakSignalToNoiseRatio = string.Copy(lineParts[(int)SICStatsColumns.PeakSignalToNoiseRatio]),
-                            FWHMInScans = string.Copy(lineParts[(int)SICStatsColumns.FWHMInScans]),
-                            PeakScanStart = string.Copy(lineParts[(int)SICStatsColumns.PeakScanStart]),
-                            PeakScanEnd = string.Copy(lineParts[(int)SICStatsColumns.PeakScanEnd]),
-                            PeakArea = string.Copy(lineParts[(int)SICStatsColumns.PeakArea]),
-                            ParentIonIntensity = string.Copy(lineParts[(int)SICStatsColumns.ParentIonIntensity]),
-                            ParentIonMZ = string.Copy(lineParts[(int)SICStatsColumns.MZ]),
-                            StatMomentsArea = string.Copy(lineParts[(int)SICStatsColumns.StatMomentsArea])
-                        };
+                        OptimalScanNumber = item.Value.OptimalPeakApexScanNumber.ToString(),
+                        PeakMaxIntensity = item.Value.PeakMaxIntensityText,
+                        PeakSignalToNoiseRatio = item.Value.PeakSignalToNoiseRatioText,
+                        FWHMInScans = item.Value.FWHMInScans.ToString(),
+                        PeakScanStart = item.Value.PeakScanStart.ToString(),
+                        PeakScanEnd = item.Value.PeakScanEnd.ToString(),
+                        PeakArea = item.Value.PeakAreaText,
+                        ParentIonIntensity = item.Value.ParentIonIntensityText,
+                        ParentIonMZ = item.Value.MzText,
+                        StatMomentsArea = item.Value.StatMomentsAreaText
+                    };
 
-                        sicStats.Add(fragScanNumber, sicStatsEntry);
-                    }
+                    sicStats.Add(fragScanNumber, sicStatsEntry);
                 }
 
                 return true;
@@ -1547,44 +1435,15 @@ namespace MASICResultsMerger
             {
                 ShowMessage("  Reading: " + reporterIonStatsFileName);
 
-                using var reader = new StreamReader(
-                    new FileStream(Path.Combine(sourceDirectory, reporterIonStatsFileName), FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                var reader = new PHRPReader.Reader.ReporterIonsFileReader();
+                RegisterEvents(reader);
 
-                var linesRead = 0;
-                while (!reader.EndOfStream)
+                var reporterIonData = reader.ReadReporterIonData(Path.Combine(sourceDirectory, reporterIonStatsFileName));
+                reporterIonHeaders = FlattenList(reader.ReporterIonHeaderNames);
+
+                foreach (var item in reporterIonData)
                 {
-                    var dataLine = reader.ReadLine();
-                    if (string.IsNullOrWhiteSpace(dataLine))
-                    {
-                        continue;
-                    }
-
-                    linesRead++;
-                    var lineParts = dataLine.Split('\t');
-                    if (linesRead == 1)
-                    {
-                        // This is the header line; we need to cache it
-                        if (lineParts.Length >= (int)ReporterIonStatsColumns.ReporterIonIntensityMax + 1)
-                        {
-                            reporterIonHeaders = lineParts[(int)ReporterIonStatsColumns.CollisionMode];
-                            reporterIonHeaders += '\t' + FlattenArray(lineParts, (int)ReporterIonStatsColumns.ReporterIonIntensityMax);
-                        }
-                        else
-                        {
-                            // There aren't enough columns in the header line; this is unexpected
-                            reporterIonHeaders = "Collision Mode" + '\t' + "AdditionalReporterIonColumns";
-                        }
-                    }
-
-                    if (lineParts.Length < (int)ReporterIonStatsColumns.ReporterIonIntensityMax + 1)
-                    {
-                        continue;
-                    }
-
-                    if (!int.TryParse(lineParts[(int)ReporterIonStatsColumns.ScanNumber], out var scanNumber))
-                    {
-                        continue;
-                    }
+                    var scanNumber = item.Value.ScanNumber;
 
                     // Look for scanNumber in scanNumbers
                     if (!scanStats.TryGetValue(scanNumber, out var scanStatsEntry))
@@ -1613,8 +1472,8 @@ namespace MASICResultsMerger
                     }
                     else
                     {
-                        scanStatsEntry.CollisionMode = string.Copy(lineParts[(int)ReporterIonStatsColumns.CollisionMode]);
-                        scanStatsEntry.ReporterIonData = FlattenArray(lineParts, (int)ReporterIonStatsColumns.ReporterIonIntensityMax);
+                        scanStatsEntry.CollisionMode = item.Value.CollisionMode;
+                        scanStatsEntry.ReporterIonData = item.Value.ReporterIonColumnData;
                     }
                 }
             }
