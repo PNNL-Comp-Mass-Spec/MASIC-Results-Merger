@@ -528,7 +528,6 @@ namespace MASICResultsMerger
                             if (scanStatsEntry == null || string.IsNullOrWhiteSpace(scanStatsEntry.CollisionMode))
                             {
                                 // Collision mode is not defined; append blank columns
-                                addonColumns.Add(string.Empty);
                                 addonColumns.Add(blankAdditionalReporterIonColumns);
                             }
                             else
@@ -1083,7 +1082,6 @@ namespace MASICResultsMerger
                                 if (scanStatsEntry == null || string.IsNullOrWhiteSpace(scanStatsEntry.CollisionMode))
                                 {
                                     // Collision mode is not defined; append blank columns
-                                    addonColumns.Add(string.Empty);
                                     addonColumns.Add(blankAdditionalReporterIonColumns);
                                 }
                                 else
