@@ -23,15 +23,7 @@ namespace MASICResultsMerger
 
         private bool ColumnExists(IReadOnlyDictionary<Enum, int> msgfPlusColumns, MSGFPlusSynFileColumns requiredColumn)
         {
-            if (msgfPlusColumns.TryGetValue(requiredColumn, out var columnIndex))
-            {
-                if (columnIndex >= 0)
-                {
-                    return true;
-                }
-            }
-
-            return false;
+            return msgfPlusColumns.TryGetValue(requiredColumn, out var columnIndex) && columnIndex >= 0;
         }
 
         public bool ConsolidatePSMs(string psmFilePath, bool multiJobFile)
