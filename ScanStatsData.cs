@@ -1,5 +1,4 @@
-﻿
-namespace MASICResultsMerger
+﻿namespace MASICResultsMerger
 {
     internal class ScanStatsData
     {
@@ -9,17 +8,16 @@ namespace MASICResultsMerger
         public string TotalIonIntensity { get; set; }
         public string BasePeakIntensity { get; set; }
         public string BasePeakMZ { get; set; }
+
+        /// <summary>
+        /// Comes from _ReporterIons.txt file (Nothing if the file doesn't exist)
+        /// </summary>
         public string CollisionMode { get; set; }
 
         /// <summary>
         /// Comes from _ReporterIons.txt file (Nothing if the file doesn't exist)
         /// </summary>
         public string ReporterIonData { get; set; }
-
-        /// <summary>
-        /// Comes from _ReporterIons.txt file (Nothing if the file doesn't exist)
-        /// </summary>
-        public string ScanStatsFileName { get; set; }
 
         /// <summary>
         /// Constructor
