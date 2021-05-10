@@ -338,6 +338,7 @@ namespace MASICResultsMerger
                 }
 
                 baseFileName = Path.GetFileNameWithoutExtension(inputFile.Name);
+
                 if (string.IsNullOrWhiteSpace(reporterIonHeaders))
                 {
                     reporterIonHeaders = string.Empty;
@@ -591,6 +592,7 @@ namespace MASICResultsMerger
                 // If there are, then delete the empty output file
                 // However, retain at least one output file
                 var emptyOutFileCount = 0;
+
                 for (var index = 0; index < outputFileCount; index++)
                 {
                     if (linesWritten[index] == 0)
@@ -600,6 +602,7 @@ namespace MASICResultsMerger
                 }
 
                 var outputPathEntry = new ProcessedFileInfo(baseFileName);
+
                 if (emptyOutFileCount == 0)
                 {
                     foreach (var item in outputFilePaths.ToList())
@@ -729,6 +732,7 @@ namespace MASICResultsMerger
                 }
 
                 baseFileName = "MergedData_" + baseFileName;
+
                 // Open the output files
                 var outputFileHandles = new Dictionary<string, StreamWriter>();
                 var outputFileHeaderWritten = new Dictionary<string, bool>();
@@ -972,6 +976,7 @@ namespace MASICResultsMerger
                     while (phrpReader.MoveNext())
                     {
                         var psm = phrpReader.CurrentPSM;
+
                         // Parse out the job from the current line
                         var lstColumns = psm.DataLineText.Split('\t').ToList();
 
