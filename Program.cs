@@ -43,7 +43,7 @@ namespace MASICResultsMerger
 
         private static int Main()
         {
-            //  Returns 0 if no error, error code if an error
+            // Returns 0 if no error, error code if an error
             var commandLineParser = new clsParseCommandLine();
             mInputFilePath = string.Empty;
             mCreateDartIdInputFile = false;
@@ -77,7 +77,7 @@ namespace MASICResultsMerger
                     return -1;
                 }
 
-                //  Note: If a parameter file is defined, settings in that file will override the options defined here
+                // Note: If a parameter file is defined, settings in that file will override the options defined here
                 mMASICResultsMerger = new MASICResultsMerger
                 {
                     LogMessagesToFile = mLogMessagesToFile,
@@ -168,7 +168,7 @@ namespace MASICResultsMerger
 
         private static bool SetOptionsUsingCommandLineParameters(clsParseCommandLine commandLineParser)
         {
-            //  Returns True if no problems; otherwise, returns false
+            // Returns True if no problems; otherwise, returns false
 
             var validParameters = new List<string>
             {
@@ -187,7 +187,7 @@ namespace MASICResultsMerger
 
             try
             {
-                //  Make sure no invalid parameters are present
+                // Make sure no invalid parameters are present
                 if (commandLineParser.InvalidParametersPresent(validParameters))
                 {
                     ShowErrorMessage("Invalid command line parameters",
@@ -195,7 +195,7 @@ namespace MASICResultsMerger
                     return false;
                 }
 
-                //  Query commandLineParser to see if various parameters are present
+                // Query commandLineParser to see if various parameters are present
                 if (commandLineParser.RetrieveValueForParameter("I", out var inputFile))
                 {
                     mInputFilePath = inputFile;
@@ -367,7 +367,7 @@ namespace MASICResultsMerger
                 Console.WriteLine("Website: https://omics.pnl.gov/ or https://panomics.pnnl.gov/");
                 Console.WriteLine();
 
-                //  Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
+                // Delay for 750 msec in case the user double clicked this file from within Windows Explorer (or started the program via a shortcut)
                 System.Threading.Thread.Sleep(750);
             }
             catch (Exception ex)

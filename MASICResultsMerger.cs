@@ -53,8 +53,8 @@ namespace MASICResultsMerger
             UnspecifiedError = -1,
         }
 
-        //  ReSharper disable UnusedMember.Local
-        //  ReSharper disable UnusedMember.Global
+        // ReSharper disable UnusedMember.Local
+        // ReSharper disable UnusedMember.Global
         private enum ScanStatsColumns
         {
             Dataset = 0,
@@ -109,8 +109,8 @@ namespace MASICResultsMerger
             ReporterIonIntensityMax = 6,
         }
 
-        //  ReSharper restore UnusedMember.Local
-        //  ReSharper restore UnusedMember.Global
+        // ReSharper restore UnusedMember.Local
+        // ReSharper restore UnusedMember.Global
 
         #endregion
 
@@ -191,7 +191,7 @@ namespace MASICResultsMerger
                 Console.WriteLine();
                 ShowMessage("Looking for MASIC data files that correspond to " + datasetInfo.DatasetName);
                 var datasetName = string.Copy(datasetInfo.DatasetName);
-                //  Use a loop to try various possible dataset names
+                // Use a loop to try various possible dataset names
                 while (true)
                 {
                     var scanStatsFile = new FileInfo(Path.Combine(masicResultsDirectory, datasetName + SCAN_STATS_FILE_EXTENSION));
@@ -218,7 +218,7 @@ namespace MASICResultsMerger
                         break;
                     }
 
-                    //  Find the last underscore in datasetName, then remove it and any text after it
+                    // Find the last underscore in datasetName, then remove it and any text after it
                     var charIndex = datasetName.LastIndexOf('_');
                     if (charIndex > 0)
                     {
@@ -231,7 +231,7 @@ namespace MASICResultsMerger
                     }
                     else
                     {
-                        //  No more underscores; we're unable to determine the dataset name
+                        // No more underscores; we're unable to determine the dataset name
                         break;
                     }
                 }
@@ -279,8 +279,8 @@ namespace MASICResultsMerger
 
         private void FindScanNumColumn(FileSystemInfo inputFile, IList<string> lineParts)
         {
-            //  Check for a column named "ScanNum" or "ScanNumber" or "Scan Num" or "Scan Number"
-            //  If found, override ScanNumberColumn
+            // Check for a column named "ScanNum" or "ScanNumber" or "Scan Num" or "Scan Number"
+            // If found, override ScanNumberColumn
             for (var colIndex = 0; colIndex < lineParts.Count; colIndex++)
             {
                 if (lineParts[colIndex].Equals("Scan", StringComparison.OrdinalIgnoreCase) ||
@@ -429,7 +429,7 @@ namespace MASICResultsMerger
 
             int outputFileCount;
 
-            //  The Key is the collision mode and the value is the path
+            // The Key is the collision mode and the value is the path
             KeyValuePair<string, string>[] outputFilePaths;
             string baseFileName;
 
@@ -453,7 +453,7 @@ namespace MASICResultsMerger
                     reporterIonHeaders = string.Empty;
                 }
 
-                //  Define the output file path
+                // Define the output file path
                 if (outputDirectoryPath == null)
                 {
                     outputDirectoryPath = string.Empty;
@@ -497,11 +497,11 @@ namespace MASICResultsMerger
                 ShowMessage("Parsing " + inputFile.Name + " and writing " + Path.GetFileName(outputFilePaths[0].Value));
                 if (ScanNumberColumn < 1)
                 {
-                    //  Assume the scan number is in the second column
+                    // Assume the scan number is in the second column
                     ScanNumberColumn = DEFAULT_SCAN_NUMBER_COLUMN;
                 }
 
-                //  Read from reader and write out to the file(s) in writers[]
+                // Read from reader and write out to the file(s) in writers[]
                 using (var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
                 {
                     var linesRead = 0;
@@ -521,10 +521,10 @@ namespace MASICResultsMerger
                         if (linesRead == 1)
                         {
                             string headerLine;
-                            //  Write out an updated header line
+                            // Write out an updated header line
                             if (lineParts.Count >= ScanNumberColumn && int.TryParse(lineParts[ScanNumberColumn - 1], out _))
                             {
-                                //  The input file doesn't have a header line; we will add one, using generic column names for the data in the input file
+                                // The input file doesn't have a header line; we will add one, using generic column names for the data in the input file
                                 var genericHeaders = new List<string>();
                                 for (var index = 0; index < lineParts.Count; index++)
                                 {
@@ -535,10 +535,10 @@ namespace MASICResultsMerger
                             }
                             else
                             {
-                                //  The input file does have a text-based header
+                                // The input file does have a text-based header
                                 headerLine = string.Copy(dataLine);
                                 FindScanNumColumn(inputFile, lineParts);
-                                //  Clear splitLine so that this line gets skipped
+                                // Clear splitLine so that this line gets skipped
                                 lineParts.Clear();
                             }
 
@@ -549,20 +549,20 @@ namespace MASICResultsMerger
                                 sicStatsHeaders.Clear();
                             }
 
-                            //  Populate blankAdditionalScanStatsColumns with tab characters based on the number of items in scanStatsHeaders
+                            // Populate blankAdditionalScanStatsColumns with tab characters based on the number of items in scanStatsHeaders
                             blankAdditionalScanStatsColumns = new string('\t', scanStatsHeaders.Count - 1);
                             if (writeSICStats)
                             {
                                 blankAdditionalSICColumns = new string('\t', sicStatsHeaders.Count);
                             }
 
-                            //  Initialize blankAdditionalReporterIonColumns
+                            // Initialize blankAdditionalReporterIonColumns
                             if (reporterIonHeaders.Length > 0)
                             {
                                 blankAdditionalReporterIonColumns = new string('\t', reporterIonHeaders.Split('\t').ToList().Count - 1);
                             }
 
-                            //  Initialize the AddOn header columns
+                            // Initialize the AddOn header columns
                             var addonHeaders = FlattenList(scanStatsHeaders);
                             if (writeSICStats)
                             {
@@ -571,12 +571,12 @@ namespace MASICResultsMerger
 
                             if (reporterIonHeaders.Length > 0)
                             {
-                                //  Append the reporter ion stats columns
+                                // Append the reporter ion stats columns
                                 addonHeaders += '\t' + reporterIonHeaders;
                                 writeReporterIonStats = true;
                             }
 
-                            //  Write out the headers
+                            // Write out the headers
                             for (var index = 0; index < outputFileCount; index++)
                             {
                                 writers[index].WriteLine(headerLine + '\t' + addonHeaders);
@@ -589,11 +589,11 @@ namespace MASICResultsMerger
                             continue;
                         }
 
-                        //  Look for scanNumber in scanStats
+                        // Look for scanNumber in scanStats
                         var addonColumns = new List<string>();
                         if (!scanStats.TryGetValue(scanNumber, out var scanStatsEntry))
                         {
-                            //  Match not found; use the blank columns in blankAdditionalScanStatsColumns
+                            // Match not found; use the blank columns in blankAdditionalScanStatsColumns
                             addonColumns.Add(blankAdditionalScanStatsColumns);
                         }
                         else
@@ -609,7 +609,7 @@ namespace MASICResultsMerger
                         {
                             if (!sicStats.TryGetValue(scanNumber, out var sicStatsEntry))
                             {
-                                //  Match not found; use the blank columns in blankAdditionalSICColumns
+                                // Match not found; use the blank columns in blankAdditionalSICColumns
                                 addonColumns.Add(blankAdditionalSICColumns);
                             }
                             else
@@ -634,13 +634,13 @@ namespace MASICResultsMerger
                         {
                             if (scanStatsEntry == null || string.IsNullOrWhiteSpace(scanStatsEntry.CollisionMode))
                             {
-                                //  Collision mode is not defined; append blank columns
+                                // Collision mode is not defined; append blank columns
                                 addonColumns.Add(string.Empty);
                                 addonColumns.Add(blankAdditionalReporterIonColumns);
                             }
                             else
                             {
-                                //  Collision mode is defined
+                                // Collision mode is defined
                                 addonColumns.Add(scanStatsEntry.CollisionMode);
                                 addonColumns.Add(scanStatsEntry.ReporterIonData);
                                 collisionModeCurrentScan = string.Copy(scanStatsEntry.CollisionMode);
@@ -663,7 +663,7 @@ namespace MASICResultsMerger
                         {
                             if (collisionModeCurrentScan != null)
                             {
-                                //  Determine the correct output file
+                                // Determine the correct output file
                                 if (!collisionModeFileMap.TryGetValue(collisionModeCurrentScan, out outFileIndex))
                                 {
                                     outFileIndex = 0;
@@ -676,7 +676,7 @@ namespace MASICResultsMerger
                     }
                 }
 
-                //  Close the output files
+                // Close the output files
                 if (writers != null)
                 {
                     for (var index = 0; index < outputFileCount; index++)
@@ -695,9 +695,9 @@ namespace MASICResultsMerger
                     }
                 }
 
-                //  See if any of the files had no data written to them
-                //  If there are, then delete the empty output file
-                //  However, retain at least one output file
+                // See if any of the files had no data written to them
+                // If there are, then delete the empty output file
+                // However, retain at least one output file
                 var emptyOutFileCount = 0;
                 for (var index = 0; index < outputFileCount; index++)
                 {
@@ -719,14 +719,14 @@ namespace MASICResultsMerger
                 {
                     if (emptyOutFileCount == outputFileCount)
                     {
-                        //  All output files are empty
-                        //  Pretend the first output file actually contains data
+                        // All output files are empty
+                        // Pretend the first output file actually contains data
                         linesWritten[0] = 1;
                     }
 
                     for (var index = 0; index < outputFileCount; index++)
                     {
-                        //  Wait 250 msec before continuing
+                        // Wait 250 msec before continuing
                         Thread.Sleep(250);
                         if (linesWritten[index] == 0)
                         {
@@ -770,12 +770,12 @@ namespace MASICResultsMerger
             {
                 if (ProcessedDatasets.Count == 1)
                 {
-                    //  Nothing to merge
+                    // Nothing to merge
                     ShowMessage("Only one dataset has been processed by the MASICResultsMerger; nothing to merge");
                     return true;
                 }
 
-                //  Determine the base filename and collision modes used
+                // Determine the base filename and collision modes used
                 var baseFileName = string.Empty;
                 var collisionModes = new SortedSet<string>();
                 var datasetNameIdMap = new Dictionary<string, int>();
@@ -794,7 +794,7 @@ namespace MASICResultsMerger
                         datasetNameIdMap.Add(processedDataset.BaseName, datasetNameIdMap.Count + 1);
                     }
 
-                    //  Find the characters common to all of the processed datasets
+                    // Find the characters common to all of the processed datasets
                     var candidateName = processedDataset.BaseName;
                     if (string.IsNullOrEmpty(baseFileName))
                     {
@@ -821,7 +821,7 @@ namespace MASICResultsMerger
                         if (charsInCommon > 1)
                         {
                             baseFileName = baseFileName.Substring(0, charsInCommon);
-                            //  Possibly backtrack to the previous underscore
+                            // Possibly backtrack to the previous underscore
                             var lastUnderscore = baseFileName.LastIndexOf("_", StringComparison.Ordinal);
                             if (lastUnderscore >= 4)
                             {
@@ -837,7 +837,7 @@ namespace MASICResultsMerger
                 }
 
                 baseFileName = "MergedData_" + baseFileName;
-                //  Open the output files
+                // Open the output files
                 var outputFileHandles = new Dictionary<string, StreamWriter>();
                 var outputFileHeaderWritten = new Dictionary<string, bool>();
                 foreach (var collisionMode in collisionModes)
@@ -859,7 +859,7 @@ namespace MASICResultsMerger
                     outputFileHeaderWritten.Add(collisionMode, false);
                 }
 
-                //  Create the DatasetMap file
+                // Create the DatasetMap file
                 using (var writer = new StreamWriter(
                     new FileStream(Path.Combine(mOutputDirectoryPath, baseFileName + "_DatasetMap.txt"), FileMode.Create, FileAccess.Write)))
                 {
@@ -870,7 +870,7 @@ namespace MASICResultsMerger
                     }
                 }
 
-                //  Merge the files
+                // Merge the files
                 foreach (var processedDataset in ProcessedDatasets)
                 {
                     var datasetId = datasetNameIdMap[processedDataset.BaseName];
@@ -901,7 +901,7 @@ namespace MASICResultsMerger
                             {
                                 if (outputFileHeaderWritten[collisionMode])
                                 {
-                                    //  skip this line
+                                    // skip this line
                                     continue;
                                 }
 
@@ -953,7 +953,7 @@ namespace MASICResultsMerger
                 return false;
             }
 
-            //  Note that CleanupFilePaths() will update mOutputDirectoryPath, which is used by LogMessage()
+            // Note that CleanupFilePaths() will update mOutputDirectoryPath, which is used by LogMessage()
             if (!CleanupFilePaths(ref inputFilePath, ref outputDirectoryPath))
             {
                 SetBaseClassErrorCode(ProcessFilesErrorCodes.FilePathError);
@@ -986,7 +986,7 @@ namespace MASICResultsMerger
             var sicStats = new Dictionary<int, SICStatsData>();
             try
             {
-                //  Read the Mage Metadata file
+                // Read the Mage Metadata file
                 FileInfo metadataFile;
                 var metadataFileName = Path.GetFileNameWithoutExtension(inputFile.Name) + "_metadata.txt";
 
@@ -1006,7 +1006,7 @@ namespace MASICResultsMerger
                     return false;
                 }
 
-                //  Keys in this dictionary are the job, values are the DatasetID and DatasetName
+                // Keys in this dictionary are the job, values are the DatasetID and DatasetName
                 var jobToDatasetMap = ReadMageMetadataFile(metadataFile.FullName);
                 if (jobToDatasetMap == null || jobToDatasetMap.Count == 0)
                 {
@@ -1043,7 +1043,7 @@ namespace MASICResultsMerger
                 var scanStatsHeaders = GetScanStatsHeaders();
                 var sicStatsHeaders = GetSICStatsHeaders();
 
-                //  Populate blankAdditionalScanStatsColumns with tab characters based on the number of items in scanStatsHeaders
+                // Populate blankAdditionalScanStatsColumns with tab characters based on the number of items in scanStatsHeaders
                 var blankAdditionalScanStatsColumns = new string('\t', scanStatsHeaders.Count - 1);
                 var blankAdditionalSICColumns = new string('\t', sicStatsHeaders.Count);
 
@@ -1052,10 +1052,10 @@ namespace MASICResultsMerger
 
                 var jobsSuccessfullyMerged = 0;
 
-                //  Initialize the output file
+                // Initialize the output file
                 using (var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.Read)))
                 {
-                    //  Open the Mage Extractor data file and read the data for each job
+                    // Open the Mage Extractor data file and read the data for each job
                     var phrpReader = new ReaderFactory(inputFile.FullName, PeptideHitResultTypes.Unknown, false, false, false)
                     {
                         EchoMessagesToConsole = false,
@@ -1080,7 +1080,7 @@ namespace MASICResultsMerger
                     while (phrpReader.MoveNext())
                     {
                         var psm = phrpReader.CurrentPSM;
-                        //  Parse out the job from the current line
+                        // Parse out the job from the current line
                         var lstColumns = psm.DataLineText.Split('\t').ToList();
 
                         if (!int.TryParse(lstColumns[jobColumnIndex], out var job))
@@ -1091,7 +1091,7 @@ namespace MASICResultsMerger
 
                         if (job != lastJob)
                         {
-                            //  New job; read and cache the MASIC data
+                            // New job; read and cache the MASIC data
                             masicDataLoaded = false;
 
                             if (!jobToDatasetMap.TryGetValue(job, out var datasetInfo))
@@ -1100,13 +1100,13 @@ namespace MASICResultsMerger
                             }
                             else
                             {
-                                //  Look for the corresponding MASIC files in the input directory
+                                // Look for the corresponding MASIC files in the input directory
                                 var masicFiles = new MASICFileInfo();
                                 var datasetNameAndDirectory = "for dataset " + datasetInfo.DatasetName + " in " + masicResultsDirectory;
                                 var success = FindMASICFiles(masicResultsDirectory, datasetInfo, masicFiles, datasetNameAndDirectory, job);
                                 if (success)
                                 {
-                                    //  Read and cache the MASIC data
+                                    // Read and cache the MASIC data
                                     scanStats = new Dictionary<int, ScanStatsData>();
                                     sicStats = new Dictionary<int, SICStatsData>();
 
@@ -1116,7 +1116,7 @@ namespace MASICResultsMerger
                                         jobsSuccessfullyMerged++;
                                         if (jobsSuccessfullyMerged == 1)
                                         {
-                                            //  Initialize blankAdditionalReporterIonColumns
+                                            // Initialize blankAdditionalReporterIonColumns
                                             if (reporterIonHeaders.Length > 0)
                                             {
                                                 blankAdditionalReporterIonColumns =
@@ -1135,7 +1135,7 @@ namespace MASICResultsMerger
                                 var addonHeaderColumns = FlattenList(scanStatsHeaders) + '\t' + FlattenList(sicStatsHeaders);
                                 if (reporterIonHeaders.Length > 0)
                                 {
-                                    //  The merged data file will have reporter ion columns
+                                    // The merged data file will have reporter ion columns
                                     writeReporterIonStats = true;
                                     writer.WriteLine(headerLine + '\t' + addonHeaderColumns + '\t' + reporterIonHeaders);
                                 }
@@ -1147,11 +1147,11 @@ namespace MASICResultsMerger
                                 headerLineWritten = true;
                             }
 
-                            //  Look for scanNumber in scanStats
+                            // Look for scanNumber in scanStats
                             var addonColumns = new List<string>();
                             if (!scanStats.TryGetValue(psm.ScanNumber, out var scanStatsEntry))
                             {
-                                //  Match not found; use the blank columns in blankAdditionalColumns
+                                // Match not found; use the blank columns in blankAdditionalColumns
                                 addonColumns.Add(blankAdditionalScanStatsColumns);
                             }
                             else
@@ -1165,7 +1165,7 @@ namespace MASICResultsMerger
 
                             if (!sicStats.TryGetValue(psm.ScanNumber, out var sicStatsEntry))
                             {
-                                //  Match not found; use the blank columns in blankAdditionalSICColumns
+                                // Match not found; use the blank columns in blankAdditionalSICColumns
                                 addonColumns.Add(blankAdditionalSICColumns);
                             }
                             else
@@ -1189,13 +1189,13 @@ namespace MASICResultsMerger
                             {
                                 if (scanStatsEntry == null || string.IsNullOrWhiteSpace(scanStatsEntry.CollisionMode))
                                 {
-                                    //  Collision mode is not defined; append blank columns
+                                    // Collision mode is not defined; append blank columns
                                     addonColumns.Add(string.Empty);
                                     addonColumns.Add(blankAdditionalReporterIonColumns);
                                 }
                                 else
                                 {
-                                    //  Collision mode is defined
+                                    // Collision mode is defined
                                     addonColumns.Add(scanStatsEntry.CollisionMode);
                                     addonColumns.Add(scanStatsEntry.ReporterIonData);
                                 }
@@ -1249,9 +1249,9 @@ namespace MASICResultsMerger
             {
                 var datasetName = Path.GetFileNameWithoutExtension(inputFile.FullName);
                 var datasetInfo = new DatasetInfo(datasetName, 0);
-                //  Note that FindMASICFiles will first try the full filename, and if it doesn't find a match,
-                //  it will start removing text from the end of the filename by looking for underscores
-                //  Look for the corresponding MASIC files in the input directory
+                // Note that FindMASICFiles will first try the full filename, and if it doesn't find a match,
+                // it will start removing text from the end of the filename by looking for underscores
+                // Look for the corresponding MASIC files in the input directory
                 var masicFiles = new MASICFileInfo();
                 var masicFileSearchInfo = " in " + masicResultsDirectory;
                 var success = FindMASICFiles(masicResultsDirectory, datasetInfo, masicFiles, masicFileSearchInfo, 0);
@@ -1261,14 +1261,14 @@ namespace MASICResultsMerger
                     return false;
                 }
 
-                //  Read and cache the MASIC data
+                // Read and cache the MASIC data
                 var scanStats = new Dictionary<int, ScanStatsData>();
                 var sicStats = new Dictionary<int, SICStatsData>();
 
                 success = ReadMASICData(masicResultsDirectory, masicFiles, scanStats, sicStats, out var reporterIonHeaders);
                 if (success)
                 {
-                    //  Merge the MASIC data with the input file
+                    // Merge the MASIC data with the input file
                     success = MergePeptideHitAndMASICFiles(inputFile, mOutputDirectoryPath, scanStats, sicStats, reporterIonHeaders);
                 }
 
@@ -1343,7 +1343,7 @@ namespace MASICResultsMerger
         {
             try
             {
-                //  Initialize scanStats
+                // Initialize scanStats
                 scanStats.Clear();
                 ShowMessage("  Reading: " + scanStatsFileName);
 
@@ -1369,7 +1369,7 @@ namespace MASICResultsMerger
                         continue;
                     }
 
-                    //  Note: the remaining values are stored as strings to prevent the number format from changing
+                    // Note: the remaining values are stored as strings to prevent the number format from changing
                     var scanStatsEntry = new ScanStatsData(scanNumber)
                     {
                         ElutionTime = string.Copy(lineParts[(int)ScanStatsColumns.ScanTime]),
@@ -1416,7 +1416,7 @@ namespace MASICResultsMerger
                     var lineParts = dataLine.Split('\t').ToList();
                     if (!headersParsed)
                     {
-                        //  Look for the Job and Dataset columns
+                        // Look for the Job and Dataset columns
                         jobIndex = lineParts.IndexOf("Job");
                         datasetIndex = lineParts.IndexOf("Dataset");
                         datasetIDIndex = lineParts.IndexOf("Dataset_ID");
@@ -1478,7 +1478,7 @@ namespace MASICResultsMerger
         {
             try
             {
-                //  Initialize sicStats
+                // Initialize sicStats
                 sicStats.Clear();
                 ShowMessage("  Reading: " + sicStatsFileName);
 
@@ -1497,7 +1497,7 @@ namespace MASICResultsMerger
                     if (lineParts.Length >= (int)SICStatsColumns.StatMomentsArea + 1 &&
                         int.TryParse(lineParts[(int)SICStatsColumns.FragScanNumber], out var fragScanNumber))
                     {
-                        //  Note: the remaining values are stored as strings to prevent the number format from changing
+                        // Note: the remaining values are stored as strings to prevent the number format from changing
                         var sicStatsEntry = new SICStatsData(fragScanNumber)
                         {
                             OptimalScanNumber = string.Copy(lineParts[(int)SICStatsColumns.OptimalPeakApexScanNumber]),
@@ -1554,7 +1554,7 @@ namespace MASICResultsMerger
                     var lineParts = dataLine.Split('\t');
                     if (linesRead == 1)
                     {
-                        //  This is the header line; we need to cache it
+                        // This is the header line; we need to cache it
                         if (lineParts.Length >= (int)ReporterIonStatsColumns.ReporterIonIntensityMax + 1)
                         {
                             reporterIonHeaders = lineParts[(int)ReporterIonStatsColumns.CollisionMode];
@@ -1562,7 +1562,7 @@ namespace MASICResultsMerger
                         }
                         else
                         {
-                            //  There aren't enough columns in the header line; this is unexpected
+                            // There aren't enough columns in the header line; this is unexpected
                             reporterIonHeaders = "Collision Mode" + '\t' + "AdditionalReporterIonColumns";
                         }
                     }
@@ -1577,7 +1577,7 @@ namespace MASICResultsMerger
                         continue;
                     }
 
-                    //  Look for scanNumber in scanNumbers
+                    // Look for scanNumber in scanNumbers
                     if (!scanStats.TryGetValue(scanNumber, out var scanStatsEntry))
                     {
                         if (warningCount < 10)
@@ -1598,7 +1598,7 @@ namespace MASICResultsMerger
                     }
                     else if (scanStatsEntry.ScanNumber != scanNumber)
                     {
-                        //  Scan number mismatch; this shouldn't happen
+                        // Scan number mismatch; this shouldn't happen
                         ShowMessage("Error: Scan number mismatch in ReadReporterIonStatsFile: "
                                     + scanStatsEntry.ScanNumber + " vs. " + scanNumber);
                     }
@@ -1619,7 +1619,7 @@ namespace MASICResultsMerger
         {
             if (leaveExistingErrorCodeUnchanged && mLocalErrorCode != ResultsProcessorErrorCodes.NoError)
             {
-                //  An error code is already defined; do not change it
+                // An error code is already defined; do not change it
             }
             else
             {
@@ -1651,7 +1651,7 @@ namespace MASICResultsMerger
             {
                 if (!collisionModeFileMap.ContainsKey(scanStatsItem.CollisionMode))
                 {
-                    //  Store this collision mode in htCollisionModes; the value stored will be the index in collisionModes()
+                    // Store this collision mode in htCollisionModes; the value stored will be the index in collisionModes()
                     collisionModeFileMap.Add(scanStatsItem.CollisionMode, collisionModeTypeCount);
                     collisionModeTypeCount++;
                 }
@@ -1660,8 +1660,8 @@ namespace MASICResultsMerger
             if (collisionModeFileMap.Count == 0 ||
                 collisionModeFileMap.Count == 1 && string.IsNullOrWhiteSpace(collisionModeFileMap.First().Key))
             {
-                //  Try to load the collision mode info from the input file
-                //  MS-GF+ results report this in the FragMethod column
+                // Try to load the collision mode info from the input file
+                // MS-GF+ results report this in the FragMethod column
                 collisionModeFileMap.Clear();
                 collisionModeTypeCount = 0;
                 try
@@ -1682,7 +1682,7 @@ namespace MASICResultsMerger
                         var lineParts = dataLine.Split('\t');
                         if (linesRead == 1)
                         {
-                            //  Header line; look for the FragMethod column
+                            // Header line; look for the FragMethod column
                             for (var colIndex = 0; colIndex < lineParts.Length; colIndex++)
                             {
                                 if (string.Equals(lineParts[colIndex], "FragMethod", StringComparison.OrdinalIgnoreCase))
@@ -1694,14 +1694,14 @@ namespace MASICResultsMerger
 
                             if (fragMethodColNumber == 0)
                             {
-                                //  Fragmentation method column not found
+                                // Fragmentation method column not found
                                 ShowWarning("Unable to determine the collision mode for results being merged. " +
                                             "This is typically obtained from a MASIC _ReporterIons.txt file " +
                                             "or from the FragMethod column in the MS-GF+ results file");
                                 break;
                             }
 
-                            //  Also look for the scan number column and the protein column
+                            // Also look for the scan number column and the protein column
                             FindScanNumColumn(inputFile, lineParts);
                             continue;
                         }
@@ -1720,7 +1720,7 @@ namespace MASICResultsMerger
                         var collisionMode = lineParts[fragMethodColNumber - 1];
                         if (!collisionModeFileMap.ContainsKey(collisionMode))
                         {
-                            //  Store this collision mode in htCollisionModes; the value stored will be the index in collisionModes()
+                            // Store this collision mode in htCollisionModes; the value stored will be the index in collisionModes()
                             collisionModeFileMap.Add(collisionMode, collisionModeTypeCount);
                             collisionModeTypeCount++;
                         }

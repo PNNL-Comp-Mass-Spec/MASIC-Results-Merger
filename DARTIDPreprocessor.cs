@@ -64,7 +64,7 @@ namespace MASICResultsMerger
                 }
                 else
                 {
-                    //  Obtain the dataset name from the filename
+                    // Obtain the dataset name from the filename
                     if (psmFilePath.EndsWith(MASICResultsMerger.RESULTS_SUFFIX, StringComparison.OrdinalIgnoreCase))
                     {
                         datasetName = Path.GetFileName(psmFilePath.Substring(0, psmFilePath.Length - MASICResultsMerger.RESULTS_SUFFIX.Length));
@@ -80,7 +80,7 @@ namespace MASICResultsMerger
                         datasetName = datasetName.Substring(0, datasetName.Length - 4);
                     }
 
-                    //  ReSharper disable StringLiteralTypo
+                    // ReSharper disable StringLiteralTypo
                     if (datasetName.EndsWith("_msgfplus", StringComparison.OrdinalIgnoreCase))
                     {
                         datasetName = datasetName.Substring(0, datasetName.Length - "_msgfplus".Length);
@@ -90,7 +90,7 @@ namespace MASICResultsMerger
                         datasetName = datasetName.Substring(0, datasetName.Length - "_msgfdb".Length);
                     }
 
-                    //  ReSharper restore StringLiteralTypo
+                    // ReSharper restore StringLiteralTypo
                 }
 
                 var psmGroup = new DartIdData();
@@ -140,7 +140,7 @@ namespace MASICResultsMerger
                             return false;
                         }
 
-                        //  Validate that the required columns exist
+                        // Validate that the required columns exist
                         foreach (var requiredColumn in requiredColumns)
                         {
                             if (!ColumnExists(msgfPlusColumns, requiredColumn))
