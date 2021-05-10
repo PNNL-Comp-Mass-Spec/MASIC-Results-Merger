@@ -69,21 +69,21 @@ namespace MASICResultsMerger
                     datasetName = Path.GetFileName(psmFilePath.Substring(0, psmFilePath.Length - MASICResultsMerger.RESULTS_SUFFIX.Length));
                 }
                 else
-                    {
-                        datasetName = Path.GetFileNameWithoutExtension(psmFilePath);
-                    }
+                {
+                    datasetName = Path.GetFileNameWithoutExtension(psmFilePath);
+                }
 
-                    if (datasetName.EndsWith("_syn", StringComparison.OrdinalIgnoreCase) ||
-                        datasetName.EndsWith("_fht", StringComparison.OrdinalIgnoreCase))
-                    {
-                        datasetName = datasetName.Substring(0, datasetName.Length - 4);
-                    }
+                if (datasetName.EndsWith("_syn", StringComparison.OrdinalIgnoreCase) ||
+                    datasetName.EndsWith("_fht", StringComparison.OrdinalIgnoreCase))
+                {
+                    datasetName = datasetName.Substring(0, datasetName.Length - 4);
+                }
 
-                    // ReSharper disable StringLiteralTypo
-                    if (datasetName.EndsWith("_msgfplus", StringComparison.OrdinalIgnoreCase))
-                    {
-                        datasetName = datasetName.Substring(0, datasetName.Length - "_msgfplus".Length);
-                    }
+                // ReSharper disable StringLiteralTypo
+                if (datasetName.EndsWith("_msgfplus", StringComparison.OrdinalIgnoreCase))
+                {
+                    datasetName = datasetName.Substring(0, datasetName.Length - "_msgfplus".Length);
+                }
                 else if (datasetName.EndsWith("_msgfdb", StringComparison.OrdinalIgnoreCase))
                 {
                     datasetName = datasetName.Substring(0, datasetName.Length - "_msgfdb".Length);
@@ -119,6 +119,7 @@ namespace MASICResultsMerger
                     if (mScanTimeColIndex < 0)
                     {
                         var success = ParseMergedFileHeaderLine(dataLine, msgfPlusColumns);
+
                         if (!success)
                         {
                             return false;
@@ -154,6 +155,7 @@ namespace MASICResultsMerger
                     }
 
                     var dataColumns = dataLine.Split('\t');
+
                     var scanNumber = GetValueInt(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.Scan);
                     var charge = GetValueInt(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.Charge);
                     var peptide = GetValue(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.Peptide);

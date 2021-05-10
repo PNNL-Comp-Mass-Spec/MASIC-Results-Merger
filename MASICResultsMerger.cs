@@ -495,6 +495,7 @@ namespace MASICResultsMerger
             {
                 Console.WriteLine();
                 ShowMessage("Parsing " + inputFile.Name + " and writing " + Path.GetFileName(outputFilePaths[0].Value));
+
                 if (ScanNumberColumn < 1)
                 {
                     // Assume the scan number is in the second column
@@ -507,6 +508,7 @@ namespace MASICResultsMerger
                     var linesRead = 0;
                     var writeReporterIonStats = false;
                     var writeSICStats = (sicStats.Count > 0);
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -518,9 +520,11 @@ namespace MASICResultsMerger
 
                         linesRead++;
                         var lineParts = dataLine.Split('\t').ToList();
+
                         if (linesRead == 1)
                         {
                             string headerLine;
+
                             // Write out an updated header line
                             if (lineParts.Count >= ScanNumberColumn && int.TryParse(lineParts[ScanNumberColumn - 1], out _))
                             {
@@ -538,12 +542,14 @@ namespace MASICResultsMerger
                                 // The input file does have a text-based header
                                 headerLine = string.Copy(dataLine);
                                 FindScanNumColumn(inputFile, lineParts);
+
                                 // Clear splitLine so that this line gets skipped
                                 lineParts.Clear();
                             }
 
                             var scanStatsHeaders = GetScanStatsHeaders();
                             var sicStatsHeaders = GetSICStatsHeaders();
+
                             if (!writeSICStats)
                             {
                                 sicStatsHeaders.Clear();
@@ -1249,6 +1255,7 @@ namespace MASICResultsMerger
             {
                 var datasetName = Path.GetFileNameWithoutExtension(inputFile.FullName);
                 var datasetInfo = new DatasetInfo(datasetName, 0);
+
                 // Note that FindMASICFiles will first try the full filename, and if it doesn't find a match,
                 // it will start removing text from the end of the filename by looking for underscores
                 // Look for the corresponding MASIC files in the input directory
@@ -1266,6 +1273,7 @@ namespace MASICResultsMerger
                 var sicStats = new Dictionary<int, SICStatsData>();
 
                 success = ReadMASICData(masicResultsDirectory, masicFiles, scanStats, sicStats, out var reporterIonHeaders);
+
                 if (success)
                 {
                     // Merge the MASIC data with the input file
@@ -1302,6 +1310,7 @@ namespace MASICResultsMerger
             {
                 bool scanStatsRead;
                 bool sicStatsRead;
+
                 if (string.IsNullOrWhiteSpace(masicFiles.ScanStatsFileName))
                 {
                     scanStatsRead = false;
@@ -1647,6 +1656,7 @@ namespace MASICResultsMerger
         {
             collisionModeFileMap = new Dictionary<string, int>(StringComparer.CurrentCultureIgnoreCase);
             var collisionModeTypeCount = 0;
+
             foreach (var scanStatsItem in scanStats.Values)
             {
                 if (!collisionModeFileMap.ContainsKey(scanStatsItem.CollisionMode))
@@ -1670,6 +1680,7 @@ namespace MASICResultsMerger
 
                     var linesRead = 0;
                     var fragMethodColNumber = 0;
+
                     while (!reader.EndOfStream)
                     {
                         var dataLine = reader.ReadLine();
@@ -1718,6 +1729,7 @@ namespace MASICResultsMerger
                         }
 
                         var collisionMode = lineParts[fragMethodColNumber - 1];
+
                         if (!collisionModeFileMap.ContainsKey(collisionMode))
                         {
                             // Store this collision mode in htCollisionModes; the value stored will be the index in collisionModes()
