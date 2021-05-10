@@ -1431,16 +1431,15 @@ namespace MASICResultsMerger
                     {
                         if (warningCount < 10)
                         {
-                            ShowMessage("Warning: "
-                                        + REPORTER_IONS_FILE_EXTENSION + " file refers to scan "
-                                        + scanNumber +
-                                        ", but that scan was not in the _ScanStats.txt file");
+                            ShowMessage(string.Format(
+                                "Warning: the {0} file refers to scan {1}, but that scan was not in the _ScanStats.txt file",
+                                REPORTER_IONS_FILE_EXTENSION, scanNumber));
                         }
                         else if (warningCount == 10)
                         {
-                            ShowMessage("Warning: "
-                                        + REPORTER_IONS_FILE_EXTENSION +
-                                        " file has 10 or more scan numbers that are not defined in the _ScanStats.txt file");
+                            ShowMessage(string.Format(
+                                "Warning: the {0} file has 10 or more scan numbers that are not defined in the _ScanStats.txt file",
+                                REPORTER_IONS_FILE_EXTENSION));
                         }
 
                         warningCount++;
@@ -1448,8 +1447,9 @@ namespace MASICResultsMerger
                     else if (scanStatsEntry.ScanNumber != scanNumber)
                     {
                         // Scan number mismatch; this shouldn't happen
-                        ShowMessage("Error: Scan number mismatch in ReadReporterIonStatsFile: "
-                                    + scanStatsEntry.ScanNumber + " vs. " + scanNumber);
+                        ShowMessage(string.Format(
+                            "Error: Scan number mismatch in ReadReporterIonStatsFile: {0} vs. {1}",
+                            scanStatsEntry.ScanNumber, scanNumber));
                     }
                     else
                     {
