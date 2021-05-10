@@ -860,8 +860,8 @@ namespace MASICResultsMerger
                 }
 
                 //  Create the DatasetMap file
-                using (var writer = new StreamWriter(new FileStream(Path.Combine(mOutputDirectoryPath, baseFileName + "_DatasetMap.txt"),
-                                                                    FileMode.Create, FileAccess.Write)))
+                using (var writer = new StreamWriter(
+                    new FileStream(Path.Combine(mOutputDirectoryPath, baseFileName + "_DatasetMap.txt"), FileMode.Create, FileAccess.Write)))
                 {
                     writer.WriteLine("DatasetID" + '\t' + "DatasetName");
                     foreach (var datasetMapping in datasetNameIdMap)
@@ -890,28 +890,27 @@ namespace MASICResultsMerger
                             continue;
                         }
 
-                        using (var reader = new StreamReader(new FileStream(sourceFile.Value, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                        {
-                            var linesRead = 0;
-                            while (!reader.EndOfStream)
-                            {
-                                var dataLine = reader.ReadLine();
-                                linesRead++;
-                                if (linesRead == 1)
-                                {
-                                    if (outputFileHeaderWritten[collisionMode])
-                                    {
-                                        //  skip this line
-                                        continue;
-                                    }
+                        using var reader = new StreamReader(new FileStream(sourceFile.Value, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
-                                    writer.WriteLine("DatasetID" + '\t' + dataLine);
-                                    outputFileHeaderWritten[collisionMode] = true;
-                                }
-                                else
+                        var linesRead = 0;
+                        while (!reader.EndOfStream)
+                        {
+                            var dataLine = reader.ReadLine();
+                            linesRead++;
+                            if (linesRead == 1)
+                            {
+                                if (outputFileHeaderWritten[collisionMode])
                                 {
-                                    writer.WriteLine(datasetId + '\t' + dataLine);
+                                    //  skip this line
+                                    continue;
                                 }
+
+                                writer.WriteLine("DatasetID" + '\t' + dataLine);
+                                outputFileHeaderWritten[collisionMode] = true;
+                            }
+                            else
+                            {
+                                writer.WriteLine(datasetId + '\t' + dataLine);
                             }
                         }
                     }
@@ -1347,42 +1346,42 @@ namespace MASICResultsMerger
                 //  Initialize scanStats
                 scanStats.Clear();
                 ShowMessage("  Reading: " + scanStatsFileName);
-                using (var reader = new StreamReader(new FileStream(Path.Combine(sourceDirectory, scanStatsFileName), FileMode.Open, FileAccess.Read,
-                                                                    FileShare.ReadWrite)))
+
+                using var reader = new StreamReader(
+                    new FileStream(Path.Combine(sourceDirectory, scanStatsFileName), FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            continue;
-                        }
-
-                        var lineParts = dataLine.Split('\t');
-                        if (lineParts.Length < (int)ScanStatsColumns.BasePeakMZ + 1)
-                        {
-                            continue;
-                        }
-
-                        if (!int.TryParse(lineParts[(int)ScanStatsColumns.ScanNumber], out var scanNumber))
-                        {
-                            continue;
-                        }
-
-                        //  Note: the remaining values are stored as strings to prevent the number format from changing
-                        var scanStatsEntry = new ScanStatsData(scanNumber)
-                        {
-                            ElutionTime = string.Copy(lineParts[(int)ScanStatsColumns.ScanTime]),
-                            ScanType = string.Copy(lineParts[(int)ScanStatsColumns.ScanType]),
-                            TotalIonIntensity = string.Copy(lineParts[(int)ScanStatsColumns.TotalIonIntensity]),
-                            BasePeakIntensity = string.Copy(lineParts[(int)ScanStatsColumns.BasePeakIntensity]),
-                            BasePeakMZ = string.Copy(lineParts[(int)ScanStatsColumns.BasePeakMZ]),
-                            CollisionMode = string.Empty,
-                            ReporterIonData = string.Empty
-                        };
-
-                        scanStats.Add(scanNumber, scanStatsEntry);
+                        continue;
                     }
+
+                    var lineParts = dataLine.Split('\t');
+                    if (lineParts.Length < (int)ScanStatsColumns.BasePeakMZ + 1)
+                    {
+                        continue;
+                    }
+
+                    if (!int.TryParse(lineParts[(int)ScanStatsColumns.ScanNumber], out var scanNumber))
+                    {
+                        continue;
+                    }
+
+                    //  Note: the remaining values are stored as strings to prevent the number format from changing
+                    var scanStatsEntry = new ScanStatsData(scanNumber)
+                    {
+                        ElutionTime = string.Copy(lineParts[(int)ScanStatsColumns.ScanTime]),
+                        ScanType = string.Copy(lineParts[(int)ScanStatsColumns.ScanType]),
+                        TotalIonIntensity = string.Copy(lineParts[(int)ScanStatsColumns.TotalIonIntensity]),
+                        BasePeakIntensity = string.Copy(lineParts[(int)ScanStatsColumns.BasePeakIntensity]),
+                        BasePeakMZ = string.Copy(lineParts[(int)ScanStatsColumns.BasePeakMZ]),
+                        CollisionMode = string.Empty,
+                        ReporterIonData = string.Empty
+                    };
+
+                    scanStats.Add(scanNumber, scanStatsEntry);
                 }
 
                 return true;
@@ -1404,65 +1403,64 @@ namespace MASICResultsMerger
 
             try
             {
-                using (var reader = new StreamReader(new FileStream(metadataFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(metadataFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+                    }
+
+                    var lineParts = dataLine.Split('\t').ToList();
+                    if (!headersParsed)
+                    {
+                        //  Look for the Job and Dataset columns
+                        jobIndex = lineParts.IndexOf("Job");
+                        datasetIndex = lineParts.IndexOf("Dataset");
+                        datasetIDIndex = lineParts.IndexOf("Dataset_ID");
+
+                        if (jobIndex < 0)
                         {
-                            continue;
+                            ShowErrorMessage("Job column not found in the metadata file: " + metadataFilePath);
+                            return null;
                         }
 
-                        var lineParts = dataLine.Split('\t').ToList();
-                        if (!headersParsed)
+                        if (datasetIndex < 0)
                         {
-                            //  Look for the Job and Dataset columns
-                            jobIndex = lineParts.IndexOf("Job");
-                            datasetIndex = lineParts.IndexOf("Dataset");
-                            datasetIDIndex = lineParts.IndexOf("Dataset_ID");
-
-                            if (jobIndex < 0)
-                            {
-                                ShowErrorMessage("Job column not found in the metadata file: " + metadataFilePath);
-                                return null;
-                            }
-
-                            if (datasetIndex < 0)
-                            {
-                                ShowErrorMessage("Dataset column not found in the metadata file: " + metadataFilePath);
-                                return null;
-                            }
-
-                            if (datasetIDIndex < 0)
-                            {
-                                ShowErrorMessage("Dataset_ID column not found in the metadata file: " + metadataFilePath);
-                                return null;
-                            }
-
-                            headersParsed = true;
-                            continue;
+                            ShowErrorMessage("Dataset column not found in the metadata file: " + metadataFilePath);
+                            return null;
                         }
 
-                        if (lineParts.Count > datasetIndex)
+                        if (datasetIDIndex < 0)
                         {
-                            if (int.TryParse(lineParts[jobIndex], out var jobNumber))
+                            ShowErrorMessage("Dataset_ID column not found in the metadata file: " + metadataFilePath);
+                            return null;
+                        }
+
+                        headersParsed = true;
+                        continue;
+                    }
+
+                    if (lineParts.Count > datasetIndex)
+                    {
+                        if (int.TryParse(lineParts[jobIndex], out var jobNumber))
+                        {
+                            if (int.TryParse(lineParts[datasetIDIndex], out var datasetID))
                             {
-                                if (int.TryParse(lineParts[datasetIDIndex], out var datasetID))
-                                {
-                                    var datasetName = lineParts[datasetIndex];
-                                    var datasetInfo = new DatasetInfo(datasetName, datasetID);
-                                    jobToDatasetMap.Add(jobNumber, datasetInfo);
-                                }
-                                else
-                                {
-                                    ShowMessage("Warning: Dataset_ID number not numeric in metadata file, line " + dataLine);
-                                }
+                                var datasetName = lineParts[datasetIndex];
+                                var datasetInfo = new DatasetInfo(datasetName, datasetID);
+                                jobToDatasetMap.Add(jobNumber, datasetInfo);
                             }
                             else
                             {
-                                ShowMessage("Warning: Job number not numeric in metadata file, line " + dataLine);
+                                ShowMessage("Warning: Dataset_ID number not numeric in metadata file, line " + dataLine);
                             }
+                        }
+                        else
+                        {
+                            ShowMessage("Warning: Job number not numeric in metadata file, line " + dataLine);
                         }
                     }
                 }
@@ -1483,38 +1481,38 @@ namespace MASICResultsMerger
                 //  Initialize sicStats
                 sicStats.Clear();
                 ShowMessage("  Reading: " + sicStatsFileName);
-                using (var reader = new StreamReader(new FileStream(Path.Combine(sourceDirectory, sicStatsFileName), FileMode.Open, FileAccess.Read,
-                                                                    FileShare.ReadWrite)))
+
+                using var reader = new StreamReader(
+                    new FileStream(Path.Combine(sourceDirectory, sicStatsFileName), FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                while (!reader.EndOfStream)
                 {
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            continue;
-                        }
+                        continue;
+                    }
 
-                        var lineParts = dataLine.Split('\t');
-                        if (lineParts.Length >= (int)SICStatsColumns.StatMomentsArea + 1 &&
-                            int.TryParse(lineParts[(int)SICStatsColumns.FragScanNumber], out var fragScanNumber))
+                    var lineParts = dataLine.Split('\t');
+                    if (lineParts.Length >= (int)SICStatsColumns.StatMomentsArea + 1 &&
+                        int.TryParse(lineParts[(int)SICStatsColumns.FragScanNumber], out var fragScanNumber))
+                    {
+                        //  Note: the remaining values are stored as strings to prevent the number format from changing
+                        var sicStatsEntry = new SICStatsData(fragScanNumber)
                         {
-                            //  Note: the remaining values are stored as strings to prevent the number format from changing
-                            var sicStatsEntry = new SICStatsData(fragScanNumber)
-                            {
-                                OptimalScanNumber = string.Copy(lineParts[(int)SICStatsColumns.OptimalPeakApexScanNumber]),
-                                PeakMaxIntensity = string.Copy(lineParts[(int)SICStatsColumns.PeakMaxIntensity]),
-                                PeakSignalToNoiseRatio = string.Copy(lineParts[(int)SICStatsColumns.PeakSignalToNoiseRatio]),
-                                FWHMInScans = string.Copy(lineParts[(int)SICStatsColumns.FWHMInScans]),
-                                PeakScanStart = string.Copy(lineParts[(int)SICStatsColumns.PeakScanStart]),
-                                PeakScanEnd = string.Copy(lineParts[(int)SICStatsColumns.PeakScanEnd]),
-                                PeakArea = string.Copy(lineParts[(int)SICStatsColumns.PeakArea]),
-                                ParentIonIntensity = string.Copy(lineParts[(int)SICStatsColumns.ParentIonIntensity]),
-                                ParentIonMZ = string.Copy(lineParts[(int)SICStatsColumns.MZ]),
-                                StatMomentsArea = string.Copy(lineParts[(int)SICStatsColumns.StatMomentsArea])
-                            };
+                            OptimalScanNumber = string.Copy(lineParts[(int)SICStatsColumns.OptimalPeakApexScanNumber]),
+                            PeakMaxIntensity = string.Copy(lineParts[(int)SICStatsColumns.PeakMaxIntensity]),
+                            PeakSignalToNoiseRatio = string.Copy(lineParts[(int)SICStatsColumns.PeakSignalToNoiseRatio]),
+                            FWHMInScans = string.Copy(lineParts[(int)SICStatsColumns.FWHMInScans]),
+                            PeakScanStart = string.Copy(lineParts[(int)SICStatsColumns.PeakScanStart]),
+                            PeakScanEnd = string.Copy(lineParts[(int)SICStatsColumns.PeakScanEnd]),
+                            PeakArea = string.Copy(lineParts[(int)SICStatsColumns.PeakArea]),
+                            ParentIonIntensity = string.Copy(lineParts[(int)SICStatsColumns.ParentIonIntensity]),
+                            ParentIonMZ = string.Copy(lineParts[(int)SICStatsColumns.MZ]),
+                            StatMomentsArea = string.Copy(lineParts[(int)SICStatsColumns.StatMomentsArea])
+                        };
 
-                            sicStats.Add(fragScanNumber, sicStatsEntry);
-                        }
+                        sicStats.Add(fragScanNumber, sicStatsEntry);
                     }
                 }
 
@@ -1539,75 +1537,75 @@ namespace MASICResultsMerger
             try
             {
                 ShowMessage("  Reading: " + reporterIonStatsFileName);
-                using (var reader = new StreamReader(new FileStream(Path.Combine(sourceDirectory, reporterIonStatsFileName), FileMode.Open,
-                                                                    FileAccess.Read, FileShare.ReadWrite)))
+
+                using var reader = new StreamReader(
+                    new FileStream(Path.Combine(sourceDirectory, reporterIonStatsFileName), FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                var linesRead = 0;
+                while (!reader.EndOfStream)
                 {
-                    var linesRead = 0;
-                    while (!reader.EndOfStream)
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                        {
-                            continue;
-                        }
+                        continue;
+                    }
 
-                        linesRead++;
-                        var lineParts = dataLine.Split('\t');
-                        if (linesRead == 1)
+                    linesRead++;
+                    var lineParts = dataLine.Split('\t');
+                    if (linesRead == 1)
+                    {
+                        //  This is the header line; we need to cache it
+                        if (lineParts.Length >= (int)ReporterIonStatsColumns.ReporterIonIntensityMax + 1)
                         {
-                            //  This is the header line; we need to cache it
-                            if (lineParts.Length >= (int)ReporterIonStatsColumns.ReporterIonIntensityMax + 1)
-                            {
-                                reporterIonHeaders = lineParts[(int)ReporterIonStatsColumns.CollisionMode];
-                                reporterIonHeaders += '\t' + FlattenArray(lineParts, (int)ReporterIonStatsColumns.ReporterIonIntensityMax);
-                            }
-                            else
-                            {
-                                //  There aren't enough columns in the header line; this is unexpected
-                                reporterIonHeaders = "Collision Mode" + '\t' + "AdditionalReporterIonColumns";
-                            }
-                        }
-
-                        if (lineParts.Length < (int)ReporterIonStatsColumns.ReporterIonIntensityMax + 1)
-                        {
-                            continue;
-                        }
-
-                        if (!int.TryParse(lineParts[(int)ReporterIonStatsColumns.ScanNumber], out var scanNumber))
-                        {
-                            continue;
-                        }
-
-                        //  Look for scanNumber in scanNumbers
-                        if (!scanStats.TryGetValue(scanNumber, out var scanStatsEntry))
-                        {
-                            if (warningCount < 10)
-                            {
-                                ShowMessage("Warning: "
-                                             + REPORTER_IONS_FILE_EXTENSION + " file refers to scan "
-                                                                                + scanNumber +
-                                                                                   ", but that scan was not in the _ScanStats.txt file");
-                            }
-                            else if (warningCount == 10)
-                            {
-                                ShowMessage("Warning: "
-                                             + REPORTER_IONS_FILE_EXTENSION +
-                                                " file has 10 or more scan numbers that are not defined in the _ScanStats.txt file");
-                            }
-
-                            warningCount++;
-                        }
-                        else if (scanStatsEntry.ScanNumber != scanNumber)
-                        {
-                            //  Scan number mismatch; this shouldn't happen
-                            ShowMessage("Error: Scan number mismatch in ReadReporterIonStatsFile: "
-                                         + scanStatsEntry.ScanNumber + " vs. " + scanNumber);
+                            reporterIonHeaders = lineParts[(int)ReporterIonStatsColumns.CollisionMode];
+                            reporterIonHeaders += '\t' + FlattenArray(lineParts, (int)ReporterIonStatsColumns.ReporterIonIntensityMax);
                         }
                         else
                         {
-                            scanStatsEntry.CollisionMode = string.Copy(lineParts[(int)ReporterIonStatsColumns.CollisionMode]);
-                            scanStatsEntry.ReporterIonData = FlattenArray(lineParts, (int)ReporterIonStatsColumns.ReporterIonIntensityMax);
+                            //  There aren't enough columns in the header line; this is unexpected
+                            reporterIonHeaders = "Collision Mode" + '\t' + "AdditionalReporterIonColumns";
                         }
+                    }
+
+                    if (lineParts.Length < (int)ReporterIonStatsColumns.ReporterIonIntensityMax + 1)
+                    {
+                        continue;
+                    }
+
+                    if (!int.TryParse(lineParts[(int)ReporterIonStatsColumns.ScanNumber], out var scanNumber))
+                    {
+                        continue;
+                    }
+
+                    //  Look for scanNumber in scanNumbers
+                    if (!scanStats.TryGetValue(scanNumber, out var scanStatsEntry))
+                    {
+                        if (warningCount < 10)
+                        {
+                            ShowMessage("Warning: "
+                                        + REPORTER_IONS_FILE_EXTENSION + " file refers to scan "
+                                        + scanNumber +
+                                        ", but that scan was not in the _ScanStats.txt file");
+                        }
+                        else if (warningCount == 10)
+                        {
+                            ShowMessage("Warning: "
+                                        + REPORTER_IONS_FILE_EXTENSION +
+                                        " file has 10 or more scan numbers that are not defined in the _ScanStats.txt file");
+                        }
+
+                        warningCount++;
+                    }
+                    else if (scanStatsEntry.ScanNumber != scanNumber)
+                    {
+                        //  Scan number mismatch; this shouldn't happen
+                        ShowMessage("Error: Scan number mismatch in ReadReporterIonStatsFile: "
+                                    + scanStatsEntry.ScanNumber + " vs. " + scanNumber);
+                    }
+                    else
+                    {
+                        scanStatsEntry.CollisionMode = string.Copy(lineParts[(int)ReporterIonStatsColumns.CollisionMode]);
+                        scanStatsEntry.ReporterIonData = FlattenArray(lineParts, (int)ReporterIonStatsColumns.ReporterIonIntensityMax);
                     }
                 }
             }
@@ -1668,77 +1666,76 @@ namespace MASICResultsMerger
                 collisionModeTypeCount = 0;
                 try
                 {
-                    using (var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
+                    using var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+
+                    var linesRead = 0;
+                    var fragMethodColNumber = 0;
+                    while (!reader.EndOfStream)
                     {
-                        var linesRead = 0;
-                        var fragMethodColNumber = 0;
-                        while (!reader.EndOfStream)
+                        var dataLine = reader.ReadLine();
+                        if (string.IsNullOrWhiteSpace(dataLine))
                         {
-                            var dataLine = reader.ReadLine();
-                            if (string.IsNullOrWhiteSpace(dataLine))
-                            {
-                                continue;
-                            }
+                            continue;
+                        }
 
-                            linesRead++;
-                            var lineParts = dataLine.Split('\t');
-                            if (linesRead == 1)
+                        linesRead++;
+                        var lineParts = dataLine.Split('\t');
+                        if (linesRead == 1)
+                        {
+                            //  Header line; look for the FragMethod column
+                            for (var colIndex = 0; colIndex < lineParts.Length; colIndex++)
                             {
-                                //  Header line; look for the FragMethod column
-                                for (var colIndex = 0; colIndex < lineParts.Length; colIndex++)
+                                if (string.Equals(lineParts[colIndex], "FragMethod", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    if (string.Equals(lineParts[colIndex], "FragMethod", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        fragMethodColNumber = colIndex + 1;
-                                        break;
-                                    }
-                                }
-
-                                if (fragMethodColNumber == 0)
-                                {
-                                    //  Fragmentation method column not found
-                                    ShowWarning("Unable to determine the collision mode for results being merged. " +
-                                                 "This is typically obtained from a MASIC _ReporterIons.txt file " +
-                                                  "or from the FragMethod column in the MS-GF+ results file");
+                                    fragMethodColNumber = colIndex + 1;
                                     break;
                                 }
-
-                                //  Also look for the scan number column and the protein column
-                                FindScanNumColumn(inputFile, lineParts);
-                                continue;
                             }
 
-                            if (lineParts.Length < ScanNumberColumn ||
-                                !int.TryParse(lineParts[ScanNumberColumn - 1], out var scanNumber))
+                            if (fragMethodColNumber == 0)
                             {
-                                continue;
+                                //  Fragmentation method column not found
+                                ShowWarning("Unable to determine the collision mode for results being merged. " +
+                                            "This is typically obtained from a MASIC _ReporterIons.txt file " +
+                                            "or from the FragMethod column in the MS-GF+ results file");
+                                break;
                             }
 
-                            if (lineParts.Length < fragMethodColNumber)
-                            {
-                                continue;
-                            }
+                            //  Also look for the scan number column and the protein column
+                            FindScanNumColumn(inputFile, lineParts);
+                            continue;
+                        }
 
-                            var collisionMode = lineParts[fragMethodColNumber - 1];
-                            if (!collisionModeFileMap.ContainsKey(collisionMode))
-                            {
-                                //  Store this collision mode in htCollisionModes; the value stored will be the index in collisionModes()
-                                collisionModeFileMap.Add(collisionMode, collisionModeTypeCount);
-                                collisionModeTypeCount++;
-                            }
+                        if (lineParts.Length < ScanNumberColumn ||
+                            !int.TryParse(lineParts[ScanNumberColumn - 1], out var scanNumber))
+                        {
+                            continue;
+                        }
 
-                            if (!scanStats.TryGetValue(scanNumber, out var scanStatsEntry))
+                        if (lineParts.Length < fragMethodColNumber)
+                        {
+                            continue;
+                        }
+
+                        var collisionMode = lineParts[fragMethodColNumber - 1];
+                        if (!collisionModeFileMap.ContainsKey(collisionMode))
+                        {
+                            //  Store this collision mode in htCollisionModes; the value stored will be the index in collisionModes()
+                            collisionModeFileMap.Add(collisionMode, collisionModeTypeCount);
+                            collisionModeTypeCount++;
+                        }
+
+                        if (!scanStats.TryGetValue(scanNumber, out var scanStatsEntry))
+                        {
+                            scanStatsEntry = new ScanStatsData(scanNumber)
                             {
-                                scanStatsEntry = new ScanStatsData(scanNumber)
-                                {
-                                    CollisionMode = collisionMode
-                                };
-                                scanStats.Add(scanNumber, scanStatsEntry);
-                            }
-                            else
-                            {
-                                scanStatsEntry.CollisionMode = collisionMode;
-                            }
+                                CollisionMode = collisionMode
+                            };
+                            scanStats.Add(scanNumber, scanStatsEntry);
+                        }
+                        else
+                        {
+                            scanStatsEntry.CollisionMode = collisionMode;
                         }
                     }
                 }

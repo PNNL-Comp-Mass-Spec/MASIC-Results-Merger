@@ -95,98 +95,97 @@ namespace MASICResultsMerger
 
                 var psmGroup = new DartIdData();
 
-                using (var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite)))
-                using (var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite)))
+                using var reader = new StreamReader(new FileStream(inputFile.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
+                using var writer = new StreamWriter(new FileStream(outputFilePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite));
+
+                var headerLine = new List<string>
                 {
-                    var headerLine = new List<string>
-                    {
-                        "Dataset",
-                        "Peptide",
-                        "MSGFDB_SpecEValue",
-                        "Charge",
-                        "LeadingProtein",
-                        "Proteins",
-                        "ElutionTime",
-                        "PeakWidthMinutes"
-                    };
+                    "Dataset",
+                    "Peptide",
+                    "MSGFDB_SpecEValue",
+                    "Charge",
+                    "LeadingProtein",
+                    "Proteins",
+                    "ElutionTime",
+                    "PeakWidthMinutes"
+                };
 
-                    writer.WriteLine(string.Join("\t", headerLine));
+                writer.WriteLine(string.Join("\t", headerLine));
 
-                    while (!reader.EndOfStream)
+                while (!reader.EndOfStream)
+                {
+                    var dataLine = reader.ReadLine();
+                    if (string.IsNullOrWhiteSpace(dataLine))
+                        continue;
+
+                    if (mScanTimeColIndex < 0)
                     {
-                        var dataLine = reader.ReadLine();
-                        if (string.IsNullOrWhiteSpace(dataLine))
-                            continue;
+                        var success = ParseMergedFileHeaderLine(dataLine, msgfPlusColumns);
+                        if (!success)
+                        {
+                            return false;
+                        }
 
                         if (mScanTimeColIndex < 0)
                         {
-                            var success = ParseMergedFileHeaderLine(dataLine, msgfPlusColumns);
-                            if (!success)
-                            {
-                                return false;
-                            }
+                            OnErrorEvent(string.Format("File {0} is missing column {1} on the header line", inputFile.Name,
+                                MASICResultsMerger.SCAN_STATS_ELUTION_TIME_COLUMN));
+                            return false;
+                        }
 
-                            if (mScanTimeColIndex < 0)
+                        if (mPeakWidthMinutesColIndex < 0)
+                        {
+                            OnErrorEvent(string.Format("File {0} is missing column {1} on the header line", inputFile.Name,
+                                MASICResultsMerger.PEAK_WIDTH_MINUTES_COLUMN));
+                            return false;
+                        }
+
+                        //  Validate that the required columns exist
+                        foreach (var requiredColumn in requiredColumns)
+                        {
+                            if (!ColumnExists(msgfPlusColumns, requiredColumn))
                             {
                                 OnErrorEvent(string.Format("File {0} is missing column {1} on the header line", inputFile.Name,
-                                                           MASICResultsMerger.SCAN_STATS_ELUTION_TIME_COLUMN));
+                                    requiredColumn.ToString()));
                                 return false;
                             }
-
-                            if (mPeakWidthMinutesColIndex < 0)
-                            {
-                                OnErrorEvent(string.Format("File {0} is missing column {1} on the header line", inputFile.Name,
-                                                           MASICResultsMerger.PEAK_WIDTH_MINUTES_COLUMN));
-                                return false;
-                            }
-
-                            //  Validate that the required columns exist
-                            foreach (var requiredColumn in requiredColumns)
-                            {
-                                if (!ColumnExists(msgfPlusColumns, requiredColumn))
-                                {
-                                    OnErrorEvent(string.Format("File {0} is missing column {1} on the header line", inputFile.Name,
-                                                               requiredColumn.ToString()));
-                                    return false;
-                                }
-                            }
-
-                            continue;
                         }
 
-                        var dataColumns = dataLine.Split('\t');
-                        var scanNumber = GetValueInt(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.Scan);
-                        var charge = GetValueInt(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.Charge);
-                        var peptide = GetValue(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.Peptide);
-                        var protein = GetValue(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.Protein);
-
-                        if (!PeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(peptide, out var primarySequence, out _, out _))
-                        {
-                            primarySequence = peptide;
-                        }
-
-                        if (scanNumber != psmGroup.ScanNumber ||
-                            charge != psmGroup.Charge ||
-                            !string.Equals(primarySequence, psmGroup.PrimarySequence))
-                        {
-                            StoreResult(writer, psmGroup, datasetName);
-
-                            psmGroup = new DartIdData(dataLine, scanNumber, peptide, primarySequence, protein)
-                            {
-                                SpecEValue = GetValue(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.SpecProb_EValue),
-                                Charge = charge,
-                                ElutionTime = dataColumns[mScanTimeColIndex],
-                                PeakWidthMinutes = dataColumns[mPeakWidthMinutesColIndex]
-                            };
-                        }
-                        else
-                        {
-                            psmGroup.Proteins.Add(protein);
-                        }
+                        continue;
                     }
 
-                    StoreResult(writer, psmGroup, datasetName);
+                    var dataColumns = dataLine.Split('\t');
+                    var scanNumber = GetValueInt(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.Scan);
+                    var charge = GetValueInt(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.Charge);
+                    var peptide = GetValue(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.Peptide);
+                    var protein = GetValue(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.Protein);
+
+                    if (!PeptideCleavageStateCalculator.SplitPrefixAndSuffixFromSequence(peptide, out var primarySequence, out _, out _))
+                    {
+                        primarySequence = peptide;
+                    }
+
+                    if (scanNumber != psmGroup.ScanNumber ||
+                        charge != psmGroup.Charge ||
+                        !string.Equals(primarySequence, psmGroup.PrimarySequence))
+                    {
+                        StoreResult(writer, psmGroup, datasetName);
+
+                        psmGroup = new DartIdData(dataLine, scanNumber, peptide, primarySequence, protein)
+                        {
+                            SpecEValue = GetValue(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.SpecProb_EValue),
+                            Charge = charge,
+                            ElutionTime = dataColumns[mScanTimeColIndex],
+                            PeakWidthMinutes = dataColumns[mPeakWidthMinutesColIndex]
+                        };
+                    }
+                    else
+                    {
+                        psmGroup.Proteins.Add(protein);
+                    }
                 }
+
+                StoreResult(writer, psmGroup, datasetName);
 
                 return true;
             }
