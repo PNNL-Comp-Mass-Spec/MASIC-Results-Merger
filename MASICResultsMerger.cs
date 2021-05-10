@@ -16,7 +16,7 @@ namespace MASICResultsMerger
     internal class MASICResultsMerger : PRISM.FileProcessor.ProcessFilesBase
     {
         // ReSharper disable once CommentTypo
-        // Ignore Spelling: Frag, SICstats
+        // Ignore Spelling: Frag, Mage, na, Num, SICstats
 
         /// <summary>
         /// Constructor

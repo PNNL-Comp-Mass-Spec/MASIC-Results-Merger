@@ -14,9 +14,9 @@ namespace MASICResultsMerger
     /// </summary>
     public static class Program
     {
-        // Ignore Spelling: tsv, fht
+        // Ignore Spelling: fht, Mage, tsv
 
-        private const string PROGRAM_DATE = "November 25, 2020";
+        private const string PROGRAM_DATE = "May 10, 2021";
 
         private static string mInputFilePath;
         private static bool mCreateDartIdInputFile;
