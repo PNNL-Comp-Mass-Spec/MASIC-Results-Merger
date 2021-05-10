@@ -50,7 +50,7 @@ namespace MASICResultsMerger
                 var requiredColumns = new List<MSGFPlusSynFileColumns>
                 {
                     MSGFPlusSynFileColumns.Peptide,
-                    MSGFPlusSynFileColumns.SpecProb_EValue,
+                    MSGFPlusSynFileColumns.SpecEValue,
                     MSGFPlusSynFileColumns.Charge,
                     MSGFPlusSynFileColumns.Protein
                 };
@@ -173,7 +173,7 @@ namespace MASICResultsMerger
 
                         psmGroup = new DartIdData(dataLine, scanNumber, peptide, primarySequence, protein)
                         {
-                            SpecEValue = GetValue(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.SpecProb_EValue),
+                            SpecEValue = GetValue(dataColumns, msgfPlusColumns, MSGFPlusSynFileColumns.SpecEValue),
                             Charge = charge,
                             ElutionTime = dataColumns[mScanTimeColIndex],
                             PeakWidthMinutes = dataColumns[mPeakWidthMinutesColIndex]
@@ -254,9 +254,9 @@ namespace MASICResultsMerger
                     else if (headerNames[index].Equals("SpecEValue", StringComparison.OrdinalIgnoreCase))
                     {
                         // In .tsv files created by MzidToTsvConverter, the MSGFDB_SpecEValue column is named SpecEValue
-                        if (!msgfPlusColumns.ContainsKey(MSGFPlusSynFileColumns.SpecProb_EValue))
+                        if (!msgfPlusColumns.ContainsKey(MSGFPlusSynFileColumns.SpecEValue))
                         {
-                            msgfPlusColumns.Add(MSGFPlusSynFileColumns.SpecProb_EValue, index);
+                            msgfPlusColumns.Add(MSGFPlusSynFileColumns.SpecEValue, index);
                         }
                     }
                     else if (headerNames[index].Equals("ScanNum", StringComparison.OrdinalIgnoreCase))
