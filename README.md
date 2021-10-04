@@ -1,7 +1,7 @@
 # MASIC Results Merger
 
 This program merges the contents of a tab-delimited peptide hit results file 
-(e.g. from X!Tandem or MSGF+) with the corresponding MASIC results files, 
+(e.g. from X!Tandem or MS-GF+) with the corresponding MASIC results files, 
 appending the relevant MASIC stats for each peptide hit result, writing the 
 merged data to a new tab-delimited text file. 
 
@@ -30,11 +30,11 @@ switch can be used to change this (see below).
 
 Common input files are
 * Peptide Hit Results Processor (https://github.com/PNNL-Comp-Mass-Spec/PHRP) tab-delimited files
-  * MSGF+ syn/fht file (`_msgfplus_syn.txt` or `_msgfplus_fht.txt`)
+  * MS-GF+ syn/fht file (`_msgfplus_syn.txt` or `_msgfplus_fht.txt`)
   * SEQUEST Synopsis or First-Hits file (`_syn.txt `or `_fht.txt`)
   * XTandem `_xt.txt` file
 * MzidToTSVConverter (https://github.com/PNNL-Comp-Mass-Spec/Mzid-To-Tsv-Converter) .TSV files
-  * This is a tab-delimited text file created from a `.mzid` file (e.g. from MSGF+)
+  * This is a tab-delimited text file created from a `.mzid` file (e.g. from MS-GF+)
 
 If the MASIC result files are not in the same directory as the input file, use /M 
 to define the path to the correct directory. 
