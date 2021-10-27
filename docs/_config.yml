@@ -2,3 +2,6 @@
 name: MASIC-Results-Merger
 description: Reads the contents of a tab-delimited peptide hit results file (e.g. from Sequest, XTandem, Inspect, or MSGF+) and merges that information with the corresponding MASIC results files, appending the relevant MASIC stats for each peptide hit result.
 url: https://pnnl-comp-mass-spec.github.io/MASIC-Results-Merger/
+
+# Google Analytics
+google_analytics: G-LXXKP1N66C
