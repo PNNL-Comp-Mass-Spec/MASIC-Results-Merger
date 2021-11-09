@@ -23,7 +23,7 @@ namespace MASICResultsMerger
         /// </summary>
         public MASICResultsMerger()
         {
-            mFileDate = "January 25, 2021";
+            mFileDate = "November 9, 2021";
             ProcessedDatasets = new List<ProcessedFileInfo>();
 
             InitializeLocalVariables();
@@ -139,6 +139,7 @@ namespace MASICResultsMerger
         {
             var triedDatasetID = false;
             var success = false;
+
             try
             {
                 Console.WriteLine();
@@ -152,6 +153,7 @@ namespace MASICResultsMerger
                     var scanStatsFile = new FileInfo(Path.Combine(masicResultsDirectory, datasetName + SCAN_STATS_FILE_EXTENSION));
                     var sicStatsFile = new FileInfo(Path.Combine(masicResultsDirectory, datasetName + SIC_STATS_FILE_EXTENSION));
                     var reportIonsFile = new FileInfo(Path.Combine(masicResultsDirectory, datasetName + REPORTER_IONS_FILE_EXTENSION));
+
                     if (scanStatsFile.Exists || sicStatsFile.Exists)
                     {
                         if (scanStatsFile.Exists)
@@ -1186,8 +1188,10 @@ namespace MASICResultsMerger
                 // it will start removing text from the end of the filename by looking for underscores
                 // Look for the corresponding MASIC files in the input directory
                 var masicFiles = new MASICFileInfo();
-                var masicFileSearchInfo = " in " + masicResultsDirectory;
+                var masicFileSearchInfo = "in " + masicResultsDirectory;
+
                 var success = FindMASICFiles(masicResultsDirectory, datasetInfo, masicFiles, masicFileSearchInfo, 0);
+
                 if (!success)
                 {
                     SetLocalErrorCode(ResultsProcessorErrorCodes.MissingMASICFiles);
