@@ -1,5 +1,8 @@
 MASIC Results Merger Revision History
 
+Version 2.0.7983; November 9, 2021
+	- Fix bug that failed to find _SICstats.txt files on Linux due to a case mismatch
+
 Version 2.0.7800; May 10, 2021
 	- Read MASIC result files using readers in PHRPReader
 
