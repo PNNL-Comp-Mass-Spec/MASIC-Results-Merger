@@ -37,6 +37,8 @@ namespace MASICResultsMerger
         private static int mScanNumberColumn;
         private static bool mSeparateByCollisionMode;
 
+        private static bool mTraceMode;
+
         private static MASICResultsMerger mMASICResultsMerger;
         private static DateTime mLastProgressReportTime;
         private static int mLastProgressReportValue;
@@ -56,6 +58,7 @@ namespace MASICResultsMerger
             mLogMessagesToFile = false;
             mScanNumberColumn = MASICResultsMerger.DEFAULT_SCAN_NUMBER_COLUMN;
             mSeparateByCollisionMode = false;
+            mTraceMode = false;
 
             try
             {
@@ -85,7 +88,8 @@ namespace MASICResultsMerger
                     ScanNumberColumn = mScanNumberColumn,
                     SeparateByCollisionMode = mSeparateByCollisionMode,
                     CreateDartIdInputFile = mCreateDartIdInputFile,
-                    MageResults = mMageResults
+                    MageResults = mMageResults,
+                    TraceMode = mTraceMode
                 };
 
                 mMASICResultsMerger.ErrorEvent += MASICResultsMerger_ErrorEvent;
@@ -182,7 +186,8 @@ namespace MASICResultsMerger
                 "DartID",
                 "S",
                 "A",
-                "R"
+                "R",
+                "Trace"
             };
 
             try
@@ -262,6 +267,10 @@ namespace MASICResultsMerger
                     mRecreateDirectoryHierarchyInAlternatePath = true;
                 }
 
+                if (commandLineParser.IsParameterPresent("Trace"))
+                {
+                    mTraceMode = true;
+                }
                 return true;
             }
             catch (Exception ex)

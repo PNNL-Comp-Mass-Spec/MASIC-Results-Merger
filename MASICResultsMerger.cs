@@ -93,6 +93,11 @@ namespace MASICResultsMerger
         /// </summary>
         public int ScanNumberColumn { get; set; }
 
+        /// <summary>
+        /// When true, show additional debug messages
+        /// </summary>
+        public bool TraceMode { get; set; }
+
         #endregion
 
         private double ComputePeakWidthMinutes(IReadOnlyDictionary<int, ScanStatsData> scanStats, string peakScanStart, string peakScanEnd)
@@ -159,16 +164,32 @@ namespace MASICResultsMerger
                         break;
                     }
 
+                    if (TraceMode)
+                    {
+                        OnDebugEvent("These expected files were not found:\n   {0}\n   {1}", scanStatsFile.Name, sicStatsFile.Name);
+                        Console.WriteLine();
+                    }
+
                     // Find the last underscore in datasetName, then remove it and any text after it
                     var charIndex = datasetName.LastIndexOf('_');
                     if (charIndex > 0)
                     {
                         datasetName = datasetName.Substring(0, charIndex);
+
+                        if (TraceMode)
+                        {
+                            ShowMessage("Now looking for " + datasetName);
+                        }
                     }
                     else if (!triedDatasetID && datasetInfo.DatasetID > 0)
                     {
                         datasetName = datasetInfo.DatasetID + "_" + datasetInfo.DatasetName;
                         triedDatasetID = true;
+
+                        if (TraceMode)
+                        {
+                            ShowMessage("Now looking for " + datasetName);
+                        }
                     }
                     else
                     {
