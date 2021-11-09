@@ -143,7 +143,9 @@ namespace MASICResultsMerger
             {
                 Console.WriteLine();
                 ShowMessage("Looking for MASIC data files that correspond to " + datasetInfo.DatasetName);
-                var datasetName = string.Copy(datasetInfo.DatasetName);
+
+                var datasetName = datasetInfo.DatasetName;
+
                 // Use a loop to try various possible dataset names
                 while (true)
                 {
@@ -456,7 +458,7 @@ namespace MASICResultsMerger
                             else
                             {
                                 // The input file does have a text-based header
-                                headerLine = string.Copy(dataLine);
+                                headerLine = dataLine;
                                 FindScanNumColumn(inputFile, lineParts);
 
                                 // Clear splitLine so that this line gets skipped
@@ -564,7 +566,7 @@ namespace MASICResultsMerger
                                 // Collision mode is defined
                                 addonColumns.Add(scanStatsEntry.CollisionMode);
                                 addonColumns.Add(scanStatsEntry.ReporterIonData);
-                                collisionModeCurrentScan = string.Copy(scanStatsEntry.CollisionMode);
+                                collisionModeCurrentScan = scanStatsEntry.CollisionMode;
                             }
                         }
                         else if (SeparateByCollisionMode)
@@ -575,7 +577,7 @@ namespace MASICResultsMerger
                             }
                             else
                             {
-                                collisionModeCurrentScan = string.Copy(scanStatsEntry.CollisionMode);
+                                collisionModeCurrentScan = scanStatsEntry.CollisionMode;
                             }
                         }
 
@@ -721,7 +723,7 @@ namespace MASICResultsMerger
                     var candidateName = processedDataset.BaseName;
                     if (string.IsNullOrEmpty(baseFileName))
                     {
-                        baseFileName = string.Copy(candidateName);
+                        baseFileName = candidateName;
                     }
                     else
                     {
@@ -891,7 +893,7 @@ namespace MASICResultsMerger
             }
             else
             {
-                masicResultsDirectory = string.Copy(mMASICResultsDirectoryPath);
+                masicResultsDirectory = mMASICResultsDirectoryPath;
             }
 
             ProcessedDatasets.Clear();
