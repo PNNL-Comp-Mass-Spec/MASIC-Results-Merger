@@ -11,7 +11,7 @@ goto Done
 
 :DoWork
 echo.
-echo Procesing with %ExePath%
+echo Processing with %ExePath%
 echo.
 
 echo Example 1, process a PHRP _syn.txt file

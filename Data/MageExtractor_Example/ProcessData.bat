@@ -11,7 +11,7 @@ goto Done
 
 :DoWork
 echo.
-echo Procesing with %ExePath%
+echo Processing with %ExePath%
 echo.
 
 echo Process a Mage Extractor file

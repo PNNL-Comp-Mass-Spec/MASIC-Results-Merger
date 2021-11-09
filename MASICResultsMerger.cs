@@ -228,12 +228,12 @@ namespace MASICResultsMerger
             if (string.IsNullOrWhiteSpace(masicFiles.ScanStatsFileName))
             {
                 // ReSharper disable once StringLiteralTypo
-                ShowMessage("  Note: The MASIC SICstats file was found, but the ScanStats file dose not exist " + masicFileSearchInfo);
+                ShowMessage("  Note: The MASIC SICstats file was found, but the ScanStats file does not exist " + masicFileSearchInfo);
             }
             else if (string.IsNullOrWhiteSpace(masicFiles.SICStatsFileName))
             {
                 // ReSharper disable once StringLiteralTypo
-                ShowMessage("  Note: The MASIC ScanStats file was found, but the SICstats file dose not exist " + masicFileSearchInfo);
+                ShowMessage("  Note: The MASIC ScanStats file was found, but the SICstats file does not exist " + masicFileSearchInfo);
             }
 
             return true;

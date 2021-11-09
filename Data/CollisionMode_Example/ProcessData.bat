@@ -11,7 +11,7 @@ goto Done
 
 :DoWork
 echo.
-echo Procesing with %ExePath%
+echo Processing with %ExePath%
 echo.
 
 echo Example 1, process a _syn.txt file created by PeptideHitResultsProcessor (PHRP) using a MSGF+ results
