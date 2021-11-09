@@ -31,7 +31,14 @@ namespace MASICResultsMerger
 
         #region "Constants and Enums"
 
-        private const string SIC_STATS_FILE_EXTENSION = "_SICStats.txt";
+        // ReSharper disable CommentTypo
+
+        /// <summary>
+        /// _SICstats filename suffix
+        /// </summary>
+        /// <remarks>MASIC uses lowercase "stats" in the SICstats filename</remarks>
+        // ReSharper restore CommentTypo
+        private const string SIC_STATS_FILE_EXTENSION = "_SICstats.txt";
         private const string SCAN_STATS_FILE_EXTENSION = "_ScanStats.txt";
         private const string REPORTER_IONS_FILE_EXTENSION = "_ReporterIons.txt";
 
