@@ -9,9 +9,9 @@ using PRISM;
 namespace MASICResultsMerger
 {
     /// <summary>
-    /// This class merges the contents of a tab-delimited peptide hit results file
-    /// (e.g. from SEQUEST, X!Tandem, or MS-GF+) with the corresponding MASIC results files,
-    /// appending the relevant MASIC stats for each peptide hit result
+    /// This class merges the contents of a tab-delimited peptide hit results file from PHRP
+    /// (for MS-GF+, MaxQuant, X!Tandem, etc.) with the corresponding MASIC results files,
+    /// appending the relevant MASIC stats to each peptide hit result
     /// </summary>
     internal class MASICResultsMerger : PRISM.FileProcessor.ProcessFilesBase
     {

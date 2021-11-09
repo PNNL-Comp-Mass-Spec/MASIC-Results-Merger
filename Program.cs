@@ -8,9 +8,9 @@ using PRISM.FileProcessor;
 namespace MASICResultsMerger
 {
     /// <summary>
-    /// This program merges the contents of a tab-delimited peptide hit results file
-    /// (e.g. from SEQUEST, X!Tandem, or MS-GF+) with the corresponding MASIC results files,
-    /// appending the relevant MASIC stats for each peptide hit result
+    /// This program merges the contents of a tab-delimited peptide hit results file from PHRP
+    /// (for MS-GF+, MaxQuant, X!Tandem, etc.) with the corresponding MASIC results files,
+    /// appending the relevant MASIC stats to each peptide hit result
     /// </summary>
     public static class Program
     {
@@ -296,9 +296,9 @@ namespace MASICResultsMerger
             try
             {
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "This program merges the contents of a tab-delimited peptide hit results file " +
-                                      "(e.g. from X!Tandem or MS-GF+) with the corresponding MASIC results files, " +
-                                      "appending the relevant MASIC stats for each peptide hit result, " +
+                                      "This program merges the contents of a tab-delimited peptide hit results file from PHRP" +
+                                      "(for MS-GF+, MaxQuant, X!Tandem, etc.) with the corresponding MASIC results files, " +
+                                      "appending the relevant MASIC stats to each peptide hit result, " +
                                       "writing the merged data to a new tab-delimited text file."));
                 Console.WriteLine();
                 Console.WriteLine("It also supports TSV files, e.g. as created by the MzidToTsvConverter");
