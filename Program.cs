@@ -369,7 +369,7 @@ namespace MASICResultsMerger
                                       "When using /S, you can use /R to re-create the input directory hierarchy in the alternate output directory (if defined)."));
                 Console.WriteLine();
                 Console.WriteLine(ConsoleMsgUtils.WrapParagraph(
-                                      "Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA) in 2008; updated in 2019"));
+                                      "Program written by Matthew Monroe for the Department of Energy (PNNL, Richland, WA)"));
                 Console.WriteLine("Version: " + GetAppVersion());
                 Console.WriteLine();
                 Console.WriteLine("E-mail: matthew.monroe@pnnl.gov or proteomics@pnnl.gov");
