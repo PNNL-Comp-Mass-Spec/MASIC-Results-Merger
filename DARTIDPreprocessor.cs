@@ -10,7 +10,7 @@ namespace MASICResultsMerger
 {
     /// <summary>
     /// Transforms a Dataset_PlusSICStats.txt data file from MASICResultsMerger into a format compatible with DART-ID
-    /// Dart-ID Manuscript: PLoS Computational Biology. 2019 Jul 1;15(7):e1007082
+    /// Manuscript: PLoS Computational Biology. 2019 Jul 1;15(7):e1007082
     /// https://www.ncbi.nlm.nih.gov/pubmed/31260443
     /// </summary>
     internal class DartIdPreprocessor : PRISM.EventNotifier

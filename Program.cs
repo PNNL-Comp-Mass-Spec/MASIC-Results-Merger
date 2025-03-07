@@ -16,7 +16,7 @@ namespace MASICResultsMerger
     {
         // Ignore Spelling: fht, Mage, tsv
 
-        private const string PROGRAM_DATE = "November 9, 2021";
+        private const string PROGRAM_DATE = "March 6, 2025";
 
         private static string mInputFilePath;
         private static bool mCreateDartIdInputFile;
