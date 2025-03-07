@@ -55,23 +55,15 @@ namespace MASICResultsMerger
                     MSGFPlusSynFileColumns.Protein
                 };
 
-                string datasetName;
                 if (multiJobFile)
                 {
-                    datasetName = "TBD";
-                    throw new NotImplementedException(
-                        "ConsolidatePSMs needs to be updated to support an input file where Job or Dataset is the first column");
+                    throw new NotImplementedException("ConsolidatePSMs needs to be updated to support an input file where Job or Dataset is the first column");
                 }
 
                 // Obtain the dataset name from the filename
-                if (psmFilePath.EndsWith(MASICResultsMerger.RESULTS_SUFFIX, StringComparison.OrdinalIgnoreCase))
-                {
-                    datasetName = Path.GetFileName(psmFilePath.Substring(0, psmFilePath.Length - MASICResultsMerger.RESULTS_SUFFIX.Length));
-                }
-                else
-                {
-                    datasetName = Path.GetFileNameWithoutExtension(psmFilePath);
-                }
+                var datasetName = psmFilePath.EndsWith(MASICResultsMerger.RESULTS_SUFFIX, StringComparison.OrdinalIgnoreCase)
+                    ? Path.GetFileName(psmFilePath.Substring(0, psmFilePath.Length - MASICResultsMerger.RESULTS_SUFFIX.Length))
+                    : Path.GetFileNameWithoutExtension(psmFilePath);
 
                 if (datasetName.EndsWith("_syn", StringComparison.OrdinalIgnoreCase) ||
                     datasetName.EndsWith("_fht", StringComparison.OrdinalIgnoreCase))
@@ -127,15 +119,13 @@ namespace MASICResultsMerger
 
                         if (mScanTimeColIndex < 0)
                         {
-                            OnErrorEvent(string.Format("File {0} is missing column {1} on the header line", inputFile.Name,
-                                MASICResultsMerger.SCAN_STATS_ELUTION_TIME_COLUMN));
+                            OnErrorEvent("File {0} is missing column {1} on the header line", inputFile.Name, MASICResultsMerger.SCAN_STATS_ELUTION_TIME_COLUMN);
                             return false;
                         }
 
                         if (mPeakWidthMinutesColIndex < 0)
                         {
-                            OnErrorEvent(string.Format("File {0} is missing column {1} on the header line", inputFile.Name,
-                                MASICResultsMerger.PEAK_WIDTH_MINUTES_COLUMN));
+                            OnErrorEvent("File {0} is missing column {1} on the header line", inputFile.Name, MASICResultsMerger.PEAK_WIDTH_MINUTES_COLUMN);
                             return false;
                         }
 
@@ -147,7 +137,7 @@ namespace MASICResultsMerger
                                 continue;
                             }
 
-                            OnErrorEvent(string.Format("File {0} is missing column {1} on the header line", inputFile.Name, requiredColumn.ToString()));
+                            OnErrorEvent("File {0} is missing column {1} on the header line", inputFile.Name, requiredColumn.ToString());
                             return false;
                         }
 

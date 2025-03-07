@@ -710,10 +710,8 @@ namespace MASICResultsMerger
                 {
                     foreach (var processedFile in processedDataset.OutputFiles)
                     {
-                        if (!collisionModes.Contains(processedFile.Key))
-                        {
-                            collisionModes.Add(processedFile.Key);
-                        }
+                        // Add the processed file (if not yet present)
+                        collisionModes.Add(processedFile.Key);
                     }
 
                     if (!datasetNameIdMap.ContainsKey(processedDataset.BaseName))
@@ -936,6 +934,7 @@ namespace MASICResultsMerger
 
                 // Keys in this dictionary are the job, values are the DatasetID and DatasetName
                 var jobToDatasetMap = ReadMageMetadataFile(metadataFile.FullName);
+
                 if (jobToDatasetMap == null || jobToDatasetMap.Count == 0)
                 {
                     ShowErrorMessage("Error: ReadMageMetadataFile returned an empty job mapping");
@@ -1334,15 +1333,20 @@ namespace MASICResultsMerger
             {
                 using var reader = new StreamReader(new FileStream(metadataFilePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite));
 
+                var lineNumber = 0;
+
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+                    lineNumber++;
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                     {
                         continue;
                     }
 
                     var lineParts = dataLine.Split('\t').ToList();
+
                     if (!headersParsed)
                     {
                         // Look for the Job and Dataset columns
@@ -1372,9 +1376,14 @@ namespace MASICResultsMerger
                         continue;
                     }
 
-                    if (lineParts.Count > datasetIndex)
+                    if (lineParts.Count <= datasetIndex)
                     {
-                        if (int.TryParse(lineParts[jobIndex], out var jobNumber))
+                        ShowMessage(string.Format("Warning: Ignoring line {0} in the metadata file since it has fewer columns than the header row", lineNumber));
+                        continue;
+                    }
+
+                    if (int.TryParse(lineParts[jobIndex], out var jobNumber))
+                    {
                         {
                             if (int.TryParse(lineParts[datasetIDIndex], out var datasetID))
                             {
@@ -1386,11 +1395,20 @@ namespace MASICResultsMerger
                             {
                                 ShowMessage("Warning: Dataset_ID number not numeric in metadata file, line " + dataLine);
                             }
+                        if (int.TryParse(lineParts[datasetIDIndex], out var datasetID))
+                        {
+                            var datasetName = lineParts[datasetIndex];
+                            var datasetInfo = new DatasetInfo(datasetName, datasetID);
+                            jobToDatasetMap.Add(jobNumber, datasetInfo);
                         }
                         else
                         {
-                            ShowMessage("Warning: Job number not numeric in metadata file, line " + dataLine);
+                            ShowMessage(string.Format("Warning: Dataset_ID \"{0}\" not numeric in metadata file, line {1}", lineParts[datasetIDIndex], lineNumber));
                         }
+                    }
+                    else
+                    {
+                        ShowMessage(string.Format("Warning: Job number \"{0}\" is not numeric in metadata file, line {1}", lineParts[jobIndex], lineNumber));
                     }
                 }
             }
