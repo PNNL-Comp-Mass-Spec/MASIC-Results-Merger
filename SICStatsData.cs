@@ -37,6 +37,7 @@
                 return -1;
             }
 
+            // ReSharper disable once ConvertIfStatementToReturnStatement
             if (FragScanNumber > other.FragScanNumber)
             {
                 return 1;
