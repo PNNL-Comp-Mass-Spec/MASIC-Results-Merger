@@ -15,7 +15,7 @@ namespace MASICResultsMerger
     /// </summary>
     internal class DartIdPreprocessor : PRISM.EventNotifier
     {
-        // Ignore Spelling: tsv, fht, msgfdb, psm
+        // Ignore Spelling: fht, msgfdb, psm, tsv
 
         private int mScanTimeColIndex;
 
