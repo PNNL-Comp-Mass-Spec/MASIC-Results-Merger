@@ -721,7 +721,7 @@ namespace MASICResultsMerger
                         datasetNameIdMap.Add(processedDataset.BaseName, datasetNameIdMap.Count + 1);
                     }
 
-                    // Find the characters common to all of the processed datasets
+                    // Find the characters common to the processed datasets
                     var candidateName = processedDataset.BaseName;
                     if (string.IsNullOrEmpty(baseFileName))
                     {

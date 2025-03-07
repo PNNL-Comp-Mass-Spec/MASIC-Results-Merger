@@ -28,6 +28,11 @@
             ScanNumber = scanNumber;
         }
 
+        /// <summary>
+        /// Compare the scan numbers between two scan stats items
+        /// </summary>
+        /// <param name="other">Scan stats instance to compare</param>
+        /// <returns>Comparison result</returns>
         public int CompareTo(ScanStatsData other)
         {
             if (ScanNumber < other.ScanNumber)

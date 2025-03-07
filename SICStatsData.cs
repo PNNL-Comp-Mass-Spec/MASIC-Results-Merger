@@ -2,6 +2,8 @@
 {
     internal class SICStatsData
     {
+        // Ignore Spelling: frag
+
         public int FragScanNumber { get; }
         public string OptimalScanNumber { get; set; }
         public string PeakMaxIntensity { get; set; }
@@ -17,12 +19,17 @@
         /// <summary>
         /// Constructor
         /// </summary>
-        /// <param name="fragScanNumber"></param>
+        /// <param name="fragScanNumber">Fragmentation scan number</param>
         public SICStatsData(int fragScanNumber)
         {
             FragScanNumber = fragScanNumber;
         }
 
+        /// <summary>
+        /// Compare the fragmentation scan numbers between two SIC stats items
+        /// </summary>
+        /// <param name="other">SIC stats instance to compare</param>
+        /// <returns>Comparison result</returns>
         public int CompareTo(SICStatsData other)
         {
             if (FragScanNumber < other.FragScanNumber)
