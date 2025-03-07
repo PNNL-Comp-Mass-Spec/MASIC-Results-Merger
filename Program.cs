@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using PRISM;
-using PRISM.FileProcessor;
 
 namespace MASICResultsMerger
 {
@@ -307,8 +306,7 @@ namespace MASICResultsMerger
                                       "If the input directory includes a MASIC _ReporterIons.txt file, " +
                                       "the reporter ion intensities will also be included in the new text file."));
                 Console.WriteLine();
-                Console.WriteLine("Program syntax:"
-                                + Environment.NewLine + Path.GetFileName(ProcessFilesOrDirectoriesBase.GetAppPath()));
+                Console.WriteLine("Program syntax:" + Environment.NewLine + Path.GetFileName(AppUtils.GetAppPath()));
                 Console.WriteLine(" InputFilePathSpec [/M:MASICResultsDirectoryPath] [/O:OutputDirectoryPath]");
                 Console.WriteLine(" [/N:ScanNumberColumn] [/C] [/Mage] [/Append]");
                 Console.WriteLine(" [/DartID]");
@@ -413,7 +411,7 @@ namespace MASICResultsMerger
             {
                 if (mMageResults)
                 {
-                    if (mLastProgressReportValue > 0 && mLastProgressReportValue < 100)
+                    if (mLastProgressReportValue is > 0 and < 100)
                     {
                         Console.WriteLine();
                         DisplayProgressPercent(mLastProgressReportValue, false);
