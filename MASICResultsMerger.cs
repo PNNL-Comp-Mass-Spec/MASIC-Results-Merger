@@ -1384,17 +1384,12 @@ namespace MASICResultsMerger
 
                     if (int.TryParse(lineParts[jobIndex], out var jobNumber))
                     {
+                        if (jobToDatasetMap.ContainsKey(jobNumber))
                         {
-                            if (int.TryParse(lineParts[datasetIDIndex], out var datasetID))
-                            {
-                                var datasetName = lineParts[datasetIndex];
-                                var datasetInfo = new DatasetInfo(datasetName, datasetID);
-                                jobToDatasetMap.Add(jobNumber, datasetInfo);
-                            }
-                            else
-                            {
-                                ShowMessage("Warning: Dataset_ID number not numeric in metadata file, line " + dataLine);
-                            }
+                            ShowMessage(string.Format("Warning: Ignoring line {0} in the metadata file since it has a duplicate job number ({1})", lineNumber, jobNumber));
+                            continue;
+                        }
+
                         if (int.TryParse(lineParts[datasetIDIndex], out var datasetID))
                         {
                             var datasetName = lineParts[datasetIndex];
