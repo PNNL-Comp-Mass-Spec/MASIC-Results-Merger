@@ -62,6 +62,7 @@ namespace MASICResultsMerger
             try
             {
                 var proceed = false;
+
                 if (commandLineParser.ParseCommandLine())
                 {
                     if (SetOptionsUsingCommandLineParameters(commandLineParser))
@@ -99,6 +100,7 @@ namespace MASICResultsMerger
                 mMASICResultsMerger.ProgressReset += MASICResultsMerger_ProgressReset;
 
                 int returnCode;
+
                 if (mRecurseDirectories)
                 {
                     if (mMASICResultsMerger.ProcessFilesAndRecurseDirectories(mInputFilePath, mOutputDirectoryPath,
@@ -120,6 +122,7 @@ namespace MASICResultsMerger
                 else
                 {
                     returnCode = (int)mMASICResultsMerger.ErrorCode;
+
                     if (returnCode != 0)
                     {
                         ShowErrorMessage("Error while processing: " + mMASICResultsMerger.GetErrorMessage());
@@ -158,6 +161,7 @@ namespace MASICResultsMerger
             }
 
             Console.Write("Processing: {0:N2}%", percentComplete);
+
             if (addCarriageReturn)
             {
                 Console.WriteLine();
@@ -250,6 +254,7 @@ namespace MASICResultsMerger
                 if (commandLineParser.RetrieveValueForParameter("S", out var maxLevelsToRecurse))
                 {
                     mRecurseDirectories = true;
+
                     if (int.TryParse(maxLevelsToRecurse, out var levels))
                     {
                         mRecurseDirectoriesMaxLevels = levels;
@@ -407,6 +412,7 @@ namespace MASICResultsMerger
         {
             const int PERCENT_REPORT_INTERVAL = 25;
             const int PROGRESS_DOT_INTERVAL_MSEC = 250;
+
             if (percentComplete >= mLastProgressReportValue)
             {
                 if (mMageResults)
@@ -434,6 +440,7 @@ namespace MASICResultsMerger
             else if (DateTime.UtcNow.Subtract(mLastProgressReportTime).TotalMilliseconds > PROGRESS_DOT_INTERVAL_MSEC)
             {
                 mLastProgressReportTime = DateTime.UtcNow;
+
                 if (!mMageResults)
                 {
                     Console.Write(".");

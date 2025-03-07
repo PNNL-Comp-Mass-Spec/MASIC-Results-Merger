@@ -105,6 +105,7 @@ namespace MASICResultsMerger
                 while (!reader.EndOfStream)
                 {
                     var dataLine = reader.ReadLine();
+
                     if (string.IsNullOrWhiteSpace(dataLine))
                         continue;
 
@@ -215,6 +216,7 @@ namespace MASICResultsMerger
         private int GetValueInt(string[] dataColumns, SortedDictionary<Enum, int> msgfPlusColumns, MSGFPlusSynFileColumns columnEnum)
         {
             var dataValue = GetValue(dataColumns, msgfPlusColumns, columnEnum);
+
             if (int.TryParse(dataValue, out var value))
                 return value;
 
@@ -227,6 +229,7 @@ namespace MASICResultsMerger
             {
                 var headerNames = headerLine.Split('\t').ToList();
                 var columnNameToIndexMap = MSGFPlusSynFileReader.GetColumnMapFromHeaderLine(headerNames);
+
                 foreach (var item in columnNameToIndexMap)
                 {
                     msgfPlusColumns.Add(item.Key, item.Value);
